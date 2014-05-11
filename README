@@ -1,0 +1,4 @@
+Basic four dimensional renderer using glut/OpenGL in C++/Cg. Not tuned for external users in terms of UI. Use qawsedftgyh for various kinds of movement or rotation in different dimensions.
+
+Remnants of a Nehe starting tutorial are probably still around. Thanks!
+Using a Makefile from Michael Crawford. Thanks!
