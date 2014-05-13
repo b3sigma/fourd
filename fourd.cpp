@@ -34,6 +34,11 @@ Mat4f projectionMatrix;
 Mat4f fourToThree;
 Mesh tesseract;
 Camera _camera;
+float _fov = 90.0f;
+float _near = 0.1f;
+float _far = 100000.0f;
+int _width = 800;
+int _height = 600;
 int cubeIndex = 0;
 
 typedef std::vector<Vec4f> VectorList;
@@ -117,6 +122,26 @@ bool Initialize() {
 void Deinitialize(void) {
   cgDestroyContext(cgContext);
 }
+
+void UpdatePerspective() {
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(_fov, (GLfloat) (_width) / (GLfloat) (_height), _near, _far);
+  cgGLSetStateMatrixParameter(cgProjectionMatrix, CG_GL_PROJECTION_MATRIX,
+      CG_GL_MATRIX_IDENTITY);
+}
+
+void ReshapeGL(int width, int height) {
+  _width = width;
+  _height = height;
+  glViewport(0, 0, (GLsizei) (_width), (GLsizei) (_height));
+  UpdatePerspective();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glutPostRedisplay();
+}
+
 
 void Update(int key, int x, int y) {
   UNUSED(x); UNUSED(y); // Required by glut prototype.
@@ -214,6 +239,31 @@ void Update(int key, int x, int y) {
     case 'j' : {
       _camera.ApplyRollInput(rollAmount, Camera::UP, Camera::INSIDE);
     } break;
+    // Sure this looks like an unsorted mess, but is spatially aligned kinda.
+    case 'x' : {
+      _near *= 0.1f;
+      UpdatePerspective();
+    } break;
+    case 'c' : {
+      _near *= 10.0f;
+      UpdatePerspective();
+    } break;
+    case 'v' : {
+      _far *= 0.1f;
+      UpdatePerspective();
+    } break;
+    case 'b' : {
+      _far *= 10.0f;
+      UpdatePerspective();
+    } break;
+    case 'n' : {
+      _fov -= 5.0f;
+      UpdatePerspective();
+    } break;
+    case 'm' : {
+      _fov += 5.0f;
+      UpdatePerspective();
+    } break;
     case '?' : {
       _camera.printIt();
     } break;
@@ -228,8 +278,6 @@ void Draw(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  cgGLSetStateMatrixParameter(cgProjectionMatrix, CG_GL_PROJECTION_MATRIX,
-      CG_GL_MATRIX_IDENTITY);
   cgGLSetParameter4fv(cgCameraPosition, _camera.getCameraPos().raw());
   cgGLSetMatrixParameterfc(cgWorldMatrix, worldMatrix.raw());
   Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
@@ -272,17 +320,6 @@ void Draw(void) {
   cgGLDisableProfile(cgVertexProfile);
   glFlush();
   glutSwapBuffers();
-}
-
-void ReshapeGL(int width, int height) {
-  glViewport(0, 0, (GLsizei) (width), (GLsizei) (height));
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(90.0f, (GLfloat) (width) / (GLfloat) (height), 0.1f, 100000.0f);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  glutPostRedisplay();
 }
 
 void Key(unsigned char key, int x, int y) {
