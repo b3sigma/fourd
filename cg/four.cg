@@ -1,20 +1,20 @@
-struct appdata 
+struct Vertex 
 {
 	float4 position : POSITION;
 	float4 color	: COLOR0;
 };
 
-struct vfconn
+struct VOut
 {
 	float4 HPos	: POSITION;
 	float4 Col0	: COLOR0;
 };
 
-vfconn main(appdata IN,	uniform float4x4 worldMatrix, uniform float4 worldPosition,
+VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	uniform float4 cameraPosition, uniform float4x4 cameraMatrix,
 	uniform float4x4 projectionMatrix, uniform float4x4 fourToThree)
 {
-	vfconn OUT;
+	VOut OUT;
 	//float4 worldSpace = mul(worldMatrix, float4(IN.position.xyz, 1.0)); // rotation/scale in 4d around origin
     float4 worldSpace = mul(worldMatrix, IN.position); // rotation/scale in 4d around origin
 	worldSpace += worldPosition; // final world space position
@@ -39,7 +39,6 @@ vfconn main(appdata IN,	uniform float4x4 worldMatrix, uniform float4 worldPositi
 	//OUT.HPos = mul(megaMatrix, IN.position);
 	//OUT.HPos = mul(megaMatrix, worldSpace);
 	
-	// Set The Color To The Value Specified In IN.color
     OUT.Col0.a = 0.2;
     OUT.Col0.g = IN.color.y;
     //OUT.Col0.r = abs(worldSpace.z / 10);
