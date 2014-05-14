@@ -2,5 +2,14 @@ Basic four dimensional renderer using glut/OpenGL in C++/Cg.
 
 Not tuned for external users in terms of UI. Use qawsedftgyh for various kinds of movement or rotation in different dimensions.
 
+Todo list:
+* Refactor rotation code to be smoother
+* Fix the 4d clipping issues (negative w?)
+* Normalize the input amounts
+* Refactor the input system
+* Switch the mat4 class to be column major (at least make the calls explicit)
+* Add heirarchical multi-view rendering that is based on eye structures
+* Add post effects
+
 Remnants of a Nehe starting tutorial are probably still around. Thanks!
 Using a Makefile from Michael Crawford. Thanks!
