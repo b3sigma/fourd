@@ -9,7 +9,7 @@
 #include "../common/fourmath.h"
 #include "../common/mesh.h"
 #include "../common/camera.h"
-#include "../common/render.h"
+#include "render.h"
 
 using namespace ::fd;
 
