@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <list>
 #include <assert.h>
-#include "fdTypes.h"
-#include "fdMath.h"
+#include "types.h"
+#include "fourmath.h"
 
 namespace fd {
 

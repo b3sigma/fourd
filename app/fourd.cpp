@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
-#include "../common/fdMath.h"
-#include "../common/fdMesh.h"
-#include "../common/fdCamera.h"
-#include "../common/fdRender.h"
+#include "../common/fourmath.h"
+#include "../common/mesh.h"
+#include "../common/camera.h"
+#include "../common/render.h"
 
 using namespace ::fd;
 

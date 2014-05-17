@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "fdCamera.h"
+#include "camera.h"
 
 using namespace ::fd;
 

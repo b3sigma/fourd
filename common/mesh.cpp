@@ -5,8 +5,8 @@
 #include <map>
 #include <algorithm>
 #include <functional>
-#include "fdMesh.h"
-#include "fdMath.h"
+#include "mesh.h"
+#include "fourmath.h"
 
 using namespace ::fd;
 

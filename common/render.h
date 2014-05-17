@@ -10,8 +10,8 @@
 #include <Cg/cgGL.h>
 #include <GL/glut.h>
 
-#include "fdMath.h"
-#include "fdCamera.h"
+#include "fourmath.h"
+#include "camera.h"
 
 namespace fd {
 
