@@ -3,6 +3,7 @@ Basic four dimensional renderer using glut/OpenGL in C++/Cg.
 Not tuned for external users in terms of UI. Use qawsedftgyh for various kinds of movement or rotation in different dimensions.
 
 Todo list:
+* Separate fourd app code from common reusable code.
 * Refactor rotation code to be smoother
 * Fix the 4d clipping issues (negative w?)
 * Normalize the input amounts
