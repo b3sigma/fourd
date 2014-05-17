@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdio.h>
 
+namespace fd {
+
 // derp
 #define PI (3.141592653589793238462643383)
 
@@ -206,3 +208,5 @@ public:
 };
 
 typedef Matrix4<float> Mat4f;
+
+} // namespace fd

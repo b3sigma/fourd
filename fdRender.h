@@ -13,6 +13,8 @@
 #include "fdMath.h"
 #include "fdCamera.h"
 
+namespace fd {
+
 // Render should contain all the GL code
 // View will contain a specific render target and a camera
 
@@ -43,3 +45,5 @@ class Render {
   typedef std::vector<View*> TViewList;
   TViewList _views;
 };
+
+}  // namespace fd

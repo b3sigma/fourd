@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "fdCamera.h"
 
+using namespace ::fd;
+
 void Camera::ApplyRotationInput(float radians, Direction target, Direction source) {
   if (_movement == LOOK) {
     Mat4f rot;

@@ -11,6 +11,8 @@
 #include "fdCamera.h"
 #include "fdRender.h"
 
+using namespace ::fd;
+
 CGcontext cgContext;
 CGprogram cgProgram;
 CGprofile cgVertexProfile;

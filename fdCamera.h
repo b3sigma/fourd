@@ -2,6 +2,8 @@
 
 #include "fdMath.h"
 
+namespace fd {
+
 class Camera {
 public:
     Mat4f _cameraMatrix;
@@ -41,3 +43,5 @@ public:
     const Mat4f& getCameraMatrix() const { return _cameraMatrix; }
     const Vec4f& getCameraPos() const { return _cameraPos; }
 };
+
+}  // namespace fd

@@ -9,6 +9,8 @@
 #include "fdTypes.h"
 #include "fdMath.h"
 
+namespace fd {
+
 // Windings are a mess and should be considered meaningless.
 class Mesh {
 public:
@@ -147,3 +149,5 @@ private:
   Shape* collectCoPlanar(Connectivity& connectivity, int triangle, TriHash& unique);
   void buildShapes(const VertList& verts, const IndexList& indices, Shapes& outShapes);
 };
+
+}  // namespace fd

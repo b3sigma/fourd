@@ -8,6 +8,8 @@
 #include "fdMesh.h"
 #include "fdMath.h"
 
+using namespace ::fd;
+
 void Mesh::getTriangle(int index, Vec4f& a, Vec4f& b, Vec4f& c) {
   assert(index < getNumberTriangles() && index >= 0);
 

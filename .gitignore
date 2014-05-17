@@ -1,0 +1,6 @@
+.git/
+*.o
+fourd
+temp*
+build/*
+bin/*
