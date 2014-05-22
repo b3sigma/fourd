@@ -407,6 +407,11 @@ void RunTests() {
   iden.storeIdentity();
   assert(iden == (iden * iden));
 
+  Mat4f scale(look);
+  Mat4f invScale = scale.inverse();
+  assert(!(scale == invScale));
+  assert(scale == invScale.inverse());
+
   Mat4f rotXFourth;
   rotXFourth.buildRotation(PI / 2.0, 1, 0);
   Mat4f rotXEighth;
