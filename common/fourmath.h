@@ -3,6 +3,8 @@
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
+#include "../eigen/Eigen/Geometry"
+#include "../eigen/Eigen/LU"
 
 namespace fd {
 
@@ -119,7 +121,13 @@ typedef Vector4<float> Vec4f;
 template <typename T>
 class Matrix4 {
   typedef Vector4<T> Vec;
-  Vec d[4];
+  typedef Matrix4<T> FdMat;
+  typedef Eigen::Matrix<T, 4, 4> EigMat;
+
+  union {
+    Vec d[4];
+    EigMat e;
+  };
 
 public:
   Matrix4() { storeZero(); }
@@ -130,27 +138,37 @@ public:
     d[0] = x; d[1] = y; d[2] = z; d[3] = w;
   }
 
+  EigMat& eigen() { return e; }
+  void setEigen(const EigMat& new_e) { e = new_e; }
+
   T* raw() { return (T*)&d[0]; }
   const T* raw() const { return (T*)&d[0]; }
   Vec& operator[] (int index) { return d[index]; }
   void setRow(int index, const Vec& row) { d[index] = row; }
 
-  bool operator ==(const Matrix4<T>& c) const {
+  bool operator ==(const FdMat& c) const {
     return d[0] == c.d[0] && d[1] == c.d[1] && d[2] == c.d[2] && d[3] == c.d[3];
   }
 
-  void storeZero() {
+  FdMat& operator =(const FdMat& right) {
+    e = right.e;
+    return *this;
+  }
+
+  FdMat&  storeZero() {
     for (int i = 0; i < 4; i++) {
       d[i].storeZero();
-     }
+    }
+    return *this;
   }
 
-  void storeIdentity() {
+  FdMat& storeIdentity() {
     storeZero();
     d[0].x = d[1].y = d[2].z = d[3].w = 1;
+    return *this;
   }
 
-  void buildRotation(float radians, int targetIndex, int sourceIndex) {
+  FdMat& buildRotation(float radians, int targetIndex, int sourceIndex) {
     assert(targetIndex < 4 && targetIndex >= 0);
     assert(sourceIndex < 4 && sourceIndex >= 0);
     storeIdentity();
@@ -160,10 +178,18 @@ public:
     Vec newSource = d[targetIndex] * -sinResult + d[sourceIndex] * cosResult;
     d[targetIndex] = newTarget;
     d[sourceIndex] = newSource;
+    return *this;
   }
 
-  Matrix4<T> transpose() const {
-    Matrix4<T> r;
+  FdMat inverse() const {
+    FdMat inv = transpose();
+    EigMat inverse = inv.e.inverse().eval();
+    inv.e = inverse;
+    return inv.transpose();
+  }
+
+  FdMat transpose() const {
+    FdMat r;
     r.d[0].set(d[0].x, d[1].x, d[2].x, d[3].x);
     r.d[1].set(d[0].y, d[1].y, d[2].y, d[3].y);
     r.d[2].set(d[0].z, d[1].z, d[2].z, d[3].z);
@@ -171,9 +197,9 @@ public:
     return r;
   }
 
-  Matrix4<T> operator * (const Matrix4<T>& m) const {
-    Matrix4<T> r;
-    Matrix4<T> t = m.transpose();
+  FdMat operator * (const FdMat& m) const {
+    FdMat r;
+    FdMat t = m.transpose();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
         r[i][j] = d[i].dot(t[j]);
