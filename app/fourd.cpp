@@ -435,7 +435,7 @@ int main(int argc, char *argv[]) {
   glutMouseFunc(MouseClick);
   glutPassiveMotionFunc(PassiveMotion);
   glutMotionFunc(Motion);
-  glutSpecialFunc(Update);
+  //glutSpecialFunc(Update);
   glutDisplayFunc(Draw);
   glutIdleFunc(OnIdle);
   Initialize();
