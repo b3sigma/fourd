@@ -19,19 +19,56 @@ void Camera::ApplyOrbitInput(float radians, Direction direction)
   Mat4f invRot;
   invRot.buildRotation(-radians, (int)direction, (int)coDirection);
 
-  _cameraMatrix = invRot * _cameraMatrix;
-
-  // TODO: this is wrong, convert lookDir into camera space first,
-  // then rotate, then convert back into world space
+  Mat4f invCamera = _cameraMatrix.inverse();
   Vec4f lookDir = _cameraPos - _cameraLookAt;
-  lookDir = rot.transform(lookDir);
-  _cameraPos = _cameraLookAt + lookDir;
+  Vec4f cameraLookDir = invCamera.transform(lookDir);
+  cameraLookDir = rot.transform(cameraLookDir);
+  Vec4f worldLook = _cameraMatrix.transform(cameraLookDir);
+  _cameraPos = _cameraLookAt + worldLook;
+
+  _cameraMatrix = rot * _cameraMatrix;
+//  _cameraMatrix = invRot * _cameraMatrix;
+//  Vec4f lookAt = _cameraPos - _cameraLookAt;
+//  lookAt.storeNormalized();
+//  _cameraMatrix.setRow(FORWARD, lookAt);
+//  _cameraMatrix.storeOrthognoal(FORWARD, changeBasis, goodBasis,
+//      goodCoBasis);
+
 }
 
 void Camera::ApplyRollInput(float radians, Direction target, Direction source) {
   Mat4f rot;
   rot.buildRotation(radians, (int)target, (int)source);
   _cameraMatrix = rot * _cameraMatrix;
+}
+
+void Camera::RenormalizeCamera(Direction changeBasis) {
+  Vec4f lookAt = _cameraPos - _cameraLookAt;
+  lookAt.storeNormalized();
+  _cameraMatrix.setRow(FORWARD, lookAt);
+
+  Direction goodBasis;
+  Direction goodCoBasis;
+  switch (changeBasis) {
+    case UP:
+      goodBasis = INSIDE;
+      goodCoBasis = RIGHT;
+      break;
+    case RIGHT:
+      goodBasis = UP;
+      goodCoBasis = INSIDE;
+      break;
+    case INSIDE:
+      goodBasis = RIGHT;
+      goodCoBasis = UP;
+      break;
+    default:
+    case FORWARD:
+      assert(false);
+      break;
+  }
+  _cameraMatrix.storeOrthognoal(FORWARD, changeBasis, goodBasis,
+      goodCoBasis);
 }
 
 void Camera::ApplyTranslationInput(float amount, Direction direction) {
@@ -49,37 +86,10 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
       Vec4f lookAt = _cameraPos - _cameraLookAt;
       float distToLook = lookAt.length();
       _cameraPos += _cameraMatrix[direction] * amount;
-
       if (direction != FORWARD) {
         _cameraPos.storeNormalized();
         _cameraPos = _cameraPos * distToLook;
-
-        lookAt.storeNormalized();
-        _cameraMatrix.setRow(FORWARD, lookAt);
-
-        Direction goodBasis;
-        Direction goodCoBasis;
-        Direction changeBasis = direction;
-        switch (direction) {
-          case UP:
-            goodBasis = INSIDE;
-            goodCoBasis = RIGHT;
-            break;
-          case RIGHT:
-            goodBasis = UP;
-            goodCoBasis = INSIDE;
-            break;
-          case INSIDE:
-            goodBasis = RIGHT;
-            goodCoBasis = UP;
-            break;
-          default:
-          case FORWARD:
-            assert(false);
-            break;
-        }
-        _cameraMatrix.storeOrthognoal(FORWARD, changeBasis, goodBasis,
-            goodCoBasis);
+        RenormalizeCamera(direction);
       }
     }
   } else {

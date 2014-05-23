@@ -146,6 +146,7 @@ void ReshapeGL(int width, int height) {
 
 
 void Update(int key, int x, int y) {
+  printf("In update key:%d x:%d y:%d\n", key, x, y);
   UNUSED(x); UNUSED(y); // Required by glut prototype.
   static float moveAmount = 1.0f;
   static float rollAmount = moveAmount * 2 * PI / 100.0f;
@@ -187,7 +188,7 @@ void Update(int key, int x, int y) {
     case 27: {
       Deinitialize();
       exit(0);
-    }
+    } break;
     case ',' : {
       int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
       cubeIndex = (cubeIndex + 1) % numCubes;
