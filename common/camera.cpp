@@ -26,15 +26,39 @@ void Camera::ApplyOrbitInput(float radians, Direction direction)
   Vec4f worldLook = _cameraMatrix.transform(cameraLookDir);
   _cameraPos = _cameraLookAt + worldLook;
 
-  _cameraMatrix = rot * _cameraMatrix;
-//  _cameraMatrix = invRot * _cameraMatrix;
+  _cameraMatrix = _cameraMatrix * invRot;
+
 //  Vec4f lookAt = _cameraPos - _cameraLookAt;
 //  lookAt.storeNormalized();
 //  _cameraMatrix.setRow(FORWARD, lookAt);
-//  _cameraMatrix.storeOrthognoal(FORWARD, changeBasis, goodBasis,
-//      goodCoBasis);
-
+//  Direction firstInvariant;
+//  Direction secondInvariant;
+//  PickBasisFromForward(direction, firstInvariant, secondInvariant);
+//  _cameraMatrix.storeOrthognoal(FORWARD, direction, firstInvariant,
+//      secondInvariant);
 }
+
+void Camera::PickBasisFromForward(const Direction changeBasis, Direction& firstOther, Direction& secondOther) {
+  switch (changeBasis) {
+    case UP:
+      firstOther = INSIDE;
+      secondOther = RIGHT;
+      break;
+    case RIGHT:
+      firstOther = UP;
+      secondOther = INSIDE;
+      break;
+    case INSIDE:
+      firstOther = RIGHT;
+      secondOther = UP;
+      break;
+    default:
+    case FORWARD:
+      assert(false);
+      break;
+  }
+}
+
 
 void Camera::ApplyRollInput(float radians, Direction target, Direction source) {
   Mat4f rot;
@@ -49,24 +73,7 @@ void Camera::RenormalizeCamera(Direction changeBasis) {
 
   Direction goodBasis;
   Direction goodCoBasis;
-  switch (changeBasis) {
-    case UP:
-      goodBasis = INSIDE;
-      goodCoBasis = RIGHT;
-      break;
-    case RIGHT:
-      goodBasis = UP;
-      goodCoBasis = INSIDE;
-      break;
-    case INSIDE:
-      goodBasis = RIGHT;
-      goodCoBasis = UP;
-      break;
-    default:
-    case FORWARD:
-      assert(false);
-      break;
-  }
+  PickBasisFromForward(changeBasis, goodBasis, goodCoBasis);
   _cameraMatrix.storeOrthognoal(FORWARD, changeBasis, goodBasis,
       goodCoBasis);
 }
@@ -85,7 +92,7 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
     } else {
       Vec4f lookAt = _cameraPos - _cameraLookAt;
       float distToLook = lookAt.length();
-      _cameraPos += _cameraMatrix[direction] * amount;
+      _cameraPos += _cameraMatrix[direction] * amount * 10.0f;
       if (direction != FORWARD) {
         _cameraPos.storeNormalized();
         _cameraPos = _cameraPos * distToLook;

@@ -46,6 +46,7 @@ public:
 
 private:
   void RenormalizeCamera(Direction changeBasis);
+  void PickBasisFromForward(const Direction changeBasis, Direction& firstOther, Direction& secondOther);
 };
 
 } // namespace fd

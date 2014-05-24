@@ -7,8 +7,6 @@ make
 ./fourd
 
 Todo list:
-* Convert fourmath to use eigen code
-** Re-add the 4d math that eigen doesn't provide through the addons approach detailed at http://eigen.tuxfamily.org/dox/TopicCustomizingEigen.html
 * Refactor rotation code to be smoother
 * Fix the 4d clipping issues (negative w?)
 * Normalize the input amounts
