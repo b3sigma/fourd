@@ -25,6 +25,11 @@ public:
     _cameraMatrix.storeIdentity();
   }
 
+  Camera(MovementMode mode)
+      : _movement(mode) {
+    _cameraMatrix.storeIdentity();
+  }
+
   void SetCameraPosition(Vec4f position) {
     _cameraPos = position;
   }
@@ -44,9 +49,14 @@ public:
     return _cameraPos;
   }
 
+  void setMovementMode(MovementMode mode) {
+    _movement = mode;
+  }
+
 private:
   void RenormalizeCamera(Direction changeBasis);
-  void PickBasisFromForward(const Direction changeBasis, Direction& firstOther, Direction& secondOther);
+  void PickBasisFromForward(const Direction changeBasis, Direction& firstOther,
+      Direction& secondOther);
 };
 
 } // namespace fd
