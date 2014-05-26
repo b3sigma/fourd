@@ -7,11 +7,8 @@ make
 ./fourd
 
 Todo list:
-* Refactor rotation code to be smoother
-* Fix the 4d clipping issues (negative w?)
-* Normalize the input amounts
 * Refactor the input system
-* Switch the mat4 class to be column major (at least make the calls explicit)
+* Switch the mat4 class to be column major? (at least make the calls explicit)
 * Add heirarchical multi-view rendering that is based on eye structures
 * Add post effects
 

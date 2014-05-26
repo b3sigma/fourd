@@ -33,8 +33,8 @@ VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	//threeSpace = cameraSpace;
 	
 	float4 homogenousCoords = mul(projectionMatrix, threeSpace); // homogenous clip space position
-	homogenousCoords.w = abs(homogenousCoords.w + savedW);
-	homogenousCoords.z = abs(homogenousCoords.z);
+	//homogenousCoords.w = abs(homogenousCoords.w + savedW);
+	//homogenousCoords.z = abs(homogenousCoords.z);
 	OUT.HPos = homogenousCoords;
 	//OUT.HPos = mul(megaMatrix, IN.position);
 	//OUT.HPos = mul(megaMatrix, worldSpace);
