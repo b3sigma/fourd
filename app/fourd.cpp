@@ -419,6 +419,9 @@ void RunTests() {
   assert(iden == (rotXFourth * rotXFourth * rotXFourth * rotXFourth * iden));
   assert(rotXEighth * rotXEighth == rotXFourth);
   assert(!(rotXFourth * rotXFourth == rotXFourth));
+
+  Mat4f threeMat;
+//  threeMat.eigen().
 }
 
 int main(int argc, char *argv[]) {

@@ -18,7 +18,7 @@ T max(T left, T right) {
 
 template <typename T>
 class Vector4 {
-public:
+protected:
   union {
     T d[4];
     struct {
@@ -26,6 +26,7 @@ public:
     };
   };
 
+public:
   Vector4() : x(0), y(0), z(0), w(0) {}
 	Vector4(T inX, T inY, T inZ, T inI) : x(inX), y(inY), z(inZ), w(inI) {}
 	Vector4(const Vector4<T>& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
@@ -120,6 +121,7 @@ typedef Vector4<float> Vec4f;
 
 template <typename T>
 class Matrix4 {
+protected:
   typedef Vector4<T> Vec;
   typedef Matrix4<T> FdMat;
   typedef Eigen::Matrix<T, 4, 4> EigMat;
@@ -140,6 +142,7 @@ public:
   Matrix4(const T* vals) : e(vals) {}
 
   EigMat& eigen() { return e; }
+  const EigMat& eigen() const { return e; }
   void setEigen(const EigMat& new_e) { e = new_e; }
 
   T* raw() { return (T*)&d[0]; }
