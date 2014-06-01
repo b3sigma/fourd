@@ -137,6 +137,7 @@ public:
   Matrix4(Vec x, Vec y, Vec z, Vec w) {
     d[0] = x; d[1] = y; d[2] = z; d[3] = w;
   }
+  Matrix4(const T* vals) : e(vals) {}
 
   EigMat& eigen() { return e; }
   void setEigen(const EigMat& new_e) { e = new_e; }
