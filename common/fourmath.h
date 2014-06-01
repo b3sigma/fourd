@@ -50,6 +50,14 @@ public:
     set(x + r.x, y + r.y, z + r.z, w + r.w);
     return *this;
   }
+  Vector4<T>& operator -= (const Vector4<T>& r) {
+    set(x - r.x, y - r.y, z - r.z, w - r.w);
+    return *this;
+  }
+  Vector4<T>& operator *= (const T& s) {
+    set(x * s, y * s, z * s, w * s);
+    return *this;
+  }
 
 	Vector4<T> operator + (const Vector4<T>& v) const {
 	  return Vector4<T>(x + v.x, y + v.y, z + v.z, w + v.w);
@@ -57,6 +65,9 @@ public:
 
   Vector4<T> operator - (const Vector4<T>& v) const {
     return Vector4<T>(x - v.x, y - v.y, z - v.z, w - v.w);
+  }
+  Vector4<T> operator - () const {
+    return Vector4<T>(-x, -y, -z, -w);
   }
 
 	Vector4<T> operator * (T s) const {
@@ -233,6 +244,15 @@ public:
       d[i].printIt();
       printf("\n");
     }
+  }
+
+  FdMat convertToTransposed3d() const {
+    FdMat result = transpose();
+    result.d[0].w = 0;
+    result.d[1].w = 0;
+    result.d[2].w = 0;
+    result.d[3].set(0, 0, 0, 1);
+    return result;
   }
 
   // Split this 4d matrix, interpreted as the usual 3d view + 3d position into a valid
