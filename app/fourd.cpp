@@ -57,7 +57,7 @@ void buildColorArray() {
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
-  tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0, 1, 2, 0));
+  tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0)); //Vec4f(0, 1, 2, 0));
   _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 60.5f, 0.0f));
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

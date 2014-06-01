@@ -137,7 +137,7 @@ void Mesh::buildReferenceTesseract(float size, Vec4f offset, Vec4f step) {
 
 void Mesh::buildTesseract(float size, Vec4f offset, Vec4f step) {
   buildCube(size, offset, step);
-  projectIntoFour(size);
+  projectIntoFour(size, step);
 }
 
 void Mesh::buildFourTetrad(float size, Vec4f offset) {
@@ -444,7 +444,7 @@ void Mesh::buildShapes(const VertList& verts, const IndexList& indices, Shapes& 
 // More interesting 4d projections will require more interesting shape definitions.
 // More intelligent projections that don't make tons of cubes will require
 // a 4d approach to rendering which would do the equivalent of interior surface removal.
-void Mesh::projectIntoFour(float insideDist) {
+void Mesh::projectIntoFour(float insideDist, Vec4f step) {
   Vec4f shift(0, 0, 0, insideDist);
   VertList fourVerts;
   fourVerts.resize(_verts.size());
@@ -454,6 +454,7 @@ void Mesh::projectIntoFour(float insideDist) {
       ++iV) {
     Vec4f& v = *iV;
     v += shift;
+    v += step;
   }
   int numOldVerts = (int)_verts.size();
   _verts.resize(_verts.size() + fourVerts.size());
@@ -579,7 +580,7 @@ void Mesh::buildCylinder(float radius, float length, int faceCount) {
 
 void Mesh::buildFourCylinder(float radius, float length, float inside, int faceCount) {
   buildCylinder(radius, length, faceCount);
-  projectIntoFour(inside);
+  projectIntoFour(inside, fd::Vec4f());
 }
 
 void Mesh::Shape::addTriangle(int a, int b, int c) {
