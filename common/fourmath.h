@@ -209,8 +209,8 @@ public:
     return r;
   }
 
-  Vector4<T> transform(const Vector4<T>& v) const {
-    Vector4<T> result(v.dot(d[0]), v.dot(d[1]), v.dot(d[2]), v.dot(d[3]));
+  Vec transform(const Vec& v) const {
+    Vec result(v.dot(d[0]), v.dot(d[1]), v.dot(d[2]), v.dot(d[3]));
     return result;
   }
 
@@ -232,6 +232,18 @@ public:
     }
   }
 
+  // Split this 4d matrix, interpreted as the usual 3d view + 3d position into a valid
+  // 4d view + 4d position. Ok to pass self as viewTarget.
+  void splice3dInto4d(FdMat& viewTarget, Vec& posTarget) const {
+    posTarget = d[3];
+    posTarget.w = 0;
+
+    viewTarget = *this;
+    viewTarget.d[0].w = 0;
+    viewTarget.d[1].w = 0;
+    viewTarget.d[2].w = 0;
+    viewTarget.d[3].set(0, 0, 0, 1);
+  }
 };
 
 typedef Matrix4<float> Mat4f;
