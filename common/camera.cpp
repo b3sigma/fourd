@@ -40,17 +40,17 @@ void Camera::ApplyOrbitInput(float radians, Direction direction)
 
 void Camera::PickBasisFromForward(const Direction changeBasis, Direction& firstOther, Direction& secondOther) {
   switch (changeBasis) {
-    case UP:
-      firstOther = INSIDE;
-      secondOther = RIGHT;
-      break;
-    case RIGHT:
-      firstOther = UP;
+    case UP: // f,u,r,i (3,2,1,4) -> -
+      firstOther = RIGHT;
       secondOther = INSIDE;
       break;
-    case INSIDE:
-      firstOther = RIGHT;
+    case RIGHT: // f,r,i,u (3,1,4,2) -> -
+      firstOther = INSIDE;
       secondOther = UP;
+      break;
+    case INSIDE: // f,i,u,r (3,4,2,1) -> -
+      firstOther = UP;
+      secondOther = RIGHT;
       break;
     default:
     case FORWARD:
@@ -58,7 +58,6 @@ void Camera::PickBasisFromForward(const Direction changeBasis, Direction& firstO
       break;
   }
 }
-
 
 void Camera::ApplyRollInput(float radians, Direction target, Direction source) {
   Mat4f rot;

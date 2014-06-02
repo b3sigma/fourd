@@ -36,7 +36,7 @@ Mat4f projectionMatrix;
 Mat4f fourToThree;
 Mesh tesseract;
 Camera _camera;
-float _fov = 90.0f;
+float _fov = 45.0f;
 float _near = 0.1f;
 float _far = 100000.0f;
 int _width = 800;
@@ -58,7 +58,7 @@ bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0)); //Vec4f(0, 1, 2, 0));
-  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 60.5f, 0.0f));
+  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);

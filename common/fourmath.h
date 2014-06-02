@@ -19,6 +19,8 @@ T max(T left, T right) {
 template <typename T>
 class Vector4 {
 protected:
+  typedef Vector4<T> Vec;
+
   union {
     T d[4];
     struct {
@@ -29,56 +31,56 @@ protected:
 public:
   Vector4() : x(0), y(0), z(0), w(0) {}
 	Vector4(T inX, T inY, T inZ, T inI) : x(inX), y(inY), z(inZ), w(inI) {}
-	Vector4(const Vector4<T>& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+	Vector4(const Vec& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 
 	T* raw() { return (T*)this; }
 	const T* raw() const { return (T*)this; }
 	T& operator()(int index) { return d[index]; }
 	T& operator[](int index) { return d[index]; }
 	void set(int index, T val) { d[index] = val; }
-	void set(const Vector4<T>& rVal) {
+	void set(const Vec& rVal) {
 	  x = rVal.x; y = rVal.y; z = rVal.z; w = rVal.w;
 	}
   void set(T inX, T inY, T inZ, T inI) {
     x = inX; y = inY; z = inZ; w = inI;
   }
-	Vector4<T>& operator = (const Vector4<T>& rVal) {
+	Vec& operator = (const Vec& rVal) {
 	  set(rVal);
 	  return *this;
 	}
-  Vector4<T>& operator += (const Vector4<T>& r) {
+  Vec& operator += (const Vec& r) {
     set(x + r.x, y + r.y, z + r.z, w + r.w);
     return *this;
   }
-  Vector4<T>& operator -= (const Vector4<T>& r) {
+  Vec& operator -= (const Vec& r) {
     set(x - r.x, y - r.y, z - r.z, w - r.w);
     return *this;
   }
-  Vector4<T>& operator *= (const T& s) {
+  Vec& operator *= (const T& s) {
     set(x * s, y * s, z * s, w * s);
     return *this;
   }
 
-	Vector4<T> operator + (const Vector4<T>& v) const {
-	  return Vector4<T>(x + v.x, y + v.y, z + v.z, w + v.w);
+	Vec operator + (const Vec& v) const {
+	  return Vec(x + v.x, y + v.y, z + v.z, w + v.w);
 	}
 
-  Vector4<T> operator - (const Vector4<T>& v) const {
-    return Vector4<T>(x - v.x, y - v.y, z - v.z, w - v.w);
+  Vec operator - (const Vec& v) const {
+    return Vec(x - v.x, y - v.y, z - v.z, w - v.w);
   }
-  Vector4<T> operator - () const {
-    return Vector4<T>(-x, -y, -z, -w);
+  Vec operator - () const {
+    return Vec(-x, -y, -z, -w);
   }
 
-	Vector4<T> operator * (T s) const {
-	  return Vector4<T>(x * s, y * s, z * s, w * s);
+	Vec operator * (T s) const {
+	  return Vec(x * s, y * s, z * s, w * s);
 	}
 
-	Vector4<T> operator * (const Vector4<T>& v) const {
-    return Vector4<T>(x * v.x, y * v.y, z * v.z, w * v.w);
+	Vec operator * (const Vec& v) const {
+    return Vec(x * v.x, y * v.y, z * v.z, w * v.w);
 	}
 
-	T dot(const Vector4<T>& v) const {
+	T dot(const Vec& v) const {
     return x * v.x + y * v.y + z * v.z + w * v.w;
 	}
 
@@ -90,31 +92,32 @@ public:
 	  set(0, 0, 0, 0);
 	}
 
-	Vector4<T> normalized() {
-	  Vector4<T> result(*this);
+	Vec normalized() {
+	  Vec result(*this);
 	  result.storeNormalized();
 	  return result;
 	}
 
-	void storeNormalized() {
+	Vec& storeNormalized() {
 	  T len = length();
 	  if (len != 0) {
 	    len = 1 / len;
 	    set(x * len, y * len, z *len, w * len);
 	  }
+	  return *this;
 	}
 
-	Vector4<T> cross(const Vector4<T>& a, const Vector4<T>& b) const {
+	Vec cross(const Vec& a, const Vec& b) const {
 	  // e_ijk * a_i * b_j * c_k
-	  const Vector4<T>& c = *this;
-	  return Vector4<T>(
+	  const Vec& c = *this;
+	  return Vec(
 	      + a.y*b.z*c.w - a.y*b.w*c.z - a.z*b.y*c.w + a.z*b.w*c.y + a.w*b.y*c.z - a.w*b.z*c.y,
 	      - a.x*b.z*c.w + a.x*b.w*c.z + a.z*b.x*c.w - a.z*b.w*c.x - a.w*b.x*c.z + a.w*b.z*c.x,
 	      + a.x*b.y*c.w - a.x*b.w*c.y - a.y*b.x*c.w + a.y*b.w*c.x + a.w*b.x*c.y - a.w*b.y*c.x,
 	      - a.x*b.y*c.z + a.x*b.z*c.y + a.y*b.x*c.z - a.y*b.z*c.x - a.z*b.x*c.y + a.z*b.y*c.x);
 	}
 
-	bool operator == (const Vector4<T>& c) const {
+	bool operator == (const Vec& c) const {
 	  static const T threshold = 0.00001;
 	  return abs(x - c.x) < threshold
 	      && abs(y - c.y) < threshold
@@ -236,6 +239,27 @@ public:
     d[tertiary].storeNormalized();
     d[secondary] = d[invariant].cross(d[tertiary], d[variant]);
     d[secondary].storeNormalized();
+  }
+
+  // In the oculus sdk in 3d, this convention would be
+  // X((-forward), right) = up and X(right, up) = -forward, X(u, -f) = r
+  // where X is the cross operator applied in order to args
+  // These follow a consistent levi-civita ordering:
+  // (-3,1,2), (1,2,-3), (2,-3,1) -> -
+  // which ties into the defintion of the cross product* in n-dimensions
+  // (* I may be the only one who refers to this is a cross product in 4d)
+  // Following the same logic, we label right=1, up=2, forward=3, in=4
+  // So it seems like if the resulting levi-civita ordering is negative in 3d, it's "RH"
+  // And if it's positive in 4d, it's "RH"
+   static FdMat lookAtRH(const Vec& eye, const Vec& at, const Vec& up, const Vec& in) {
+    Vec newForward = (eye - at).storeNormalized(); // actually negative forward
+    // X(u,-f,i)=r (2,-3,4,1) -> +
+    Vec newRight = up.cross(newForward, in).storeNormalized();
+    // X(-f,u,r)=i (-3,2,1,4) -> +
+    Vec newIn = newForward.cross(up, newRight).storeNormalized();
+    // X(r,i,-f)=u (1,4,-3,2) -> +
+    Vec newUp = newRight.cross(newIn, newForward).storeNormalized();
+    return FdMat(newRight, newUp, newForward, newIn);
   }
 
   void printIt() const {
