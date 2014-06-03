@@ -251,7 +251,8 @@ public:
   // Following the same logic, we label right=1, up=2, forward=3, in=4
   // So it seems like if the resulting levi-civita ordering is negative in 3d, it's "RH"
   // And if it's positive in 4d, it's "RH"
-   static FdMat lookAtRH(const Vec& eye, const Vec& at, const Vec& up, const Vec& in) {
+  static void lookAtRH(const Vec& eye, const Vec& at, const Vec& up, const Vec& in,
+      FdMat& resultView, Vec& resultPos) {
     Vec newForward = (eye - at).storeNormalized(); // actually negative forward
     // X(u,-f,i)=r (2,-3,4,1) -> +
     Vec newRight = up.cross(newForward, in).storeNormalized();
@@ -259,7 +260,12 @@ public:
     Vec newIn = newForward.cross(up, newRight).storeNormalized();
     // X(r,i,-f)=u (1,4,-3,2) -> +
     Vec newUp = newRight.cross(newIn, newForward).storeNormalized();
-    return FdMat(newRight, newUp, newForward, newIn);
+    resultView = FdMat(newRight, newUp, newForward, newIn);
+
+    resultPos.x = -(newRight.dot(eye));
+    resultPos.y = -(newUp.dot(eye));
+    resultPos.z = -(newForward.dot(eye));
+    resultPos.w = -(newIn.dot(eye));
   }
 
   void printIt() const {
