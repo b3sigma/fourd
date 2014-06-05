@@ -23,11 +23,13 @@ public:
   Camera()
       : _movement(ORBIT) {
     _cameraMatrix.storeIdentity();
+    _cameraPos.storeZero();
   }
 
   Camera(MovementMode mode)
       : _movement(mode) {
     _cameraMatrix.storeIdentity();
+    _cameraPos.storeZero();
   }
 
   void SetCameraPosition(Vec4f position) {
