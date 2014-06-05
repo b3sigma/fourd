@@ -12,7 +12,8 @@ struct VOut
 
 VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	uniform float4 cameraPosition, uniform float4x4 cameraMatrix,
-	uniform float4x4 projectionMatrix, uniform float4x4 fourToThree)
+	uniform float4x4 projectionMatrix, uniform float4x4 fourToThree,
+	uniform float4 fourToThreeOffset)
 {
 	VOut OUT;
 	//float4 worldSpace = mul(worldMatrix, float4(IN.position.xyz, 1.0)); // rotation/scale in 4d around origin

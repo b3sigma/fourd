@@ -24,6 +24,7 @@ CGparameter cgCameraPosition;
 CGparameter cgCameraMatrix;
 CGparameter cgProjectionMatrix;
 CGparameter cgFourToThree;
+CGparameter cgFourToThreeOffset;
 
 // TODO: Move most of the CG/GL code to render, including the camera
 // Setup a render target approach
@@ -34,6 +35,7 @@ CGparameter cgFourToThree;
 Mat4f worldMatrix;
 Mat4f projectionMatrix;
 Mat4f fourToThree;
+Vec4f fourToThreeOffset;
 Mesh tesseract;
 Camera _camera;
 float _fov = 45.0f;
@@ -58,7 +60,9 @@ bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0)); //Vec4f(0, 1, 2, 0));
+  _camera.setMovementMode(Camera::MovementMode::LOOK);
   _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
+
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
@@ -106,6 +110,7 @@ bool Initialize() {
   cgCameraMatrix = cgGetNamedParameter(cgProgram, "cameraMatrix");
   cgProjectionMatrix = cgGetNamedParameter(cgProgram, "projectionMatrix");
   cgFourToThree = cgGetNamedParameter(cgProgram, "fourToThree");
+  cgFourToThreeOffset = cgGetNamedParameter(cgProgram, "fourToThreeOffset");
 
   worldMatrix.storeIdentity();
   projectionMatrix.storeIdentity();
@@ -286,6 +291,8 @@ void Draw(void) {
   cgGLSetMatrixParameterfc(cgCameraMatrix, transposedCamera.raw());
   Mat4f transposedFour = fourToThree.transpose();
   cgGLSetMatrixParameterfc(cgFourToThree, transposedFour.raw());
+  fourToThreeOffset.storeZero();
+  cgGLSetParameter4fv(cgFourToThreeOffset, fourToThreeOffset.raw());
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)
