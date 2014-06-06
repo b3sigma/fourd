@@ -14,7 +14,7 @@
 using namespace ::fd;
 
 CGcontext cgContext;
-CGprogram cgProgram;
+CGprogram cgProgram = NULL;
 CGprofile cgVertexProfile;
 CGparameter position;
 CGparameter color;
@@ -55,6 +55,44 @@ void buildColorArray() {
   }
 }
 
+bool loadShader() {
+  if (cgProgram != NULL) {
+    cgDestroyProgram(cgProgram);
+    cgProgram = NULL;
+  }
+
+  cgVertexProfile = cgGLGetLatestProfile(CG_GL_VERTEX);
+  if (cgVertexProfile == CG_PROFILE_UNKNOWN) {
+    fprintf(stderr, "Invalid profile type\n");
+    return false;
+  }
+
+  cgGLSetOptimalOptions(cgVertexProfile);
+
+  cgProgram = cgCreateProgramFromFile(cgContext, CG_SOURCE, "./cg/four.cg",
+      cgVertexProfile, "main", 0);
+
+  if (cgProgram == 0) {
+    CGerror Error = cgGetError();
+
+    fprintf(stderr, "%s \n", cgGetErrorString(Error));
+    return false;
+  }
+
+  cgGLLoadProgram(cgProgram);
+
+  position = cgGetNamedParameter(cgProgram, "IN.position");
+  color = cgGetNamedParameter(cgProgram, "IN.color");
+  cgWorldMatrix = cgGetNamedParameter(cgProgram, "worldMatrix");
+  cgWorldPosition = cgGetNamedParameter(cgProgram, "worldPosition");
+  cgCameraPosition = cgGetNamedParameter(cgProgram, "cameraPosition");
+  cgCameraMatrix = cgGetNamedParameter(cgProgram, "cameraMatrix");
+  cgProjectionMatrix = cgGetNamedParameter(cgProgram, "projectionMatrix");
+  cgFourToThree = cgGetNamedParameter(cgProgram, "fourToThree");
+  cgFourToThreeOffset = cgGetNamedParameter(cgProgram, "fourToThreeOffset");
+
+  return true;
+}
 
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
@@ -82,35 +120,10 @@ bool Initialize() {
     exit(-1);
   }
 
-  cgVertexProfile = cgGLGetLatestProfile(CG_GL_VERTEX);
-  if (cgVertexProfile == CG_PROFILE_UNKNOWN) {
-    fprintf(stderr, "Invalid profile type\n");
+  if (!loadShader()) {
+    fprintf(stderr, "Shader loading failed\n");
     exit(-1);
   }
-
-  cgGLSetOptimalOptions(cgVertexProfile);
-
-  cgProgram = cgCreateProgramFromFile(cgContext, CG_SOURCE, "./cg/four.cg",
-      cgVertexProfile, "main", 0);
-
-  if (cgProgram == 0) {
-    CGerror Error = cgGetError();
-
-    fprintf(stderr, "%s \n", cgGetErrorString(Error));
-    exit(-1);
-  }
-
-  cgGLLoadProgram(cgProgram);
-
-  position = cgGetNamedParameter(cgProgram, "IN.position");
-  color = cgGetNamedParameter(cgProgram, "IN.color");
-  cgWorldMatrix = cgGetNamedParameter(cgProgram, "worldMatrix");
-  cgWorldPosition = cgGetNamedParameter(cgProgram, "worldPosition");
-  cgCameraPosition = cgGetNamedParameter(cgProgram, "cameraPosition");
-  cgCameraMatrix = cgGetNamedParameter(cgProgram, "cameraMatrix");
-  cgProjectionMatrix = cgGetNamedParameter(cgProgram, "projectionMatrix");
-  cgFourToThree = cgGetNamedParameter(cgProgram, "fourToThree");
-  cgFourToThreeOffset = cgGetNamedParameter(cgProgram, "fourToThreeOffset");
 
   worldMatrix.storeIdentity();
   projectionMatrix.storeIdentity();
@@ -277,6 +290,9 @@ void Update(int key, int x, int y) {
     case '\'' : {
       tesseract.printIt();
     } break;
+    //case ']' : {
+    //  loadShader();
+    //} break;
   }
   glutPostRedisplay();
 }

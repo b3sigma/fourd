@@ -27,8 +27,7 @@ VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	cameraSpace = mul(cameraMatrix, cameraSpace); // final camera space position
 	
 	float4 threeSpace = mul(fourToThree, cameraSpace);
-	//threeSpace.z /= threeSpace.w;
-	//threeSpace.z /= abs(threeSpace.w);
+	//threeSpace.xyz /= -threeSpace.w;
     float savedW = threeSpace.w;
 	threeSpace.w = 1;
 	//threeSpace = cameraSpace;
