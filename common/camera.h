@@ -51,6 +51,7 @@ public:
     return _cameraPos;
   }
 
+  MovementMode getMovementMode() const { return _movement; }
   void setMovementMode(MovementMode mode) {
     _movement = mode;
   }

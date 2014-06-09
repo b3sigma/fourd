@@ -9,10 +9,7 @@ make
 Todo list:
 * Fix non-ortho projection.
 * Get shader reloading to work
-* Refactor the input system
 * Switch the mat4 class to be column major? (at least make the calls explicit)
-* Add heirarchical multi-view rendering that is based on eye structures
-* Add post effects
 
 Remnants of a Nehe starting tutorial are probably still around. Thanks!
 Using a Makefile from Michael Crawford. Thanks!

@@ -290,6 +290,13 @@ void Update(int key, int x, int y) {
     case '\'' : {
       tesseract.printIt();
     } break;
+    case '[' : {
+      if (_camera.getMovementMode() == Camera::LOOK) {
+        _camera.setMovementMode(Camera::ORBIT);
+      } else {
+        _camera.setMovementMode(Camera::LOOK);
+      }
+    } break;
     //case ']' : {
     //  loadShader();
     //} break;
