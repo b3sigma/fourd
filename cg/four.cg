@@ -13,21 +13,23 @@ struct VOut
 VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	uniform float4 cameraPosition, uniform float4x4 cameraMatrix,
 	uniform float4x4 projectionMatrix, uniform float4x4 fourToThree,
-	uniform float4 fourToThreeOffset)
+	uniform float4 wPlaneNearFar)
 {
 	VOut OUT;
 	//float4 worldSpace = mul(worldMatrix, float4(IN.position.xyz, 1.0)); // rotation/scale in 4d around origin
     float4 worldSpace = mul(worldMatrix, IN.position); // rotation/scale in 4d around origin
 	worldSpace += worldPosition; // final world space position
 	
-	//worldSpace = mul(fourToThree, worldSpace);
-	//worldSpace.xyz /= abs(worldSpace.w);
-	
 	float4 cameraSpace = worldSpace - cameraPosition; // translate to be around camera origin but not transformed
 	cameraSpace = mul(cameraMatrix, cameraSpace); // final camera space position
 	
 	float4 threeSpace = mul(fourToThree, cameraSpace);
-	//threeSpace.xyz /= -threeSpace.w;
+	float fourProjectionScalar = (wPlaneNearFar.y - threeSpace.w) / (wPlaneNearFar.y - wPlaneNearFar.x);
+	//fourProjectionScalar = clamp(fourProjectionScalar, 0.0, 1.0);
+	threeSpace.xy = lerp(threeSpace.xy, threeSpace.xy * fourProjectionScalar, wPlaneNearFar.z);
+	//threeSpace.xy *= clamp(threeSpace.w, 0.5, 1.0);
+    //threeSpace.xy *= threeSpace.w;
+    //threeSpace.xyz *= IN.position.w; // clamp(IN.position.w, 0.5, 1.0);
     float savedW = threeSpace.w;
 	threeSpace.w = 1;
 	//threeSpace = cameraSpace;

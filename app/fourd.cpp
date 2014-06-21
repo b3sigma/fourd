@@ -24,7 +24,7 @@ CGparameter cgCameraPosition;
 CGparameter cgCameraMatrix;
 CGparameter cgProjectionMatrix;
 CGparameter cgFourToThree;
-CGparameter cgFourToThreeOffset;
+CGparameter cgWPlaneNearFar;
 
 // TODO: Move most of the CG/GL code to render, including the camera
 // Setup a render target approach
@@ -35,7 +35,7 @@ CGparameter cgFourToThreeOffset;
 Mat4f worldMatrix;
 Mat4f projectionMatrix;
 Mat4f fourToThree;
-Vec4f fourToThreeOffset;
+Vec4f wPlaneNearFar;
 Mesh tesseract;
 Camera _camera;
 float _fov = 45.0f;
@@ -89,7 +89,7 @@ bool loadShader() {
   cgCameraMatrix = cgGetNamedParameter(cgProgram, "cameraMatrix");
   cgProjectionMatrix = cgGetNamedParameter(cgProgram, "projectionMatrix");
   cgFourToThree = cgGetNamedParameter(cgProgram, "fourToThree");
-  cgFourToThreeOffset = cgGetNamedParameter(cgProgram, "fourToThreeOffset");
+  cgWPlaneNearFar = cgGetNamedParameter(cgProgram, "wPlaneNearFar");
 
   return true;
 }
@@ -97,10 +97,11 @@ bool loadShader() {
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
-  tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0)); //Vec4f(0, 1, 2, 0));
-  _camera.setMovementMode(Camera::MovementMode::LOOK);
+  //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
+  tesseract.buildTesseract(10.0f, Vec4f(0.1f,0.1f,0.1f,0.1f), Vec4f(0,0,0,0));
+  _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
+  wPlaneNearFar.z = 1.0f; // use projective 4d mode
   _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
-
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
@@ -133,6 +134,8 @@ bool Initialize() {
   fourToThree[0][0] = nearInside;
   fourToThree[1][1] = nearInside;
   fourToThree[2][2] = nearInside;
+  wPlaneNearFar.x = -1.0f;
+  wPlaneNearFar.y = 11.0f;
 
   buildColorArray();
 
@@ -146,9 +149,9 @@ void Deinitialize(void) {
 void UpdatePerspective() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(_fov, (GLfloat) (_width) / (GLfloat) (_height), _near, _far);
-  cgGLSetStateMatrixParameter(cgProjectionMatrix, CG_GL_PROJECTION_MATRIX,
-      CG_GL_MATRIX_IDENTITY);
+  float aspect = static_cast<float>(_width) / static_cast<float>(_height);
+  projectionMatrix.build3dProjection(_fov, aspect, _near, _far);
+  cgGLSetMatrixParameterfc(cgProjectionMatrix, projectionMatrix.raw());
 }
 
 void ReshapeGL(int width, int height) {
@@ -286,6 +289,8 @@ void Update(int key, int x, int y) {
     } break;
     case '?' : {
       _camera.printIt();
+      printf("\nwPlaneNearFar\n");
+      wPlaneNearFar.printIt();
     } break;
     case '\'' : {
       tesseract.printIt();
@@ -295,6 +300,13 @@ void Update(int key, int x, int y) {
         _camera.setMovementMode(Camera::ORBIT);
       } else {
         _camera.setMovementMode(Camera::LOOK);
+      }
+    } break;
+    case ']' : {
+      if (wPlaneNearFar.z == 0.0f) {
+        wPlaneNearFar.z = 1.0f;
+      } else {
+        wPlaneNearFar.z = 0.0f;
       }
     } break;
     //case ']' : {
@@ -314,8 +326,7 @@ void Draw(void) {
   cgGLSetMatrixParameterfc(cgCameraMatrix, transposedCamera.raw());
   Mat4f transposedFour = fourToThree.transpose();
   cgGLSetMatrixParameterfc(cgFourToThree, transposedFour.raw());
-  fourToThreeOffset.storeZero();
-  cgGLSetParameter4fv(cgFourToThreeOffset, fourToThreeOffset.raw());
+  cgGLSetParameter4fv(cgWPlaneNearFar, wPlaneNearFar.raw());
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)

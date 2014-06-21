@@ -186,7 +186,7 @@ public:
     return *this;
   }
 
-  FdMat& buildRotation(float radians, int targetIndex, int sourceIndex) {
+  FdMat& buildRotation(T radians, int targetIndex, int sourceIndex) {
     assert(targetIndex < 4 && targetIndex >= 0);
     assert(sourceIndex < 4 && sourceIndex >= 0);
     storeIdentity();
@@ -196,6 +196,24 @@ public:
     Vec newSource = d[targetIndex] * -sinResult + d[sourceIndex] * cosResult;
     d[targetIndex] = newTarget;
     d[sourceIndex] = newSource;
+    return *this;
+  }
+
+  // Aspect is width/height of viewport. This is opengl style.
+  FdMat& build3dProjection(T yFov, T aspect, T zNear, T zFar) {
+    T yMax = tan(yFov * PI / 360.0f);
+    T xMax = yMax * aspect;
+
+    T depth = zFar - zNear;
+    T zScale = -(zFar + zNear) / depth;
+    T zOffset = -2.0 * (zFar * zNear) / depth;
+
+    storeZero();
+    raw()[0] = 1.0 / xMax;
+    raw()[5] = 1.0 / yMax;
+    raw()[10] = zScale;
+    raw()[11] = -1.0;
+    raw()[14] = zOffset;
     return *this;
   }
 
