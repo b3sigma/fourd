@@ -25,6 +25,7 @@ VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	
 	float4 threeSpace = mul(fourToThree, cameraSpace);
 	float fourProjectionScalar = (wPlaneNearFar.y - threeSpace.w) / (wPlaneNearFar.y - wPlaneNearFar.x);
+    // TODO: (make a smoother depth calc that doesn't go through a zero singularity)
 	//fourProjectionScalar = clamp(fourProjectionScalar, 0.0, 1.0);
 	threeSpace.xy = lerp(threeSpace.xy, threeSpace.xy * fourProjectionScalar, wPlaneNearFar.z);
 	//threeSpace.xy *= clamp(threeSpace.w, 0.5, 1.0);
