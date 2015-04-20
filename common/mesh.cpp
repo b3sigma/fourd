@@ -54,7 +54,7 @@ void Mesh::populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& 
       possibleDim--;
     }
 
-    _verts.push_back(vert + offset + (step * i));
+    _verts.push_back(vert + offset + (step * static_cast<float>(i)));
   }
 }
 
@@ -539,7 +539,7 @@ void Mesh::buildCircle(float radius, Vec4f center, Vec4f right, Vec4f up, int fa
   // I suspect I could have learned much from you but would have liked to lend more of
   // a hand than a burrito.
   for (int face = 0; face < faceCount; face++) {
-    float rotation = (float)face / (float)faceCount * 2 * PI;
+    float rotation = (float)face / (float)faceCount * 2.0f * (float)PI;
     float rightAmount = cos(rotation) * radius;
     float upAmount = sin(rotation) * radius;
     Vec4f next(center);

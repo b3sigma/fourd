@@ -1,4 +1,8 @@
 #include <math.h>
+
+#ifdef WIN32
+#include <Windows.h>
+#endif // WIN32
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <Cg/cg.h>
@@ -75,7 +79,7 @@ bool loadShader() {
   if (cgProgram == 0) {
     CGerror Error = cgGetError();
 
-    fprintf(stderr, "%s \n", cgGetErrorString(Error));
+    fprintf(stderr, "Shader err: %s \n", cgGetErrorString(Error));
     return false;
   }
 
@@ -108,7 +112,9 @@ bool Initialize() {
   glDepthFunc(GL_ALWAYS); //GL_LEQUAL);
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
-  glBlendEquation(GL_ADD);
+  // So apparently glBlendEquation just didn't get included in msvc.
+  // Need to include the entire glew project just to get it work??
+  //glBlendEquation(GL_ADD);
   glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
   glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);

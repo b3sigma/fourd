@@ -4,3 +4,8 @@ fourd
 temp*
 build/*
 bin/*
+project/*.sdf
+project/*.suo
+project/*.opensdf
+project/Debug/*
+project/Release/*

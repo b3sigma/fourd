@@ -3,7 +3,7 @@ Basic four dimensional renderer using glut/OpenGL in C++/Cg.
 Not tuned for external users in terms of UI. Use qawsedftgyh for various kinds of movement or rotation in different dimensions.
 
 Getting:
-* Make sure you use --recurive on your clone command as this project uses submodules.
+* Make sure you use --recursive on your clone command as this project uses submodules.
 * If you already didn't do that, do this sequence:
 ** cd fourd
 ** git submodule init

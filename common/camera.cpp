@@ -85,7 +85,7 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
         _cameraPos += _cameraMatrix[direction] * amount;
       }
       else {
-        static float rotationScalar = 2 * PI / 100.0f;
+        static float rotationScalar = 2.0f * (float)PI / 100.0f;
         ApplyOrbitInput(amount * rotationScalar, direction);
       }
     } else {
