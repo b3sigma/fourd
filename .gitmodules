@@ -1,3 +1,6 @@
 [submodule "eigen"]
 	path = eigen
 	url = https://github.com/b3sigma/eigen
+[submodule "FreeGLUT"]
+	path = FreeGLUT
+	url = https://github.com/dcnieho/FreeGLUT
