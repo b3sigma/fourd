@@ -116,7 +116,7 @@ bool Initialize() {
   // So apparently glBlendEquation just didn't get included in msvc.
   // Need to include the entire glew project just to get it work??
   //glBlendEquation(GL_ADD);
-  glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_DST_ALPHA);
   glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
@@ -362,7 +362,6 @@ void Draw(void) {
     shift.z += shift_amount * static_cast<float>((tes / (grid_size * grid_size)) % grid_size);
     shift.w += shift_amount * static_cast<float>(tes / (grid_size * grid_size * grid_size));
     cgGLSetParameter4fv(cgWorldPosition, shift.raw());
-
 
     int tesseractTris = tesseract.getNumberTriangles();
     int startTriangle = 0;
