@@ -18,6 +18,7 @@
 
 #include "fourmath.h"
 #include "camera.h"
+#include "timer.h"
 
 namespace fd {
 
@@ -50,6 +51,17 @@ class View {
 class Render {
   typedef std::vector<View*> TViewList;
   TViewList _views;
+
+  ::fd::Timer timer_;
+
+public:
+  Render() {}
+
+  double GetFrameTime() {
+    return timer_.GetElapsed();
+  }
+
+
 };
 
 }  // namespace fd

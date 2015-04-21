@@ -23,6 +23,7 @@ class Vector4 {
 protected:
   typedef Vector4<T> Vec;
 
+public:
   union {
     T d[4];
     struct {

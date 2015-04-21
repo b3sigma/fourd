@@ -48,6 +48,7 @@ float _far = 100000.0f;
 int _width = 800;
 int _height = 600;
 int cubeIndex = 0;
+::fd::Render renderer;
 
 typedef std::vector<Vec4f> VectorList;
 VectorList colorArray;
@@ -323,11 +324,11 @@ void Update(int key, int x, int y) {
 }
 
 void Draw(void) {
+    
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
   cgGLSetParameter4fv(cgCameraPosition, _camera.getCameraPos().raw());
-  cgGLSetMatrixParameterfc(cgWorldMatrix, worldMatrix.raw());
   Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
   cgGLSetMatrixParameterfc(cgCameraMatrix, transposedCamera.raw());
   Mat4f transposedFour = fourToThree.transpose();
@@ -342,11 +343,27 @@ void Draw(void) {
   // multi-view rendering
 
 
+  //Vec4f shift(0.0f, 0.0f, 10.0f * sin(renderer.GetFrameTime()), 0.0f);
+
+  cgGLSetMatrixParameterfc(cgWorldMatrix, worldMatrix.raw());
+
   cgGLEnableProfile(cgVertexProfile);
   cgGLBindProgram(cgProgram);
 
-  static bool drawTesseract = true;
-  if (drawTesseract) {
+  static int grid_size = 3;
+  static int numTesseracts = grid_size * grid_size * grid_size * grid_size;
+  for (int tes = 0; tes < numTesseracts; tes++) {
+
+    // draw the 27 tesseracts in a grid
+    float shift_amount = 10.0f;
+    Vec4f shift(-shift_amount, -shift_amount, -shift_amount, -shift_amount);
+    shift.x += shift_amount * static_cast<float>(tes % grid_size);
+    shift.y += shift_amount * static_cast<float>((tes / grid_size) % grid_size);
+    shift.z += shift_amount * static_cast<float>((tes / (grid_size * grid_size)) % grid_size);
+    shift.w += shift_amount * static_cast<float>(tes / (grid_size * grid_size * grid_size));
+    cgGLSetParameter4fv(cgWorldPosition, shift.raw());
+
+
     int tesseractTris = tesseract.getNumberTriangles();
     int startTriangle = 0;
     int endTriangle = tesseractTris;

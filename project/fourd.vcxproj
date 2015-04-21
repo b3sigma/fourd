@@ -81,12 +81,14 @@
     <ClCompile Include="..\app\render.cpp" />
     <ClCompile Include="..\common\camera.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
+    <ClCompile Include="..\common\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h" />
     <ClInclude Include="..\common\camera.h" />
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\mesh.h" />
+    <ClInclude Include="..\common\timer.h" />
     <ClInclude Include="..\common\types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
