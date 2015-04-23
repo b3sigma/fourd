@@ -6,12 +6,12 @@ namespace fd {
 
   // This is going to immediately suck from a space perspective.
   // Should at minimal do smaller sizes and then chunks hold some position.
-  // Actually, this isn't even a quadxol, you liar, this is just a shitty
+  // Actually, this isn't even a quaxol, you liar, this is just a shitty
   // block list.
   // But today, just code.
   // Save the pain of doing things right for tomorrow-me. Damn you, past-me,
   // for instilling these bad habits!
-  class Quadxol {
+  class Quaxol {
   public:
     union {
       int p[4];
@@ -20,7 +20,7 @@ namespace fd {
       };
     };
   };
-  typedef std::vector<Quadxol> TVecQuadxol;
+  typedef std::vector<Quaxol> TVecQuaxol;
 
   class ChunkLoader {
     
@@ -29,6 +29,6 @@ namespace fd {
 
     bool LoadFromFile(const char* filename);
 
-    TVecQuadxol quadxols_;
+    TVecQuaxol quaxols_;
   };
 }

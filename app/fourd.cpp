@@ -50,7 +50,7 @@ int _width = 800;
 int _height = 600;
 int cubeIndex = 0;
 ::fd::Render renderer;
-::fd::TVecQuadxol quadxols_g;
+::fd::TVecQuaxol quaxols_g;
 
 typedef std::vector<Vec4f> VectorList;
 VectorList colorArray;
@@ -104,8 +104,8 @@ bool loadShader() {
 bool LoadLevel() {
   ChunkLoader chunks;
   if (chunks.LoadFromFile("data\\level.txt")) {
-    std::swap(quadxols_g, chunks.quadxols_);
-    printf("Level loaded %d quadxols!", (int)quadxols_g.size());
+    std::swap(quaxols_g, chunks.quaxols_);
+    printf("Level loaded %d quaxols!", (int)quaxols_g.size());
     return true;
   }
   else {
@@ -380,11 +380,11 @@ void Draw(void) {
   cgGLEnableProfile(cgVertexProfile);
   cgGLBindProgram(cgProgram);
 
-  for (TVecQuadxol::iterator quax_it = quadxols_g.begin();
-    quax_it != quadxols_g.end();
+  for (TVecQuaxol::iterator quax_it = quaxols_g.begin();
+    quax_it != quaxols_g.end();
     ++quax_it) {
     
-    const Quadxol& q = *quax_it;
+    const Quaxol& q = *quax_it;
 
     float shift_amount = 10.0f;
     Vec4f shift;
