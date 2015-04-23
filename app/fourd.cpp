@@ -14,6 +14,7 @@
 #include "../common/mesh.h"
 #include "../common/camera.h"
 #include "render.h"
+#include "../common/chunkloader.h"
 
 using namespace ::fd;
 
@@ -49,6 +50,7 @@ int _width = 800;
 int _height = 600;
 int cubeIndex = 0;
 ::fd::Render renderer;
+::fd::TVecQuadxol quadxols_g;
 
 typedef std::vector<Vec4f> VectorList;
 VectorList colorArray;
@@ -99,6 +101,19 @@ bool loadShader() {
   return true;
 }
 
+bool LoadLevel() {
+  ChunkLoader chunks;
+  if (chunks.LoadFromFile("data\\level.txt")) {
+    std::swap(quadxols_g, chunks.quadxols_);
+    printf("Level loaded %d quadxols!", (int)quadxols_g.size());
+    return true;
+  }
+  else {
+    printf("Couldn't load the level!");
+    return false;
+  }
+}
+
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
@@ -107,6 +122,8 @@ bool Initialize() {
   _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   wPlaneNearFar.z = 1.0f; // use projective 4d mode
   _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
+
+  LoadLevel();
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
@@ -141,8 +158,8 @@ bool Initialize() {
   fourToThree[0][0] = nearInside;
   fourToThree[1][1] = nearInside;
   fourToThree[2][2] = nearInside;
-  wPlaneNearFar.x = -1.0f;
-  wPlaneNearFar.y = 11.0f;
+  wPlaneNearFar.x = 1.0f;
+  wPlaneNearFar.y = 40.0f;
 
   buildColorArray();
 
@@ -271,33 +288,40 @@ void Update(int key, int x, int y) {
     } break;
     // Sure this looks like an unsorted mess, but is spatially aligned kinda.
     case 'x' : {
-      _near *= 0.1f;
-      UpdatePerspective();
+      wPlaneNearFar.x -= 1.0f;
+      //_near *= 0.1f;
+      //UpdatePerspective();
     } break;
     case 'c' : {
-      _near *= 10.0f;
-      UpdatePerspective();
+      wPlaneNearFar.x += 1.0f;
+      //_near *= 10.0f;
+      //UpdatePerspective();
     } break;
     case 'v' : {
-      _far *= 0.1f;
-      UpdatePerspective();
+      wPlaneNearFar.y -= 1.0f;
+      //_far *= 0.1f;
+      //UpdatePerspective();
     } break;
     case 'b' : {
-      _far *= 10.0f;
-      UpdatePerspective();
+      wPlaneNearFar.y += 1.0f;
+      //_far *= 10.0f;
+      //UpdatePerspective();
     } break;
     case 'n' : {
-      _fov -= 5.0f;
-      UpdatePerspective();
+      wPlaneNearFar.z -= 1.0f;
+      //_fov -= 5.0f;
+      //UpdatePerspective();
     } break;
     case 'm' : {
-      _fov += 5.0f;
-      UpdatePerspective();
+      wPlaneNearFar.z += 1.0f;
+      //_fov += 5.0f;
+      //UpdatePerspective();
     } break;
     case '?' : {
       _camera.printIt();
       printf("\nwPlaneNearFar\n");
       wPlaneNearFar.printIt();
+      printf("\n");
     } break;
     case '\'' : {
       tesseract.printIt();
@@ -310,12 +334,18 @@ void Update(int key, int x, int y) {
       }
     } break;
     case ']' : {
+      static float storedFarZ = 1.0f;
       if (wPlaneNearFar.z == 0.0f) {
-        wPlaneNearFar.z = 1.0f;
+        wPlaneNearFar.z = storedFarZ;
       } else {
+        storedFarZ = wPlaneNearFar.z;
         wPlaneNearFar.z = 0.0f;
       }
     } break;
+    case 'p': {
+      LoadLevel();
+    } break;
+
     //case ']' : {
     //  loadShader();
     //} break;
@@ -350,17 +380,18 @@ void Draw(void) {
   cgGLEnableProfile(cgVertexProfile);
   cgGLBindProgram(cgProgram);
 
-  static int grid_size = 3;
-  static int numTesseracts = grid_size * grid_size * grid_size * grid_size;
-  for (int tes = 0; tes < numTesseracts; tes++) {
+  for (TVecQuadxol::iterator quax_it = quadxols_g.begin();
+    quax_it != quadxols_g.end();
+    ++quax_it) {
+    
+    const Quadxol& q = *quax_it;
 
-    // draw the 27 tesseracts in a grid
     float shift_amount = 10.0f;
-    Vec4f shift(-shift_amount, -shift_amount, -shift_amount, -shift_amount);
-    shift.x += shift_amount * static_cast<float>(tes % grid_size);
-    shift.y += shift_amount * static_cast<float>((tes / grid_size) % grid_size);
-    shift.z += shift_amount * static_cast<float>((tes / (grid_size * grid_size)) % grid_size);
-    shift.w += shift_amount * static_cast<float>(tes / (grid_size * grid_size * grid_size));
+    Vec4f shift;
+    shift.x = shift_amount * q.x;
+    shift.y = shift_amount * q.y;
+    shift.z = shift_amount * q.z;
+    shift.w = shift_amount * q.w;
     cgGLSetParameter4fv(cgWorldPosition, shift.raw());
 
     int tesseractTris = tesseract.getNumberTriangles();
