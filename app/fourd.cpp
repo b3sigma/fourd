@@ -1,8 +1,12 @@
 #include <math.h>
 
+#include <GL/glew.h>
+
 #ifdef WIN32
 #include <Windows.h>
 #endif // WIN32
+
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <Cg/cg.h>
@@ -15,6 +19,8 @@
 #include "../common/camera.h"
 #include "render.h"
 #include "../common/chunkloader.h"
+
+#include "texture.h"
 
 using namespace ::fd;
 
@@ -51,6 +57,8 @@ int _height = 600;
 int cubeIndex = 0;
 ::fd::Render renderer;
 ::fd::TVecQuaxol quaxols_g;
+::fd::Texture g_texture;
+// trying out different naming conventions ok? quit complaining
 
 typedef std::vector<Vec4f> VectorList;
 VectorList colorArray;
@@ -124,6 +132,8 @@ bool Initialize() {
   _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
 
   LoadLevel();
+  
+  g_texture.LoadFromFile("data\\orientedTexture.png");
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);

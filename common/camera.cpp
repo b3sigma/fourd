@@ -106,6 +106,6 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
 void Camera::printIt() {
   printf("Camera pos:");
   _cameraPos.printIt();
-  printf("\nMatrix:");
+  printf("\nMatrix:\n");
   _cameraMatrix.printIt();
 }
