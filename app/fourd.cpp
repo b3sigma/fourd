@@ -11,14 +11,16 @@
 #include <GL/glu.h>
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
+#include <GL/glut.h>
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <GL/glut.h>
 #include "../common/fourmath.h"
 #include "../common/mesh.h"
 #include "../common/camera.h"
 #include "render.h"
 #include "../common/chunkloader.h"
+#include "shader.h"
 
 #include "texture.h"
 
@@ -526,6 +528,8 @@ void RunTests() {
 
   Mat4f threeMat;
 //  threeMat.eigen().
+
+  Shader::TestShaderHash();
 }
 
 int main(int argc, char *argv[]) {

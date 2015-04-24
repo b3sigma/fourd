@@ -75,4 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\cg\four.cg">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

@@ -5,15 +5,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <GL/glew.h>
+
 #ifdef WIN32
 #include <Windows.h>
 #endif // WIN32
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <Cg/cg.h>
-#include <Cg/cgGL.h>
-#include <GL/glut.h>
+//#include <GL/gl.h>
+//#include <GL/glu.h>
+//#include <Cg/cg.h>
+//#include <Cg/cgGL.h>
+//#include <GL/glut.h>
 //#include <GL/freeglut.h>
 
 #include "fourmath.h"

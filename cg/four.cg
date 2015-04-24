@@ -8,6 +8,7 @@ struct VOut
 {
 	float4 HPos	: POSITION;
 	float4 Col0	: COLOR0;
+//	float2 Tex0 : TEXCOORDS0;
 };
 
 VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
@@ -19,6 +20,9 @@ VOut main(Vertex IN, uniform float4x4 worldMatrix, uniform float4 worldPosition,
 	//float4 worldSpace = mul(worldMatrix, float4(IN.position.xyz, 1.0)); // rotation/scale in 4d around origin
     float4 worldSpace = mul(worldMatrix, IN.position); // rotation/scale in 4d around origin
 	worldSpace += worldPosition; // final world space position
+
+//	OUT.Tex0.x = IN.position.x + IN.position.z;
+//	OUT.Tex0.y = IN.position.y + IN.position.w;
 	
 	float4 cameraSpace = worldSpace - cameraPosition; // translate to be around camera origin but not transformed
 	cameraSpace = mul(cameraMatrix, cameraSpace); // final camera space position
