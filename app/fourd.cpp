@@ -6,7 +6,6 @@
 #include <Windows.h>
 #endif // WIN32
 
-
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <Cg/cg.h>
@@ -60,6 +59,7 @@ int cubeIndex = 0;
 ::fd::Render renderer;
 ::fd::TVecQuaxol quaxols_g;
 ::fd::Texture g_texture;
+::fd::Shader g_shader;
 // trying out different naming conventions ok? quit complaining
 
 typedef std::vector<Vec4f> VectorList;
@@ -73,6 +73,9 @@ void buildColorArray() {
 }
 
 bool loadShader() {
+  g_shader.Release();
+  g_shader.LoadFromFile("data\\vertexShader.glsl", "data\\fragmentShader.glsl");
+
   if (cgProgram != NULL) {
     cgDestroyProgram(cgProgram);
     cgProgram = NULL;
@@ -115,16 +118,22 @@ bool LoadLevel() {
   ChunkLoader chunks;
   if (chunks.LoadFromFile("data\\level.txt")) {
     std::swap(quaxols_g, chunks.quaxols_);
-    printf("Level loaded %d quaxols!", (int)quaxols_g.size());
+    printf("Level loaded %d quaxols!\n", (int)quaxols_g.size());
     return true;
   }
   else {
-    printf("Couldn't load the level!");
+    printf("Couldn't load the level!\n");
     return false;
   }
 }
 
 bool Initialize() {
+  
+  if(glewInit() != GLEW_OK) {
+    printf("glew init fail\n");
+    return false;
+  }
+
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
