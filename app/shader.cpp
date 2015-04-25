@@ -28,8 +28,10 @@ void Shader::Release() {
       ++shadIt) {
     glDeleteShader(*shadIt);
   }
+  _subShaders.resize(0);
   if(_programId != 0) {
     glDeleteProgram(_programId);
+    _programId = 0;
   }
   if(_uniforms) {
     handle_hash_destroy(_uniforms);

@@ -121,7 +121,7 @@ public:
 	}
 
 	bool operator == (const Vec& c) const {
-	  static const T threshold = 0.00001;
+	  static const T threshold = (T)0.00001;
 	  return abs(x - c.x) < threshold
 	      && abs(y - c.y) < threshold
         && abs(z - c.z) < threshold
@@ -213,18 +213,18 @@ public:
 
   // Aspect is width/height of viewport. This is opengl style.
   FdMat& build3dProjection(T yFov, T aspect, T zNear, T zFar) {
-    T yMax = tan(yFov * PI / 360.0f);
+    T yMax = tan(yFov * (T)PI / 360.0f);
     T xMax = yMax * aspect;
 
     T depth = zFar - zNear;
     T zScale = -(zFar + zNear) / depth;
-    T zOffset = -2.0 * (zFar * zNear) / depth;
+    T zOffset = (T)-2.0 * (zFar * zNear) / depth;
 
     storeZero();
-    raw()[0] = 1.0 / xMax;
-    raw()[5] = 1.0 / yMax;
+    raw()[0] = (T)1.0 / xMax;
+    raw()[5] = (T)1.0 / yMax;
     raw()[10] = zScale;
-    raw()[11] = -1.0;
+    raw()[11] = (T)-1.0;
     raw()[14] = zOffset;
     return *this;
   }

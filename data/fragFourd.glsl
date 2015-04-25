@@ -1,4 +1,4 @@
-#version 150
+// # verasion 150
 // OpenGL 3.2 apparently
 
 in vec4 fragHPos;

@@ -74,7 +74,8 @@ void buildColorArray() {
 bool loadShader() {
   g_shader.Release();
   if(!g_shader.LoadFromFile(
-      "data\\vertexShader.glsl", "data\\fragmentShader.glsl")) {
+      "data\\vertFourd.glsl", "data\\fragFourd.glsl")) {
+    printf("Failed loading shader!\n");
     return false;
   }
 
@@ -107,12 +108,6 @@ bool LoadLevel() {
 }
 
 bool Initialize() {
-  
-  if(glewInit() != GLEW_OK) {
-    printf("glew init fail\n");
-    return false;
-  }
-
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
@@ -132,20 +127,21 @@ bool Initialize() {
   glEnable(GL_BLEND);
   // So apparently glBlendEquation just didn't get included in msvc.
   // Need to include the entire glew project just to get it work??
-  glBlendEquation(GL_ADD);
-  glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
+  //glBlendEquation(GL_ADD);
+  //glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // 
   glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
 
   //cgContext = cgCreateContext();
   //if (cgContext == 0) {
-  //  fprintf(stderr, "Failed To Create Cg Context\n");
+  //  fprintf(stdio, "Failed To Create Cg Context\n");
   //  exit(-1);
   //}
 
   if (!loadShader()) {
-    fprintf(stderr, "Shader loading failed\n");
+    printf("Shader loading failed\n");
     exit(-1);
   }
 
@@ -174,7 +170,9 @@ void UpdatePerspective() {
   glLoadIdentity();
   float aspect = static_cast<float>(_width) / static_cast<float>(_height);
   projectionMatrix.build3dProjection(_fov, aspect, _near, _far);
+  g_shader.StartUsing();
   glUniformMatrix4fv(cgProjectionMatrix, 1, GL_FALSE, projectionMatrix.raw());
+  g_shader.StopUsing();
 }
 
 void ReshapeGL(int width, int height) {
@@ -192,7 +190,7 @@ void ReshapeGL(int width, int height) {
 void Update(int key, int x, int y) {
   UNUSED(x); UNUSED(y); // Required by glut prototype.
   static float moveAmount = 1.0f;
-  static float rollAmount = moveAmount * 2 * PI / 100.0f;
+  static float rollAmount = moveAmount * 2 * (float)PI / 100.0f;
 
   switch (key) {
     case '1' : {
@@ -359,15 +357,15 @@ void Draw(void) {
 
   g_shader.StartUsing();
 
-  position = g_shader.getAttrib("vertPosition");
-  color = g_shader.getAttrib("vertColor");
-  cgWorldMatrix = g_shader.getUniform("worldMatrix");
-  cgWorldPosition = g_shader.getUniform("worldPosition");
-  cgCameraPosition = g_shader.getUniform("cameraPosition");
-  cgCameraMatrix = g_shader.getUniform("cameraMatrix");
-  cgProjectionMatrix = g_shader.getUniform("projectionMatrix");
-  cgFourToThree = g_shader.getUniform("fourToThree");
-  cgWPlaneNearFar = g_shader.getUniform("wPlaneNearFar");
+  //position = g_shader.getAttrib("vertPosition");
+  //color = g_shader.getAttrib("vertColor");
+  //cgWorldMatrix = g_shader.getUniform("worldMatrix");
+  //cgWorldPosition = g_shader.getUniform("worldPosition");
+  //cgCameraPosition = g_shader.getUniform("cameraPosition");
+  //cgCameraMatrix = g_shader.getUniform("cameraMatrix");
+  //cgProjectionMatrix = g_shader.getUniform("projectionMatrix");
+  //cgFourToThree = g_shader.getUniform("fourToThree");
+  //cgWPlaneNearFar = g_shader.getUniform("wPlaneNearFar");
 
   glUniform4fv(cgCameraPosition, 1, _camera.getCameraPos().raw());
   Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
@@ -519,9 +517,9 @@ void RunTests() {
   assert(scale == invScale.inverse());
 
   Mat4f rotXFourth;
-  rotXFourth.buildRotation(PI / 2.0, 1, 0);
+  rotXFourth.buildRotation((float)PI / 2.0, 1, 0);
   Mat4f rotXEighth;
-  rotXEighth.buildRotation(PI / 4.0, 1, 0);
+  rotXEighth.buildRotation((float)PI / 4.0, 1, 0);
   assert(iden == (rotXFourth * rotXFourth * rotXFourth * rotXFourth * iden));
   assert(rotXEighth * rotXEighth == rotXFourth);
   assert(!(rotXFourth * rotXFourth == rotXFourth));
@@ -532,14 +530,32 @@ void RunTests() {
   Shader::TestShaderHash();
 }
 
+#define DERP_FUCKTARD
+#ifndef DERP_FUCKTARD
+
 int main(int argc, char *argv[]) {
   RunTests();
-
+  
   glutInit(&argc, argv);
   glutInitWindowPosition(0, 0);
   glutInitWindowSize(640, 480);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+  //glutInitContextVersion(3, 2);
+  GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
+//#ifdef _DEBUG
+//  contextFlags |= GLUT_DEBUG;
+//#endif // _DEBUG
+  glutInitContextFlags(contextFlags);
+    
   glutCreateWindow(argv[0]);
+  
+  glewExperimental=TRUE;
+  GLenum err;
+  if((err = glewInit()) != GLEW_OK) {
+    printf("Glew init fail: Error: %s\n", glewGetErrorString(err));
+    return false;
+  }
+
   glutReshapeFunc(ReshapeGL);
   glutKeyboardFunc(Key);
   glutMouseFunc(MouseClick);
@@ -552,4 +568,198 @@ int main(int argc, char *argv[]) {
   glutMainLoop();
   return 0;
 }
+
+#else 
+
+void derpIdle() {
+  glutPostRedisplay();
+}
+
+void derpReshapeGL(int width, int height) {
+  _width = width;
+  _height = height;
+
+  glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+  glViewport(0, 0, (GLsizei) (_width), (GLsizei) (_height));
+
+  if(height == 0)
+	  height = 1;
+	float ratio = 1.0f * width / height;
+  gluPerspective(45,ratio,1,1000);
+	glMatrixMode(GL_MODELVIEW);
+
+  glutPostRedisplay();
+}
+
+void derpKey(unsigned char key, int x, int y) {
+  switch(key) {
+      case 27: {
+      Deinitialize();
+      exit(0);
+    } break;
+  }
+}
+
+//#define DERP_INLINE_SHADERS
+#ifdef DERP_INLINE_SHADERS
+GLuint v,f,p;
+void loadInlineShaders() {
+	v = glCreateShader(GL_VERTEX_SHADER);
+	f = glCreateShader(GL_FRAGMENT_SHADER);
+
+	char vs[] = R"foo(
+varying vec3 normal;
+uniform vec4 worldPosition;
+void main()
+{	
+  normal = gl_Normal;
+	gl_Position = ftransform() + worldPosition;
+}
+)foo";
+	char fs[] = R"foo(
+varying vec3 normal;
+void main()
+{
+	vec4 color;
+  color = vec4(1.0,0.2,0.1,1.0);
+  color.xyz += normal; 
+	gl_FragColor = color;
+}
+)foo";
+  const char* vsPtr = &vs[0];
+  const char* fsPtr = &fs[0];
+
+	glShaderSource(v, 1, &vsPtr,NULL);
+	glShaderSource(f, 1, &fsPtr,NULL);
+
+	glCompileShader(v);
+	glCompileShader(f);
+	
+	p = glCreateProgram();
+	glAttachShader(p,f);
+	glAttachShader(p,v);
+
+	glLinkProgram(p);
+	glUseProgram(p);
+  glUseProgram(0);
+}
+#else // DERP_INLINE_SHADERS
+fd::Shader derpShader;
+#endif // DERP_INLINE_SHADERS
+
+void derpRenderScene(void) {
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  static float timey = 0.0f;
+  timey += 0.008f;
+  float movey = sinf(timey) * 1.0f;
+  char uniformName[] = "worldPosition";
+#ifdef DERP_INLINE_SHADERS
+  glUseProgram(p);
+  GLint handle = glGetUniformLocation(p, uniformName);
+  if (handle == -1) {
+    printf ("couldn't get handle %s\n", uniformName);
+  } else {
+    Vec4f moveIt(movey, movey, movey, 1.0f);
+    glUniform4fv(handle, 1, moveIt.raw());
+  }
+  glUseProgram(0);
+#else //ifdef DERP_INLINE_SHADERS
+  derpShader.StartUsing();
+
+  derpShader.getUniform("worldMatrix");
+  derpShader.getUniform("worldPosition");
+  derpShader.getUniform("cameraPosition");
+  derpShader.getUniform("cameraMatrix");
+  derpShader.getUniform("projectionMatrix");
+  derpShader.getUniform("fourToThree");
+  derpShader.getUniform("wPlaneNearFar");
+
+  GLint handle = derpShader.getUniform(uniformName);
+  if (handle == -1) {
+    printf ("couldn't get handle %s\n", uniformName);
+  } else {
+    Vec4f moveIt(movey, movey, movey, 1.0f);
+    glUniform4fv(handle, 1, moveIt.raw());
+  }
+  derpShader.StopUsing();
+#endif //def DERP_INLINE_SHADERS
+
+	glBegin(GL_TRIANGLES);
+    glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(-0.5,-0.5,0.0);
+    glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(0.5,0.0,0.0);
+    glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(0.0,0.5,0.0);
+	glEnd();
+
+  glLoadIdentity();
+	gluLookAt(0.0,0.0,5.0, 
+  		      0.0,0.0,-1.0,
+	    		  0.0f,1.0f,0.0f);
+
+	float lpos[4] = {1,0.5,1,0};
+  glLightfv(GL_LIGHT0, GL_POSITION, lpos);
+
+#ifdef DERP_INLINE_SHADERS
+  glUseProgram(p);
+	glutSolidTeapot(1);
+  glUseProgram(0);
+#else
+  derpShader.StartUsing();
+	glutSolidTeapot(1);
+  derpShader.StopUsing();
+#endif //def DERP_INLINE_SHADERS
+
+  glFlush();
+
+	glutSwapBuffers();
+}
+
+int main(int argc, char *argv[]) {
+  
+  glutInit(&argc, argv);
+  glutInitWindowPosition(0, 0);
+  glutInitWindowSize(640, 480);
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+//  glutInitContextVersion(3, 2);
+  GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
+//#ifdef _DEBUG
+//  contextFlags |= GLUT_DEBUG;
+//#endif // _DEBUG
+  glutInitContextFlags(contextFlags);
+    
+  glutCreateWindow(argv[0]);
+  
+  glewExperimental=TRUE;
+  if(glewInit() != GLEW_OK) {
+    printf("glew init fail\n");
+    return false;
+  }
+
+  glutReshapeFunc(derpReshapeGL);
+  glutKeyboardFunc(derpKey);
+  glutDisplayFunc(derpRenderScene);
+  glutIdleFunc(derpIdle);
+
+  Initialize();
+
+#ifdef DERP_INLINE_SHADERS
+  loadInlineShaders();
+#else
+  derpShader.Release();
+  derpShader.LoadFromFile("data\\vertTrivial.glsl", "data\\fragTrivial.glsl");
+#endif
+  g_texture.LoadFromFile("data\\orientedTexture.png");
+
+
+  glutMainLoop();
+  return 0;
+}
+
+#endif // DERP_FUCKTARD
 
