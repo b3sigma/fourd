@@ -31,6 +31,22 @@ void Shader::Release() {
   if(_programId != 0) {
     glDeleteProgram(_programId);
   }
+  if(_uniforms) {
+    handle_hash_destroy(_uniforms);
+    _uniforms = NULL;
+  }
+  if(_attribs) {
+    handle_hash_destroy(_attribs);
+    _attribs = NULL;
+  }
+}
+
+Shader::Shader() 
+    : _programId(0)
+    , _shaderType(0)
+    , _attribs(NULL)
+    , _uniforms(NULL) {
+  s_test_shader_refs++;
 }
 
 bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
@@ -38,8 +54,10 @@ bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
   AddSubShader(pixelFile, GL_FRAGMENT_SHADER);
 
   GLuint programId = glCreateProgram();
-  if(programId == 0)
+  if(programId == 0) {
+    printf("Couldn't create program v:%s f:%s\n", vertexFile, pixelFile);
     return false;
+  }
 
   for (TVecShaderIds::iterator shadIt = _subShaders.begin();
       shadIt != _subShaders.end();
@@ -49,6 +67,12 @@ bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
 
   glLinkProgram(programId);
   
+  for (TVecShaderIds::iterator shadIt = _subShaders.begin();
+      shadIt != _subShaders.end();
+      ++shadIt) {
+    glDetachShader(programId, *shadIt);
+  }
+
   GLint linkSuccess;
   glGetProgramiv(programId, GL_COMPILE_STATUS, &linkSuccess);
   if(linkSuccess == GL_FALSE) {
@@ -64,6 +88,8 @@ bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
   }
 
   _programId = programId;
+  _attribs = handle_hash_create();
+  _uniforms = handle_hash_create();
 
   return true;
 }
@@ -103,20 +129,28 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
   return true;
 }
 
+void Shader::StartUsing() const {
+  glUseProgram(_programId);
+}
+
+void Shader::StopUsing() const {
+  glUseProgram(0);
+}
+
 //////////////////
 // TShaderHash support
 
 TShaderHash* Shader::s_pShaderhash = NULL;
 
-#define SHADER_HASH_EMPTY ((const char*)(1))
-#define SHADER_HASH_DEL ((const char*)(2))
+#define STR_KEY_HASH_EMPTY ((const char*)(1))
+#define STR_KEY_HASH_DEL ((const char*)(2))
 
 // Ugh, this is silly. Would rather std::string but stb hash is malloc based
 // so it didn't call constructors.
-const char* shader_hash_str_copy(const char* str) {
+const char* string_key_hash_str_copy(const char* str) {
   if (str == NULL) return NULL;
-  if (str == SHADER_HASH_EMPTY) return SHADER_HASH_EMPTY;
-  if (str == SHADER_HASH_DEL) return SHADER_HASH_DEL;
+  if (str == STR_KEY_HASH_EMPTY) return STR_KEY_HASH_EMPTY;
+  if (str == STR_KEY_HASH_DEL) return STR_KEY_HASH_DEL;
 
   unsigned int size = strlen(str) + 1;
   char* newStr = new char[size];
@@ -124,14 +158,14 @@ const char* shader_hash_str_copy(const char* str) {
   return newStr;
 }
 
-void shader_hash_str_del(const char* str) {
+void string_key_hash_str_del(const char* str) {
   delete [] str;
 }
 
-bool shader_hash_str_cmp(const char* left, const char* right) {
+bool string_key_hash_str_cmp(const char* left, const char* right) {
   if (left == right) { return true; }
-  if (left == NULL || left == SHADER_HASH_EMPTY || left == SHADER_HASH_DEL ||
-      right == NULL || right == SHADER_HASH_EMPTY || right == SHADER_HASH_DEL) {
+  if (left == NULL || left == STR_KEY_HASH_EMPTY || left == STR_KEY_HASH_DEL ||
+      right == NULL || right == STR_KEY_HASH_EMPTY || right == STR_KEY_HASH_DEL) {
     return false;
   }
 
@@ -140,10 +174,62 @@ bool shader_hash_str_cmp(const char* left, const char* right) {
 
 stb_define_hash_base(STB_noprefix, TShaderHash, STB_nofields,
   shader_hash_, shader_hash_, 0.85f, const char*, 
-  SHADER_HASH_EMPTY, SHADER_HASH_DEL, 
-  shader_hash_str_copy, shader_hash_str_del, STB_nosafe,
-  shader_hash_str_cmp, shader_hash_str_cmp,
+  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
+  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
+  string_key_hash_str_cmp, string_key_hash_str_cmp,
   return stb_hash(k); , Shader*, STB_nullvalue, NULL);
+
+//////////////////
+// THandleHash support
+
+#define HANDLE_HASH_NULL ((GLint)(-1))
+
+stb_define_hash_base(STB_noprefix, THandleHash, STB_nofields,
+  handle_hash_, handle_hash_, 0.85f, const char*, 
+  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
+  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
+  string_key_hash_str_cmp, string_key_hash_str_cmp,
+  return stb_hash(k); , GLint, STB_nullvalue, HANDLE_HASH_NULL);
+
+GLint Shader::getAttrib(const char* name) {
+  assert(name != NULL);
+  assert(_programId != 0);
+  assert(_attribs != NULL);
+  // Why do we assume GL isn't already doing something like this?
+  // TODO: test whether this is a pre-optimization, dumbass.
+  GLint handle = handle_hash_get(_attribs, name);
+  if (handle != HANDLE_HASH_NULL)
+    return handle;
+
+  handle = glGetAttribLocation(_programId, name);
+  if(handle == -1) {
+    printf("Couldn't find attrib:%s\n", name);
+    return handle;
+  }
+
+  handle_hash_add(_attribs, name, handle);
+  return handle;
+}
+
+GLint Shader::getUniform(const char* name) {
+  assert(name != NULL);
+  assert(_programId != 0);
+  assert(_uniforms != NULL);
+  // Why do we assume GL isn't already doing something like this?
+  // TODO: test whether this is a pre-optimization, dumbass.
+  GLint handle = handle_hash_get(_uniforms, name);
+  if (handle != HANDLE_HASH_NULL)
+    return handle;
+
+  handle = glGetUniformLocation(_programId, name);
+  if(handle == -1) {
+    printf("Couldn't find uniform:%s\n", name);
+    return handle;
+  }
+
+  handle_hash_add(_uniforms, name, handle);
+  return handle;
+}
 
 /////////////////
 // TShaderHash test

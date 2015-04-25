@@ -8,8 +8,8 @@
 
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <Cg/cg.h>
-#include <Cg/cgGL.h>
+//#include <Cg/cg.h>
+//#include <Cg/cgGL.h>
 #include <GL/glut.h>
 
 #include <stdlib.h>
@@ -25,18 +25,19 @@
 
 using namespace ::fd;
 
-CGcontext cgContext;
-CGprogram cgProgram = NULL;
-CGprofile cgVertexProfile;
-CGparameter position;
-CGparameter color;
-CGparameter cgWorldMatrix;
-CGparameter cgWorldPosition;
-CGparameter cgCameraPosition;
-CGparameter cgCameraMatrix;
-CGparameter cgProjectionMatrix;
-CGparameter cgFourToThree;
-CGparameter cgWPlaneNearFar;
+// apparantly the right way to do most of these in GL is to make a
+// shared uniform buffer (something something sb140?)
+// look like 56 floats would apply so far
+// doing things so inefficiently already that much more refactoring necessary
+GLint position;
+GLint color;
+GLint cgWorldMatrix;
+GLint cgWorldPosition;
+GLint cgCameraPosition;
+GLint cgCameraMatrix;
+GLint cgProjectionMatrix;
+GLint cgFourToThree;
+GLint cgWPlaneNearFar;
 
 // TODO: Move most of the CG/GL code to render, including the camera
 // Setup a render target approach
@@ -74,42 +75,22 @@ void buildColorArray() {
 
 bool loadShader() {
   g_shader.Release();
-  g_shader.LoadFromFile("data\\vertexShader.glsl", "data\\fragmentShader.glsl");
-
-  if (cgProgram != NULL) {
-    cgDestroyProgram(cgProgram);
-    cgProgram = NULL;
-  }
-
-  cgVertexProfile = cgGLGetLatestProfile(CG_GL_VERTEX);
-  if (cgVertexProfile == CG_PROFILE_UNKNOWN) {
-    fprintf(stderr, "Invalid profile type\n");
+  if(!g_shader.LoadFromFile(
+      "data\\vertexShader.glsl", "data\\fragmentShader.glsl")) {
     return false;
   }
 
-  cgGLSetOptimalOptions(cgVertexProfile);
-
-  cgProgram = cgCreateProgramFromFile(cgContext, CG_SOURCE, "./cg/four.cg",
-      cgVertexProfile, "main", 0);
-
-  if (cgProgram == 0) {
-    CGerror Error = cgGetError();
-
-    fprintf(stderr, "Shader err: %s \n", cgGetErrorString(Error));
-    return false;
-  }
-
-  cgGLLoadProgram(cgProgram);
-
-  position = cgGetNamedParameter(cgProgram, "IN.position");
-  color = cgGetNamedParameter(cgProgram, "IN.color");
-  cgWorldMatrix = cgGetNamedParameter(cgProgram, "worldMatrix");
-  cgWorldPosition = cgGetNamedParameter(cgProgram, "worldPosition");
-  cgCameraPosition = cgGetNamedParameter(cgProgram, "cameraPosition");
-  cgCameraMatrix = cgGetNamedParameter(cgProgram, "cameraMatrix");
-  cgProjectionMatrix = cgGetNamedParameter(cgProgram, "projectionMatrix");
-  cgFourToThree = cgGetNamedParameter(cgProgram, "fourToThree");
-  cgWPlaneNearFar = cgGetNamedParameter(cgProgram, "wPlaneNearFar");
+  g_shader.StartUsing();
+  position = g_shader.getAttrib("vertPosition");
+  color = g_shader.getAttrib("vertColor");
+  cgWorldMatrix = g_shader.getUniform("worldMatrix");
+  cgWorldPosition = g_shader.getUniform("worldPosition");
+  cgCameraPosition = g_shader.getUniform("cameraPosition");
+  cgCameraMatrix = g_shader.getUniform("cameraMatrix");
+  cgProjectionMatrix = g_shader.getUniform("projectionMatrix");
+  cgFourToThree = g_shader.getUniform("fourToThree");
+  cgWPlaneNearFar = g_shader.getUniform("wPlaneNearFar");
+  g_shader.StopUsing();
 
   return true;
 }
@@ -159,12 +140,11 @@ bool Initialize() {
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
 
-  cgContext = cgCreateContext();
-
-  if (cgContext == 0) {
-    fprintf(stderr, "Failed To Create Cg Context\n");
-    exit(-1);
-  }
+  //cgContext = cgCreateContext();
+  //if (cgContext == 0) {
+  //  fprintf(stderr, "Failed To Create Cg Context\n");
+  //  exit(-1);
+  //}
 
   if (!loadShader()) {
     fprintf(stderr, "Shader loading failed\n");
@@ -188,7 +168,7 @@ bool Initialize() {
 }
 
 void Deinitialize(void) {
-  cgDestroyContext(cgContext);
+  //cgDestroyContext(cgContext);
 }
 
 void UpdatePerspective() {
@@ -196,7 +176,7 @@ void UpdatePerspective() {
   glLoadIdentity();
   float aspect = static_cast<float>(_width) / static_cast<float>(_height);
   projectionMatrix.build3dProjection(_fov, aspect, _near, _far);
-  cgGLSetMatrixParameterfc(cgProjectionMatrix, projectionMatrix.raw());
+  glUniformMatrix4fv(cgProjectionMatrix, 1, GL_FALSE, projectionMatrix.raw());
 }
 
 void ReshapeGL(int width, int height) {
@@ -379,12 +359,25 @@ void Draw(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  cgGLSetParameter4fv(cgCameraPosition, _camera.getCameraPos().raw());
+  g_shader.StartUsing();
+
+  position = g_shader.getAttrib("vertPosition");
+  color = g_shader.getAttrib("vertColor");
+  cgWorldMatrix = g_shader.getUniform("worldMatrix");
+  cgWorldPosition = g_shader.getUniform("worldPosition");
+  cgCameraPosition = g_shader.getUniform("cameraPosition");
+  cgCameraMatrix = g_shader.getUniform("cameraMatrix");
+  cgProjectionMatrix = g_shader.getUniform("projectionMatrix");
+  cgFourToThree = g_shader.getUniform("fourToThree");
+  cgWPlaneNearFar = g_shader.getUniform("wPlaneNearFar");
+
+  glUniform4fv(cgCameraPosition, 1, _camera.getCameraPos().raw());
   Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
-  cgGLSetMatrixParameterfc(cgCameraMatrix, transposedCamera.raw());
+
+  glUniformMatrix4fv(cgCameraMatrix, 1, GL_FALSE, transposedCamera.raw());
   Mat4f transposedFour = fourToThree.transpose();
-  cgGLSetMatrixParameterfc(cgFourToThree, transposedFour.raw());
-  cgGLSetParameter4fv(cgWPlaneNearFar, wPlaneNearFar.raw());
+  glUniformMatrix4fv(cgFourToThree, 1, GL_FALSE, transposedFour.raw());
+  glUniform4fv(cgWPlaneNearFar, 1, wPlaneNearFar.raw());
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)
@@ -393,13 +386,12 @@ void Draw(void) {
   // switch the mat4 class to be column major (at least make the calls explicit)
   // multi-view rendering
 
-
   //Vec4f shift(0.0f, 0.0f, 10.0f * sin(renderer.GetFrameTime()), 0.0f);
 
-  cgGLSetMatrixParameterfc(cgWorldMatrix, worldMatrix.raw());
+  glUniformMatrix4fv(cgWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
 
-  cgGLEnableProfile(cgVertexProfile);
-  cgGLBindProgram(cgProgram);
+  //cgGLEnableProfile(cgVertexProfile);
+  //cgGLBindProgram(cgProgram);
 
   for (TVecQuaxol::iterator quax_it = quaxols_g.begin();
     quax_it != quaxols_g.end();
@@ -413,7 +405,7 @@ void Draw(void) {
     shift.y = shift_amount * q.y;
     shift.z = shift_amount * q.z;
     shift.w = shift_amount * q.w;
-    cgGLSetParameter4fv(cgWorldPosition, shift.raw());
+    glUniform4fv(cgWorldPosition, 1, shift.raw());
 
     int tesseractTris = tesseract.getNumberTriangles();
     int startTriangle = 0;
@@ -422,7 +414,7 @@ void Draw(void) {
     Vec4f a, b, c;
     int colorIndex = 0;
     for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
-      cgGLSetParameter4fv(color, colorArray[colorIndex].raw());
+      glVertexAttrib4fv(color, colorArray[colorIndex].raw());
       tesseract.getTriangle(t, a, b, c);
       glVertex4fv(a.raw());
       glVertex4fv(b.raw());
@@ -434,7 +426,8 @@ void Draw(void) {
     glEnd();
   }
 
-  cgGLDisableProfile(cgVertexProfile);
+  g_shader.StopUsing();
+  //cgGLDisableProfile(cgVertexProfile);
   glFlush();
   glutSwapBuffers();
 }
