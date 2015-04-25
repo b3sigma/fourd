@@ -6,11 +6,9 @@
 #include <Windows.h>
 #endif // WIN32
 
+#include <GL/freeglut.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-//#include <Cg/cg.h>
-//#include <Cg/cgGL.h>
-#include <GL/glut.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -134,8 +132,8 @@ bool Initialize() {
   glEnable(GL_BLEND);
   // So apparently glBlendEquation just didn't get included in msvc.
   // Need to include the entire glew project just to get it work??
-  //glBlendEquation(GL_ADD);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_DST_ALPHA);
+  glBlendEquation(GL_ADD);
+  glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
   glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);

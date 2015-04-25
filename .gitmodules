@@ -4,3 +4,6 @@
 [submodule "stb"]
 	path = stb
 	url = https://github.com/nothings/stb
+[submodule "FreeGLUT"]
+	path = FreeGLUT
+	url = https://github.com/dcnieho/FreeGLUT

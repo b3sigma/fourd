@@ -8,8 +8,8 @@ Since I needed cmake:
 Since I needed to build freeglut:
 * cd FreeGlut\freeglut\freeglut
 ** if you cd three times the magic will affect your firstborn
-* mkdir build && cd build && cmake -G "Visual Studio 12 2013" <absolute_path_to_CMakeLists.txt>
-** Note that using a relative path like ..\CMakeLists.txt put all the build files in the source directory instead of the build directory for me.
+* mkdir build && cd build && cmake -G "Visual Studio 12 2013" "../"
+** Note the quotes and / vs \ on path, as cmake seems to like / better. 
 * cd .. && cmake --build build --config Release
 
 Installed Nvidia Cg the old fashioned way. Rebooted.
@@ -24,9 +24,8 @@ Cmake notes:
 * Added $(CG_LIB_PATH) to lib dir
 * Hahaha cg included glut so freeglut was a total waste of time
 * Set working directory to $(ProjectDir)..\
-
+* Ok, scrapped cg, so much of this is meaningless.
+* Adding freeglut again...
 
 Todo:
-* Get glBlendEquation working in windows again
-** Include glew as apparently it's just not defined in the windows version.
-
+* Get freeglut working
