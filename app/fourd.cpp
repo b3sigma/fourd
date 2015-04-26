@@ -29,7 +29,7 @@ using namespace ::fd;
 // doing things so inefficiently already that much more refactoring necessary
 GLint position;
 GLint color;
-GLint cgWorldMatrix;
+GLint hWorldMatrix;
 GLint cgWorldPosition;
 GLint cgCameraPosition;
 GLint cgCameraMatrix;
@@ -37,7 +37,7 @@ GLint cgProjectionMatrix;
 GLint cgFourToThree;
 GLint cgWPlaneNearFar;
 
-// TODO: Move most of the CG/GL code to render, including the camera
+// TODO: Move most of the GL code to render, including the camera
 // Setup a render target approach
 // Get multi-view working
 // Get a post effect working
@@ -82,7 +82,7 @@ bool loadShader() {
   g_shader.StartUsing();
   position = g_shader.getAttrib("vertPosition");
   color = g_shader.getAttrib("vertColor");
-  cgWorldMatrix = g_shader.getUniform("worldMatrix");
+  hWorldMatrix = g_shader.getUniform("worldMatrix");
   cgWorldPosition = g_shader.getUniform("worldPosition");
   cgCameraPosition = g_shader.getUniform("cameraPosition");
   cgCameraMatrix = g_shader.getUniform("cameraMatrix");
@@ -107,6 +107,18 @@ bool LoadLevel() {
   }
 }
 
+void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
+  if (bAlphaAndDisableDepth) {
+    glEnable(GL_BLEND);
+    glDepthFunc(GL_ALWAYS);
+    glDisable(GL_DEPTH_TEST);
+  } else {
+    glDisable(GL_BLEND);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_DEPTH_TEST);
+  }
+}
+
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
@@ -114,6 +126,7 @@ bool Initialize() {
   tesseract.buildTesseract(10.0f, Vec4f(0.1f,0.1f,0.1f,0.1f), Vec4f(0,0,0,0));
   _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   wPlaneNearFar.z = 1.0f; // use projective 4d mode
+  wPlaneNearFar.w = 0.0f; // project in instead of out 
   _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
 
   LoadLevel();
@@ -122,11 +135,9 @@ bool Initialize() {
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
-  glDepthFunc(GL_ALWAYS); //GL_LEQUAL);
-  glDisable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  // So apparently glBlendEquation just didn't get included in msvc.
-  // Need to include the entire glew project just to get it work??
+  SetAlphaAndDisableDepth(true);
+
+  glDisable(GL_CULL_FACE); // no backface culling for 4d
   glBlendEquation(GL_ADD);
   //glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // 
@@ -134,12 +145,6 @@ bool Initialize() {
   //glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
-
-  //cgContext = cgCreateContext();
-  //if (cgContext == 0) {
-  //  fprintf(stdio, "Failed To Create Cg Context\n");
-  //  exit(-1);
-  //}
 
   if (!loadShader()) {
     printf("Shader loading failed\n");
@@ -163,7 +168,7 @@ bool Initialize() {
 }
 
 void Deinitialize(void) {
-  //cgDestroyContext(cgContext);
+
 }
 
 void UpdatePerspective() {
@@ -187,13 +192,17 @@ void ReshapeGL(int width, int height) {
   glutPostRedisplay();
 }
 
-
 void Update(int key, int x, int y) {
   UNUSED(x); UNUSED(y); // Required by glut prototype.
   static float moveAmount = 1.0f;
   static float rollAmount = moveAmount * 2 * (float)PI / 100.0f;
 
+  bool isShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
+
   switch (key) {
+    case '!' : {
+      SetAlphaAndDisableDepth(glIsEnabled(GL_BLEND) == GL_FALSE);
+    } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
@@ -340,6 +349,13 @@ void Update(int key, int x, int y) {
         wPlaneNearFar.z = 0.0f;
       }
     } break;
+    case 'o' : {
+      if (wPlaneNearFar.w == 0.0f) {
+        wPlaneNearFar.w = 1.0f;
+      } else {
+        wPlaneNearFar.w = 0.0f;
+      }
+    } break;
     case 'p': {
       LoadLevel();
     } break;
@@ -373,12 +389,7 @@ void Draw(void) {
   // switch the mat4 class to be column major (at least make the calls explicit)
   // multi-view rendering
 
-  //Vec4f shift(0.0f, 0.0f, 10.0f * sin(renderer.GetFrameTime()), 0.0f);
-
-  glUniformMatrix4fv(cgWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
-
-  //cgGLEnableProfile(cgVertexProfile);
-  //cgGLBindProgram(cgProgram);
+  glUniformMatrix4fv(hWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
 
   for (TVecQuaxol::iterator quax_it = quaxols_g.begin();
     quax_it != quaxols_g.end();
@@ -414,7 +425,7 @@ void Draw(void) {
   }
 
   g_shader.StopUsing();
-  //cgGLDisableProfile(cgVertexProfile);
+  
   glFlush();
   glutSwapBuffers();
 }

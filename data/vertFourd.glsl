@@ -7,6 +7,9 @@ uniform vec4 cameraPosition;
 uniform mat4 cameraMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 fourToThree;
+
+// packed floats... silly and confusing!
+// wNear in x, wFar in y, any projection enabled in z, inv proj in w
 uniform vec4 wPlaneNearFar;
 
 in vec4 vertPosition;
@@ -27,10 +30,13 @@ void main() {
 	cameraSpace = cameraMatrix * cameraSpace; // final camera space position
 	
 	vec4 threeSpace = fourToThree * cameraSpace;
-	float fourProjectionScalar = (wPlaneNearFar.y - threeSpace.w) / (wPlaneNearFar.y - wPlaneNearFar.x);
+	float wSpaceFrustrumPos = (wPlaneNearFar.y - threeSpace.w) / (wPlaneNearFar.y - wPlaneNearFar.x);
+	float wSpaceFrustrumPosInv = 1.0 / wSpaceFrustrumPos;
   // TODO: (make a smoother depth calc that doesn't go through a zero singularity)
 	//fourProjectionScalar = clamp(fourProjectionScalar, 0.0, 1.0);
-	threeSpace.xy = mix(threeSpace.xy, threeSpace.xy * fourProjectionScalar, wPlaneNearFar.z);
+  float projectionScalar = mix(wSpaceFrustrumPos, wSpaceFrustrumPosInv, wPlaneNearFar.w);
+	threeSpace.xy = mix(threeSpace.xy, threeSpace.xy * projectionScalar, wPlaneNearFar.z);
+	//threeSpace.xy = mix(threeSpace.xy, threeSpace.xy * fourProjectionScalar, wPlaneNearFar.z);
 	//threeSpace.xy *= clamp(threeSpace.w, 0.5, 1.0);
   //threeSpace.xy *= threeSpace.w;
   //threeSpace.xyz *= vertposition.w; // clamp(vertposition.w, 0.5, 1.0);
