@@ -82,8 +82,27 @@
     <None Include="..\cg\four.cg">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="..\data\vertexShader.glsl">
+    <None Include="..\data\fragFourd.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\data\fragTrivial.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\vertFourd.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\vertTrivial.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\data\level.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\data\orientedTexture.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

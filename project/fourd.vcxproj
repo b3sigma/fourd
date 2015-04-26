@@ -109,7 +109,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg" />
-    <None Include="..\data\vertexShader.glsl" />
+    <None Include="..\data\fragFourd.glsl" />
+    <None Include="..\data\fragTrivial.glsl" />
+    <None Include="..\data\vertFourd.glsl" />
+    <None Include="..\data\vertTrivial.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\data\level.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\data\orientedTexture.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

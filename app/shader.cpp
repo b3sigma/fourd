@@ -75,10 +75,11 @@ bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
     glDetachShader(programId, *shadIt);
   }
 
-  GLint linkSuccess;
+  GLint linkSuccess = GL_TRUE;
   glGetProgramiv(programId, GL_COMPILE_STATUS, &linkSuccess);
-  if(linkSuccess == GL_FALSE) {
-    printf("Shader compilation failed v:%s f:\n", vertexFile, pixelFile);
+  if(linkSuccess != GL_TRUE) {
+    printf("program linking failed v:%s f:%s err:%d\n",
+        vertexFile, pixelFile, linkSuccess);
     GLint errorLength;
     glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &errorLength);
     std::string error;
@@ -112,9 +113,9 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
   glShaderSource(shaderId, 1, (const GLchar* const*)&(bufferString), NULL);
   glCompileShader(shaderId);
 
-  GLint compileSuccess;
+  GLint compileSuccess = GL_TRUE;
   glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compileSuccess);
-  if(compileSuccess == GL_FALSE) {
+  if(compileSuccess != GL_TRUE) {
     printf("Shader compilation failed:%s\ndump:%s\n", filename, buffer.c_str());
     GLint errorLength;
     glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &errorLength);
@@ -132,15 +133,30 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
 }
 
 void Shader::StartUsing() const {
+  assert(GetIsUsing() == false);
   glUseProgram(_programId);
+  assert(GetIsUsing() == true);
 }
 
 void Shader::StopUsing() const {
+  assert(GetIsUsing() == true);
   glUseProgram(0);
+  assert(GetIsUsing() == false);
+}
+
+bool Shader::GetIsUsing() const {
+  if (_programId <= 0) return false;
+  GLint currentProgram = -1;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+  return (currentProgram == _programId);
 }
 
 //////////////////
 // TShaderHash support
+// This stb hash business was a massive hassle to get to compile,
+// and the other huge downwside
+// of single file header libraries that are #define based shows up when
+// there is a problem and debugging is essentially guesswork.
 
 TShaderHash* Shader::s_pShaderhash = NULL;
 
@@ -193,7 +209,7 @@ stb_define_hash_base(STB_noprefix, THandleHash, STB_nofields,
   string_key_hash_str_cmp, string_key_hash_str_cmp,
   return stb_hash(k); , GLint, STB_nullvalue, HANDLE_HASH_NULL);
 
-GLint Shader::getAttrib(const char* name) {
+GLint Shader::getAttrib(const char* name) const {
   assert(name != NULL);
   assert(_programId != 0);
   assert(_attribs != NULL);
@@ -213,7 +229,7 @@ GLint Shader::getAttrib(const char* name) {
   return handle;
 }
 
-GLint Shader::getUniform(const char* name) {
+GLint Shader::getUniform(const char* name) const {
   assert(name != NULL);
   assert(_programId != 0);
   assert(_uniforms != NULL);

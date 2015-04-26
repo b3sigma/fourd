@@ -40,9 +40,10 @@ namespace fd {
 
     void StartUsing() const;
     void StopUsing() const;
+    bool GetIsUsing() const;
 
-    GLint getAttrib(const char* name);
-    GLint getUniform(const char* name);
+    GLint getAttrib(const char* name) const;
+    GLint getUniform(const char* name) const;
 
   public:
     static bool TestShaderHash();

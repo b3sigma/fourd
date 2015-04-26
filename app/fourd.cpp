@@ -127,10 +127,11 @@ bool Initialize() {
   glEnable(GL_BLEND);
   // So apparently glBlendEquation just didn't get included in msvc.
   // Need to include the entire glew project just to get it work??
-  //glBlendEquation(GL_ADD);
+  glBlendEquation(GL_ADD);
   //glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // 
-  glShadeModel(GL_SMOOTH);
+  glShadeModel(GL_FLAT);
+  //glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
 
@@ -357,16 +358,6 @@ void Draw(void) {
 
   g_shader.StartUsing();
 
-  //position = g_shader.getAttrib("vertPosition");
-  //color = g_shader.getAttrib("vertColor");
-  //cgWorldMatrix = g_shader.getUniform("worldMatrix");
-  //cgWorldPosition = g_shader.getUniform("worldPosition");
-  //cgCameraPosition = g_shader.getUniform("cameraPosition");
-  //cgCameraMatrix = g_shader.getUniform("cameraMatrix");
-  //cgProjectionMatrix = g_shader.getUniform("projectionMatrix");
-  //cgFourToThree = g_shader.getUniform("fourToThree");
-  //cgWPlaneNearFar = g_shader.getUniform("wPlaneNearFar");
-
   glUniform4fv(cgCameraPosition, 1, _camera.getCameraPos().raw());
   Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
 
@@ -530,7 +521,7 @@ void RunTests() {
   Shader::TestShaderHash();
 }
 
-#define DERP_FUCKTARD
+//#define DERP_FUCKTARD
 #ifndef DERP_FUCKTARD
 
 int main(int argc, char *argv[]) {
