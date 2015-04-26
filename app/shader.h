@@ -21,6 +21,7 @@ namespace fd {
   protected:
     typedef std::vector<GLuint> TVecShaderIds;
     TVecShaderIds _subShaders;
+    std::string _refName;
 
     GLuint _programId;
     GLenum _shaderType;
@@ -35,7 +36,7 @@ namespace fd {
     ~Shader();
 
     bool AddSubShader(const char* filename, GLenum shaderType);
-    bool LoadFromFile(const char* vertexFile, const char* pixelFile);
+    bool LoadFromFile(const char* refName, const char* vertexFile, const char* pixelFile);
     void Release();
 
     void StartUsing() const;
@@ -44,6 +45,13 @@ namespace fd {
 
     GLint getAttrib(const char* name) const;
     GLint getUniform(const char* name) const;
+
+    static void ClearShaderHash();
+    static Shader* GetShaderByRefName(const char* refName);
+    
+  protected:
+    void AddToShaderHash();
+    void RemoveFromShaderHash();
 
   public:
     static bool TestShaderHash();

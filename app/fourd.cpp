@@ -1,4 +1,5 @@
 #include <math.h>
+#include <memory>
 
 #include <GL/glew.h>
 
@@ -27,15 +28,15 @@ using namespace ::fd;
 // shared uniform buffer (something something sb140?)
 // look like 56 floats would apply so far
 // doing things so inefficiently already that much more refactoring necessary
-GLint position;
-GLint color;
+GLint hPosition;
+GLint hColor;
 GLint hWorldMatrix;
-GLint cgWorldPosition;
-GLint cgCameraPosition;
-GLint cgCameraMatrix;
-GLint cgProjectionMatrix;
-GLint cgFourToThree;
-GLint cgWPlaneNearFar;
+GLint hWorldPosition;
+GLint hCameraPosition;
+GLint hCameraMatrix;
+GLint hProjectionMatrix;
+GLint hFourToThree;
+GLint hWPlaneNearFar;
 
 // TODO: Move most of the GL code to render, including the camera
 // Setup a render target approach
@@ -58,8 +59,11 @@ int cubeIndex = 0;
 ::fd::Render renderer;
 ::fd::TVecQuaxol quaxols_g;
 ::fd::Texture g_texture;
-::fd::Shader g_shader;
+::fd::Shader* g_shader = NULL;
+
 // trying out different naming conventions ok? quit complaining
+// couple days later: suuuure, "trying out" and not "whatever the fuck today"
+// don't worry though, "I'll clean it up later" bwahahahaha
 
 typedef std::vector<Vec4f> VectorList;
 VectorList colorArray;
@@ -71,26 +75,47 @@ void buildColorArray() {
   }
 }
 
-bool loadShader() {
-  g_shader.Release();
-  if(!g_shader.LoadFromFile(
-      "data\\vertFourd.glsl", "data\\fragFourd.glsl")) {
+void SetCommonShaderHandles(::fd::Shader* pShader) {
+  pShader->StartUsing();
+  hPosition = pShader->getAttrib("vertPosition");
+  hColor = pShader->getAttrib("vertColor");
+  hWorldMatrix = pShader->getUniform("worldMatrix");
+  hWorldPosition = pShader->getUniform("worldPosition");
+  hCameraPosition = pShader->getUniform("cameraPosition");
+  hCameraMatrix = pShader->getUniform("cameraMatrix");
+  hProjectionMatrix = pShader->getUniform("projectionMatrix");
+  hFourToThree = pShader->getUniform("fourToThree");
+  hWPlaneNearFar = pShader->getUniform("wPlaneNearFar");
+  pShader->StopUsing();
+}
+
+bool LoadShader(const char* shaderName) {
+  std::string shaderDir = "data\\";
+  std::string vertName = shaderDir + std::string("vert")
+    + std::string(shaderName) + std::string(".glsl");
+  std::string fragName = shaderDir + std::string("frag")
+    + std::string(shaderName) + std::string(".glsl");
+
+  ::fd::Shader* pExisting = ::fd::Shader::GetShaderByRefName(shaderName);
+  if (pExisting) {
+    // Shader reloading is broken?
+    g_shader = pExisting;
+    SetCommonShaderHandles(pExisting);
+    return true;
+    //delete pExisting;
+  }
+
+  std::unique_ptr<::fd::Shader> pShader(new ::fd::Shader());
+
+  if(!pShader->LoadFromFile(shaderName, vertName.c_str(), fragName.c_str())) {
     printf("Failed loading shader!\n");
     return false;
   }
 
-  g_shader.StartUsing();
-  position = g_shader.getAttrib("vertPosition");
-  color = g_shader.getAttrib("vertColor");
-  hWorldMatrix = g_shader.getUniform("worldMatrix");
-  cgWorldPosition = g_shader.getUniform("worldPosition");
-  cgCameraPosition = g_shader.getUniform("cameraPosition");
-  cgCameraMatrix = g_shader.getUniform("cameraMatrix");
-  cgProjectionMatrix = g_shader.getUniform("projectionMatrix");
-  cgFourToThree = g_shader.getUniform("fourToThree");
-  cgWPlaneNearFar = g_shader.getUniform("wPlaneNearFar");
-  g_shader.StopUsing();
+  SetCommonShaderHandles(pShader.get());
 
+  g_shader = pShader.release();
+  
   return true;
 }
 
@@ -107,13 +132,22 @@ bool LoadLevel() {
   }
 }
 
+
 void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
   if (bAlphaAndDisableDepth) {
     glEnable(GL_BLEND);
+    glAlphaFunc(GL_ALWAYS, 0.0f);
+    glDisable(GL_ALPHA_TEST);
+
     glDepthFunc(GL_ALWAYS);
     glDisable(GL_DEPTH_TEST);
   } else {
-    glDisable(GL_BLEND);
+    
+    //glDisable(GL_BLEND);
+    glEnable(GL_BLEND);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GEQUAL, 254.0f / 255.0f);
+    
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
   }
@@ -127,7 +161,7 @@ bool Initialize() {
   _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   wPlaneNearFar.z = 1.0f; // use projective 4d mode
   wPlaneNearFar.w = 0.0f; // project in instead of out 
-  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 10.0f));
+  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 9.0f));
 
   LoadLevel();
   
@@ -135,7 +169,6 @@ bool Initialize() {
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
-  SetAlphaAndDisableDepth(true);
 
   glDisable(GL_CULL_FACE); // no backface culling for 4d
   glBlendEquation(GL_ADD);
@@ -146,7 +179,10 @@ bool Initialize() {
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
 
-  if (!loadShader()) {
+  SetAlphaAndDisableDepth(true);
+  // Just preload the shaders to check for compile errors
+  // Last one will be "current"
+  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
     printf("Shader loading failed\n");
     exit(-1);
   }
@@ -168,7 +204,7 @@ bool Initialize() {
 }
 
 void Deinitialize(void) {
-
+  ::fd::Shader::ClearShaderHash();
 }
 
 void UpdatePerspective() {
@@ -176,9 +212,12 @@ void UpdatePerspective() {
   glLoadIdentity();
   float aspect = static_cast<float>(_width) / static_cast<float>(_height);
   projectionMatrix.build3dProjection(_fov, aspect, _near, _far);
-  g_shader.StartUsing();
-  glUniformMatrix4fv(cgProjectionMatrix, 1, GL_FALSE, projectionMatrix.raw());
-  g_shader.StopUsing();
+
+  if(!g_shader)
+    return;
+  g_shader->StartUsing();
+  glUniformMatrix4fv(hProjectionMatrix, 1, GL_FALSE, projectionMatrix.raw());
+  g_shader->StopUsing();
 }
 
 void ReshapeGL(int width, int height) {
@@ -201,7 +240,16 @@ void Update(int key, int x, int y) {
 
   switch (key) {
     case '!' : {
-      SetAlphaAndDisableDepth(glIsEnabled(GL_BLEND) == GL_FALSE);
+      SetAlphaAndDisableDepth(glIsEnabled(GL_DEPTH_TEST) == GL_TRUE);
+    } break;
+    case '@' : {
+      // Reloading shaders is broken??
+      LoadShader("BlendNoTex");
+      UpdatePerspective();
+    } break;
+    case '#' : {
+      LoadShader("AlphaTest");
+      UpdatePerspective();
     } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
@@ -368,19 +416,22 @@ void Update(int key, int x, int y) {
 }
 
 void Draw(void) {
+  if (!g_shader)
+    return;
     
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  g_shader.StartUsing();
+  g_shader->StartUsing();
 
-  glUniform4fv(cgCameraPosition, 1, _camera.getCameraPos().raw());
-  Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
-
-  glUniformMatrix4fv(cgCameraMatrix, 1, GL_FALSE, transposedCamera.raw());
-  Mat4f transposedFour = fourToThree.transpose();
-  glUniformMatrix4fv(cgFourToThree, 1, GL_FALSE, transposedFour.raw());
-  glUniform4fv(cgWPlaneNearFar, 1, wPlaneNearFar.raw());
+  glUniform4fv(hCameraPosition, 1, _camera.getCameraPos().raw());
+  //Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
+  //glUniformMatrix4fv(hCameraMatrix, 1, GL_FALSE, transposedCamera.raw());
+  glUniformMatrix4fv(hCameraMatrix, 1, GL_TRUE, _camera.getCameraMatrix().raw());
+  //Mat4f transposedFour = fourToThree.transpose();
+  //glUniformMatrix4fv(hFourToThree, 1, GL_FALSE, transposedFour.raw());
+  glUniformMatrix4fv(hFourToThree, 1, GL_TRUE, fourToThree.raw());
+  glUniform4fv(hWPlaneNearFar, 1, wPlaneNearFar.raw());
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)
@@ -403,7 +454,7 @@ void Draw(void) {
     shift.y = shift_amount * q.y;
     shift.z = shift_amount * q.z;
     shift.w = shift_amount * q.w;
-    glUniform4fv(cgWorldPosition, 1, shift.raw());
+    glUniform4fv(hWorldPosition, 1, shift.raw());
 
     int tesseractTris = tesseract.getNumberTriangles();
     int startTriangle = 0;
@@ -412,7 +463,7 @@ void Draw(void) {
     Vec4f a, b, c;
     int colorIndex = 0;
     for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
-      glVertexAttrib4fv(color, colorArray[colorIndex].raw());
+      glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
       tesseract.getTriangle(t, a, b, c);
       glVertex4fv(a.raw());
       glVertex4fv(b.raw());
@@ -424,7 +475,7 @@ void Draw(void) {
     glEnd();
   }
 
-  g_shader.StopUsing();
+  g_shader->StopUsing();
   
   glFlush();
   glutSwapBuffers();
@@ -754,7 +805,8 @@ int main(int argc, char *argv[]) {
   loadInlineShaders();
 #else
   derpShader.Release();
-  derpShader.LoadFromFile("data\\vertTrivial.glsl", "data\\fragTrivial.glsl");
+  derpShader.LoadFromFile(
+      "trivial", "data\\vertTrivial.glsl", "data\\fragTrivial.glsl");
 #endif
   g_texture.LoadFromFile("data\\orientedTexture.png");
 

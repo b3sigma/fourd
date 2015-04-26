@@ -18,6 +18,7 @@
 namespace fd {
 
 Shader::~Shader() {
+  RemoveFromShaderHash();
   Release();
   s_test_shader_refs--;
 }
@@ -51,7 +52,34 @@ Shader::Shader()
   s_test_shader_refs++;
 }
 
-bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
+void Shader::ClearShaderHash() {
+  // um fuck? seems to be no way to iterate through this stupid stb hash
+  // TODO: change to a decent hash or unordered_map
+}
+
+Shader* Shader::GetShaderByRefName(const char* refName) {
+  return (s_pShaderhash != NULL) ?
+      shader_hash_get(s_pShaderhash, refName) : NULL;
+}
+
+void Shader::AddToShaderHash() {
+  if (s_pShaderhash == NULL) {
+    s_pShaderhash = shader_hash_create();
+  }
+
+  if (NULL == shader_hash_get(s_pShaderhash, _refName.c_str())) {
+    shader_hash_add(s_pShaderhash, _refName.c_str(), this);
+  }
+}
+
+void Shader::RemoveFromShaderHash() {
+  if( s_pShaderhash) {
+    shader_hash_remove(s_pShaderhash, _refName.c_str(), NULL);
+  }
+}
+
+bool Shader::LoadFromFile(const char* refName, 
+    const char* vertexFile, const char* pixelFile) {
   AddSubShader(vertexFile, GL_VERTEX_SHADER);
   AddSubShader(pixelFile, GL_FRAGMENT_SHADER);
 
@@ -93,6 +121,8 @@ bool Shader::LoadFromFile(const char* vertexFile, const char* pixelFile) {
   _programId = programId;
   _attribs = handle_hash_create();
   _uniforms = handle_hash_create();
+  _refName.assign(refName);
+  AddToShaderHash();
 
   return true;
 }
