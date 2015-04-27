@@ -25,7 +25,7 @@
 using namespace ::fd;
 
 // apparantly the right way to do most of these in GL is to make a
-// shared uniform buffer (something something sb140?)
+// shared uniform buffer
 // look like 56 floats would apply so far
 // doing things so inefficiently already that much more refactoring necessary
 GLint hPosition;
@@ -37,6 +37,7 @@ GLint hCameraMatrix;
 GLint hProjectionMatrix;
 GLint hFourToThree;
 GLint hWPlaneNearFar;
+GLint hProjectionFlags;
 
 // TODO: Move most of the GL code to render, including the camera
 // Setup a render target approach
@@ -48,16 +49,17 @@ Mat4f worldMatrix;
 Mat4f projectionMatrix;
 Mat4f fourToThree;
 Vec4f wPlaneNearFar;
+Vec4f wProjectionFlags;
 Mesh tesseract;
 Camera _camera;
-float _fov = 45.0f;
+float _fov = 90.0f;
 float _near = 0.1f;
 float _far = 100000.0f;
 int _width = 800;
 int _height = 600;
 int cubeIndex = 0;
 ::fd::Render renderer;
-::fd::TVecQuaxol quaxols_g;
+::fd::TVecQuaxol g_quaxols;
 ::fd::Texture g_texture;
 ::fd::Shader* g_shader = NULL;
 
@@ -86,6 +88,7 @@ void SetCommonShaderHandles(::fd::Shader* pShader) {
   hProjectionMatrix = pShader->getUniform("projectionMatrix");
   hFourToThree = pShader->getUniform("fourToThree");
   hWPlaneNearFar = pShader->getUniform("wPlaneNearFar");
+  hProjectionFlags = pShader->getUniform("wProjectionFlags");
   pShader->StopUsing();
 }
 
@@ -98,11 +101,11 @@ bool LoadShader(const char* shaderName) {
 
   ::fd::Shader* pExisting = ::fd::Shader::GetShaderByRefName(shaderName);
   if (pExisting) {
-    // Shader reloading is broken?
-    g_shader = pExisting;
-    SetCommonShaderHandles(pExisting);
-    return true;
-    //delete pExisting;
+    //// Shader reloading is broken?
+    //g_shader = pExisting;
+    //SetCommonShaderHandles(pExisting);
+    //return true;
+    delete pExisting;
   }
 
   std::unique_ptr<::fd::Shader> pShader(new ::fd::Shader());
@@ -122,8 +125,8 @@ bool LoadShader(const char* shaderName) {
 bool LoadLevel() {
   ChunkLoader chunks;
   if (chunks.LoadFromFile("data\\level.txt")) {
-    std::swap(quaxols_g, chunks.quaxols_);
-    printf("Level loaded %d quaxols!\n", (int)quaxols_g.size());
+    std::swap(g_quaxols, chunks.quaxols_);
+    printf("Level loaded %d quaxols!\n", (int)g_quaxols.size());
     return true;
   }
   else {
@@ -131,7 +134,6 @@ bool LoadLevel() {
     return false;
   }
 }
-
 
 void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
   if (bAlphaAndDisableDepth) {
@@ -146,7 +148,7 @@ void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
     //glDisable(GL_BLEND);
     glEnable(GL_BLEND);
     glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GEQUAL, 254.0f / 255.0f);
+    glAlphaFunc(GL_GEQUAL, 154.0f / 255.0f);
     
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
@@ -159,9 +161,10 @@ bool Initialize() {
   //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
   tesseract.buildTesseract(10.0f, Vec4f(0.1f,0.1f,0.1f,0.1f), Vec4f(0,0,0,0));
   _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
-  wPlaneNearFar.z = 1.0f; // use projective 4d mode
-  wPlaneNearFar.w = 0.0f; // project in instead of out 
-  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 9.0f));
+  wProjectionFlags.x = 1.0f; // use projective 4d mode
+  wProjectionFlags.y = 0.0f; // project in instead of out
+  wProjectionFlags.z = 1.0f; // ratio projection enabled
+  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 0.5f));
 
   LoadLevel();
   
@@ -197,6 +200,7 @@ bool Initialize() {
   fourToThree[2][2] = nearInside;
   wPlaneNearFar.x = 1.0f;
   wPlaneNearFar.y = 40.0f;
+  wPlaneNearFar.z = 0.5f; // size of far w plane / size of near w plane
 
   buildColorArray();
 
@@ -243,7 +247,6 @@ void Update(int key, int x, int y) {
       SetAlphaAndDisableDepth(glIsEnabled(GL_DEPTH_TEST) == GL_TRUE);
     } break;
     case '@' : {
-      // Reloading shaders is broken??
       LoadShader("BlendNoTex");
       UpdatePerspective();
     } break;
@@ -284,6 +287,9 @@ void Update(int key, int x, int y) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       }
     } break;
+    case '0': {
+      LoadLevel();
+    } break;
     case 27: {
       Deinitialize();
       exit(0);
@@ -291,7 +297,7 @@ void Update(int key, int x, int y) {
     case ',' : {
       int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
       cubeIndex = (cubeIndex + 1) % numCubes;
-    } break;
+     } break;
     case '.' : {
       int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
       cubeIndex = (cubeIndex - 1);
@@ -318,10 +324,10 @@ void Update(int key, int x, int y) {
       _camera.ApplyTranslationInput(moveAmount, Camera::UP);
     } break;
     case 'r' : {
-      _camera.ApplyTranslationInput(-moveAmount, Camera::INSIDE);
+      _camera.ApplyTranslationInput(moveAmount, Camera::INSIDE);
     } break;
     case 'f' : {
-      _camera.ApplyTranslationInput(moveAmount, Camera::INSIDE);
+      _camera.ApplyTranslationInput(-moveAmount, Camera::INSIDE);
     } break;
     case 't' : {
       _camera.ApplyRollInput(-rollAmount, Camera::RIGHT, Camera::UP);
@@ -363,12 +369,12 @@ void Update(int key, int x, int y) {
       //UpdatePerspective();
     } break;
     case 'n' : {
-      wPlaneNearFar.z -= 1.0f;
+      wPlaneNearFar.z -= 0.1f;
       //_fov -= 5.0f;
       //UpdatePerspective();
     } break;
     case 'm' : {
-      wPlaneNearFar.z += 1.0f;
+      wPlaneNearFar.z += 0.1f;
       //_fov += 5.0f;
       //UpdatePerspective();
     } break;
@@ -376,6 +382,8 @@ void Update(int key, int x, int y) {
       _camera.printIt();
       printf("\nwPlaneNearFar\n");
       wPlaneNearFar.printIt();
+      printf("\nwProjectionFlags\n");
+      wProjectionFlags.printIt();
       printf("\n");
     } break;
     case '\'' : {
@@ -389,23 +397,25 @@ void Update(int key, int x, int y) {
       }
     } break;
     case ']' : {
-      static float storedFarZ = 1.0f;
-      if (wPlaneNearFar.z == 0.0f) {
-        wPlaneNearFar.z = storedFarZ;
+      if (wProjectionFlags.x == 0.0f) {
+        wProjectionFlags.x = 1.0f;
       } else {
-        storedFarZ = wPlaneNearFar.z;
-        wPlaneNearFar.z = 0.0f;
+        wProjectionFlags.x = 0.0f;
       }
     } break;
     case 'o' : {
-      if (wPlaneNearFar.w == 0.0f) {
-        wPlaneNearFar.w = 1.0f;
+      if (wProjectionFlags.y == 0.0f) {
+        wProjectionFlags.y = 1.0f;
       } else {
-        wPlaneNearFar.w = 0.0f;
+        wProjectionFlags.y = 0.0f;
       }
     } break;
-    case 'p': {
-      LoadLevel();
+    case 'p' : {
+      if (wProjectionFlags.z == 0.0f) {
+        wProjectionFlags.z = 1.0f;
+      } else {
+        wProjectionFlags.z = 0.0f;
+      }
     } break;
 
     //case ']' : {
@@ -432,6 +442,7 @@ void Draw(void) {
   //glUniformMatrix4fv(hFourToThree, 1, GL_FALSE, transposedFour.raw());
   glUniformMatrix4fv(hFourToThree, 1, GL_TRUE, fourToThree.raw());
   glUniform4fv(hWPlaneNearFar, 1, wPlaneNearFar.raw());
+  glUniform4fv(hProjectionFlags, 1, wProjectionFlags.raw());
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)
@@ -442,8 +453,8 @@ void Draw(void) {
 
   glUniformMatrix4fv(hWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
 
-  for (TVecQuaxol::iterator quax_it = quaxols_g.begin();
-    quax_it != quaxols_g.end();
+  for (TVecQuaxol::iterator quax_it = g_quaxols.begin();
+    quax_it != g_quaxols.end();
     ++quax_it) {
     
     const Quaxol& q = *quax_it;
@@ -538,6 +549,7 @@ const float cfThreshold = 0.000001f;
 bool IsEqual(float l, float r) { return (fabs(l - r) < cfThreshold); }
 bool IsZero(float val) { return (fabs(val) < cfThreshold); }
 
+// TODO: tests in here is totally tacky, move them.
 void RunTests() {
   Vec4f a(Rand(), Rand(), Rand(), Rand());
   Vec4f b(Rand(), Rand(), Rand(), Rand());
@@ -591,7 +603,7 @@ int main(int argc, char *argv[]) {
   
   glutInit(&argc, argv);
   glutInitWindowPosition(0, 0);
-  glutInitWindowSize(640, 480);
+  glutInitWindowSize(640, 580);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
   //glutInitContextVersion(3, 2);
   GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
