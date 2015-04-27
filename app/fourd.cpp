@@ -122,11 +122,21 @@ bool LoadShader(const char* shaderName) {
   return true;
 }
 
-bool LoadLevel() {
+bool LoadLevel(const char* levelName = NULL) {
+  std::string levelPath = "data\\";
+  std::string nameBase;
+  if (levelName) {
+    nameBase.assign(levelName);
+  } else {
+    nameBase.assign("level"); // default should always be around?
+  }
+  std::string nameExt = ".txt"; // heh, I guess ext based format? hate you
+  std::string fullName = levelPath + nameBase + nameExt;
   ChunkLoader chunks;
-  if (chunks.LoadFromFile("data\\level.txt")) {
+  if (chunks.LoadFromFile(fullName.c_str())) {
     std::swap(g_quaxols, chunks.quaxols_);
-    printf("Level loaded %d quaxols!\n", (int)g_quaxols.size());
+    printf("Level (%s) loaded %d quaxols!\n",
+        fullName.c_str(), (int)g_quaxols.size());
     return true;
   }
   else {
@@ -150,7 +160,7 @@ void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GEQUAL, 154.0f / 255.0f);
     
-    glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_GREATER); //GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
   }
 }
@@ -278,7 +288,7 @@ void Update(int key, int x, int y) {
     case '8' : {
       tesseract.buildFourCylinder(10.0f, 10.f, 10.0f, 6);
     } break;
-    case '9' : {
+    case '(' : {
       static bool fill = false;
       fill = !fill;
       if (fill) {
@@ -287,8 +297,11 @@ void Update(int key, int x, int y) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       }
     } break;
-    case '0': {
-      LoadLevel();
+    case '9' : {
+      LoadLevel("level_4d_base");
+    } break;
+    case '0' : {
+      LoadLevel("level_arch_wth_w_overhang");
     } break;
     case 27: {
       Deinitialize();
@@ -595,9 +608,6 @@ void RunTests() {
   Shader::TestShaderHash();
 }
 
-//#define DERP_FUCKTARD
-#ifndef DERP_FUCKTARD
-
 int main(int argc, char *argv[]) {
   RunTests();
   
@@ -633,199 +643,3 @@ int main(int argc, char *argv[]) {
   glutMainLoop();
   return 0;
 }
-
-#else 
-
-void derpIdle() {
-  glutPostRedisplay();
-}
-
-void derpReshapeGL(int width, int height) {
-  _width = width;
-  _height = height;
-
-  glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-  glViewport(0, 0, (GLsizei) (_width), (GLsizei) (_height));
-
-  if(height == 0)
-	  height = 1;
-	float ratio = 1.0f * width / height;
-  gluPerspective(45,ratio,1,1000);
-	glMatrixMode(GL_MODELVIEW);
-
-  glutPostRedisplay();
-}
-
-void derpKey(unsigned char key, int x, int y) {
-  switch(key) {
-      case 27: {
-      Deinitialize();
-      exit(0);
-    } break;
-  }
-}
-
-//#define DERP_INLINE_SHADERS
-#ifdef DERP_INLINE_SHADERS
-GLuint v,f,p;
-void loadInlineShaders() {
-	v = glCreateShader(GL_VERTEX_SHADER);
-	f = glCreateShader(GL_FRAGMENT_SHADER);
-
-	char vs[] = R"foo(
-varying vec3 normal;
-uniform vec4 worldPosition;
-void main()
-{	
-  normal = gl_Normal;
-	gl_Position = ftransform() + worldPosition;
-}
-)foo";
-	char fs[] = R"foo(
-varying vec3 normal;
-void main()
-{
-	vec4 color;
-  color = vec4(1.0,0.2,0.1,1.0);
-  color.xyz += normal; 
-	gl_FragColor = color;
-}
-)foo";
-  const char* vsPtr = &vs[0];
-  const char* fsPtr = &fs[0];
-
-	glShaderSource(v, 1, &vsPtr,NULL);
-	glShaderSource(f, 1, &fsPtr,NULL);
-
-	glCompileShader(v);
-	glCompileShader(f);
-	
-	p = glCreateProgram();
-	glAttachShader(p,f);
-	glAttachShader(p,v);
-
-	glLinkProgram(p);
-	glUseProgram(p);
-  glUseProgram(0);
-}
-#else // DERP_INLINE_SHADERS
-fd::Shader derpShader;
-#endif // DERP_INLINE_SHADERS
-
-void derpRenderScene(void) {
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  static float timey = 0.0f;
-  timey += 0.008f;
-  float movey = sinf(timey) * 1.0f;
-  char uniformName[] = "worldPosition";
-#ifdef DERP_INLINE_SHADERS
-  glUseProgram(p);
-  GLint handle = glGetUniformLocation(p, uniformName);
-  if (handle == -1) {
-    printf ("couldn't get handle %s\n", uniformName);
-  } else {
-    Vec4f moveIt(movey, movey, movey, 1.0f);
-    glUniform4fv(handle, 1, moveIt.raw());
-  }
-  glUseProgram(0);
-#else //ifdef DERP_INLINE_SHADERS
-  derpShader.StartUsing();
-
-  derpShader.getUniform("worldMatrix");
-  derpShader.getUniform("worldPosition");
-  derpShader.getUniform("cameraPosition");
-  derpShader.getUniform("cameraMatrix");
-  derpShader.getUniform("projectionMatrix");
-  derpShader.getUniform("fourToThree");
-  derpShader.getUniform("wPlaneNearFar");
-
-  GLint handle = derpShader.getUniform(uniformName);
-  if (handle == -1) {
-    printf ("couldn't get handle %s\n", uniformName);
-  } else {
-    Vec4f moveIt(movey, movey, movey, 1.0f);
-    glUniform4fv(handle, 1, moveIt.raw());
-  }
-  derpShader.StopUsing();
-#endif //def DERP_INLINE_SHADERS
-
-	glBegin(GL_TRIANGLES);
-    glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex3f(-0.5,-0.5,0.0);
-    glColor3f(0.0f, 1.0f, 0.0f);
-		glVertex3f(0.5,0.0,0.0);
-    glColor3f(0.0f, 0.0f, 1.0f);
-		glVertex3f(0.0,0.5,0.0);
-	glEnd();
-
-  glLoadIdentity();
-	gluLookAt(0.0,0.0,5.0, 
-  		      0.0,0.0,-1.0,
-	    		  0.0f,1.0f,0.0f);
-
-	float lpos[4] = {1,0.5,1,0};
-  glLightfv(GL_LIGHT0, GL_POSITION, lpos);
-
-#ifdef DERP_INLINE_SHADERS
-  glUseProgram(p);
-	glutSolidTeapot(1);
-  glUseProgram(0);
-#else
-  derpShader.StartUsing();
-	glutSolidTeapot(1);
-  derpShader.StopUsing();
-#endif //def DERP_INLINE_SHADERS
-
-  glFlush();
-
-	glutSwapBuffers();
-}
-
-int main(int argc, char *argv[]) {
-  
-  glutInit(&argc, argv);
-  glutInitWindowPosition(0, 0);
-  glutInitWindowSize(640, 480);
-  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-//  glutInitContextVersion(3, 2);
-  GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
-//#ifdef _DEBUG
-//  contextFlags |= GLUT_DEBUG;
-//#endif // _DEBUG
-  glutInitContextFlags(contextFlags);
-    
-  glutCreateWindow(argv[0]);
-  
-  glewExperimental=TRUE;
-  if(glewInit() != GLEW_OK) {
-    printf("glew init fail\n");
-    return false;
-  }
-
-  glutReshapeFunc(derpReshapeGL);
-  glutKeyboardFunc(derpKey);
-  glutDisplayFunc(derpRenderScene);
-  glutIdleFunc(derpIdle);
-
-  Initialize();
-
-#ifdef DERP_INLINE_SHADERS
-  loadInlineShaders();
-#else
-  derpShader.Release();
-  derpShader.LoadFromFile(
-      "trivial", "data\\vertTrivial.glsl", "data\\fragTrivial.glsl");
-#endif
-  g_texture.LoadFromFile("data\\orientedTexture.png");
-
-
-  glutMainLoop();
-  return 0;
-}
-
-#endif // DERP_FUCKTARD
-
