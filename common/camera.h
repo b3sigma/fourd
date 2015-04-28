@@ -39,8 +39,11 @@ public:
   void ApplyOrbitInput(float radians, Direction direction);
   void ApplyRotationInput(float radians, Direction target, Direction source);
   void ApplyRollInput(float radians, Direction target, Direction source);
+  void ApplyWorldRotation(float radians, Direction target, Direction source);
 
   void ApplyTranslationInput(float amount, Direction direction);
+
+  void SetCardinalDirections(Direction right, Direction up, Direction forward);
 
   void printIt();
 

@@ -213,7 +213,7 @@ public:
 
   // Aspect is width/height of viewport. This is opengl style.
   FdMat& build3dProjection(T yFov, T aspect, T zNear, T zFar) {
-    T yMax = tan(yFov * (T)PI / 720.0f);
+    T yMax = tan(yFov * (T)PI / 360.0f);
     T xMax = yMax * aspect;
 
     T depth = zFar - zNear;

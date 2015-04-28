@@ -65,6 +65,14 @@ void Camera::ApplyRollInput(float radians, Direction target, Direction source) {
   _cameraMatrix = rot * _cameraMatrix;
 }
 
+void Camera::ApplyWorldRotation(
+    float radians, Direction target, Direction source) {
+  Mat4f rot;
+  rot.buildRotation(radians, (int)target, (int)source);
+  _cameraMatrix = _cameraMatrix * rot.transpose();
+}
+
+
 void Camera::RenormalizeCamera(Direction changeBasis) {
   Vec4f lookAt = _cameraPos - _cameraLookAt;
   lookAt.storeNormalized();

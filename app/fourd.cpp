@@ -122,14 +122,9 @@ bool LoadShader(const char* shaderName) {
   return true;
 }
 
-bool LoadLevel(const char* levelName = NULL) {
+bool LoadLevel(const char* levelName) {
   std::string levelPath = "data\\";
-  std::string nameBase;
-  if (levelName) {
-    nameBase.assign(levelName);
-  } else {
-    nameBase.assign("level"); // default should always be around?
-  }
+  std::string nameBase(levelName);
   std::string nameExt = ".txt"; // heh, I guess ext based format? hate you
   std::string fullName = levelPath + nameBase + nameExt;
   ChunkLoader chunks;
@@ -160,7 +155,7 @@ void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GEQUAL, 154.0f / 255.0f);
     
-    glDepthFunc(GL_GREATER); //GL_LEQUAL);
+    glDepthFunc(GL_LESS); // GL_GREATER); //GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
   }
 }
@@ -169,14 +164,17 @@ bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
-  tesseract.buildTesseract(10.0f, Vec4f(0.1f,0.1f,0.1f,0.1f), Vec4f(0,0,0,0));
-  _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
+  tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
   wProjectionFlags.x = 1.0f; // use projective 4d mode
   wProjectionFlags.y = 0.0f; // project in instead of out
   wProjectionFlags.z = 1.0f; // ratio projection enabled
-  _camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 50.5f, 0.5f));
-
-  LoadLevel();
+  
+  // Set up some reasonable defaults
+  _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
+  _camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
+  _camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
+  
+  LoadLevel("level_4d_base_offset");
   
   g_texture.LoadFromFile("data\\orientedTexture.png");
 
@@ -192,10 +190,10 @@ bool Initialize() {
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
 
-  SetAlphaAndDisableDepth(true);
+  SetAlphaAndDisableDepth(false);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
+  if (!LoadShader("BlendNoTex") || !LoadShader("AlphaTest")) {
     printf("Shader loading failed\n");
     exit(-1);
   }
@@ -298,7 +296,7 @@ void Update(int key, int x, int y) {
       }
     } break;
     case '9' : {
-      LoadLevel("level_4d_base");
+      LoadLevel("level_4d_base_offset");
     } break;
     case '0' : {
       LoadLevel("level_arch_wth_w_overhang");
@@ -359,6 +357,12 @@ void Update(int key, int x, int y) {
     } break;
     case 'j' : {
       _camera.ApplyRollInput(rollAmount, Camera::UP, Camera::INSIDE);
+    } break;
+    case 'i' : {
+      _camera.ApplyWorldRotation(0.5f * (float)PI, Camera::INSIDE, Camera::RIGHT);
+    } break;
+    case 'k' : {
+      _camera.ApplyWorldRotation(-0.5f * (float)PI, Camera::INSIDE, Camera::RIGHT);
     } break;
     // Sure this looks like an unsorted mess, but is spatially aligned kinda.
     case 'x' : {
