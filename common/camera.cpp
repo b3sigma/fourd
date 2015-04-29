@@ -173,13 +173,13 @@ void TestSignals() {
 
 class SuicideComponent : public Component {
   virtual void OnConnected() {
-    _bus->RegisterSignal("Step", this, &::SuicideComponent::OnStepSignal);
+    RegisterSignal(std::string("Step"), this, &::SuicideComponent::OnStepSignal);
     SelfDestruct();
   }
 
   void OnStepSignal(float delta) {
     Mat4f* mat;
-    _bus->GetOwnerData("orientation", false, &mat);
+    _bus->GetOwnerData(std::string("orientation"), false, &mat);
     mat->storeZero(); // mess up matrix intentionally
   }
 };
@@ -221,6 +221,24 @@ void Camera::TestComponents() {
   pCamera->GetComponentBus().Step(2.5f);
   // SuicideComponent messes up camera matrix if it steps
   // but since it suicided, it shouldn't have been allowed to step
+  assert(pCamera->_cameraMatrix == identity);
+  delete pCamera;
+
+  pCamera = new Camera();
+  assert(pCamera->_cameraMatrix == identity);
+  pCamera->GetComponentBus().AddComponent(
+      new SuicideComponent());
+  pCamera->GetComponentBus().AddComponent(
+      new AnimatedRotation((float)PI * 2.0f,
+          (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
+          5.0f, false));
+  pCamera->GetComponentBus().AddComponent(
+      new AnimatedRotation((float)PI * 2.0f,
+          (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
+          5.0f, false));
+  pCamera->GetComponentBus().Step(2.5f);
+  assert(pCamera->_cameraMatrix == identity);
+  pCamera->GetComponentBus().Step(2.5f);
   assert(pCamera->_cameraMatrix == identity);
   delete pCamera;
 

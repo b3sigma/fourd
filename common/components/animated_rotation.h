@@ -43,11 +43,11 @@ public:
   }
 
   virtual void OnConnected() {
-    if(!_bus->GetOwnerData("orientation", true, &_pOwnerMatrix)) {
+    if(!_bus->GetOwnerData(std::string("orientation"), true, &_pOwnerMatrix)) {
       assert(false);
       SelfDestruct();
     }
-    _bus->RegisterSignal("Step", this, &AnimatedRotation::OnStepSignal);
+    RegisterSignal(std::string("Step"), this, &AnimatedRotation::OnStepSignal);
   }
 
   void OnStepSignal(float delta) {

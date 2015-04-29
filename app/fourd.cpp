@@ -614,7 +614,7 @@ void RunTests() {
 }
 
 // Soooo tacky!
-//#define RUN_TESTS
+#define RUN_TESTS
 
 int main(int argc, char *argv[]) {
 #ifdef RUN_TESTS

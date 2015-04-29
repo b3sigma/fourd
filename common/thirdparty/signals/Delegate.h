@@ -68,7 +68,7 @@
 //				  * Bundled with Signals.h for signals and slots library
 //				  * Changed namespace to "Gallant"
 //
-// whatev-15 Sigma
+// whatev-15 1.6 Sigma:
 //          * Added variadic args version.
 //          * Changed namespace to "fd" hahaha
 

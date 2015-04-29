@@ -20,6 +20,7 @@ protected:
   friend ComponentBus;
   ComponentBus* _bus;
   bool _beingDestroyed;
+
 public:
   Component() : _bus(NULL), _beingDestroyed(false) {}
   virtual ~Component() {}
@@ -33,8 +34,25 @@ public:
   // Components should hook up data if necessary here
   virtual void OnConnected() {}
 
+  inline void UnregisterAllSignals();
+
   void SelfDestruct() {
     _beingDestroyed = true;
+    UnregisterAllSignals();
+  }
+
+  typedef std::vector<std::pair<size_t, DelegateMemento>> TRegisteredSignals;
+  TRegisteredSignals _registeredSignals;
+
+  template<typename TSlotClass, typename... TVarArgs>
+  void RegisterSignal(const std::string& name, TSlotClass* pClass,
+      void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
+  //typedef std::vector<SignalN<TVarArgs...>::_Delegate> TDelegateList;
+    // need a way to store this delegate and then unconnect later...
+    // Looking like we need the iterator of the set from the signal?
+    // Plus the hash of the signal on the bus stack?
+    auto signalDelegatePair = _bus->RegisterSignal(name, pClass, pFunc);
+    _registeredSignals.push_back(signalDelegatePair);
   }
 };
 typedef std::vector<Component*> TComponentList;
@@ -47,7 +65,7 @@ protected:
         _type_hash(0), 
         _isPermanentStorage(false),
         _busOwned(false) {}
-    RegData(void* data, const char* name, 
+    RegData(void* data, const std::string& name, 
         size_t type_hash,
         bool permanentStorage) 
         : _data(data), _name(name),
@@ -69,8 +87,9 @@ protected:
 
 public:
   ComponentBus() {
+    static std::string step("Step");
     _signals.insert(std::make_pair(HashSignalParamsAndName(
-        std::string("Step"), typeid(_sig_step).hash_code()), &_sig_step));
+        step, typeid(_sig_step).hash_code()), &_sig_step));
   }
 
   ~ComponentBus() {
@@ -90,7 +109,7 @@ public:
   }
 
   template <typename TData>
-  bool RegisterOwnerData(const char* name, TData* data, bool permanentStorage) {
+  bool RegisterOwnerData(const std::string& name, TData* data, bool permanentStorage) {
     RegData* pReg = new RegData((void*)data, name, typeid(TData).hash_code(),
         permanentStorage);
     auto result = _regHash.insert(std::make_pair(pReg->_name, pReg));
@@ -101,13 +120,13 @@ public:
   }
 
   template <typename TData>
-  void CreateOwnerData(const char* name, TData* data) {
+  void CreateOwnerData(const std::string& name, TData* data) {
   }
 
   template <typename TData>
-  bool GetOwnerData(const char* name, bool permanentStorage, TData** data) {
+  bool GetOwnerData(const std::string& name, bool permanentStorage, TData** data) {
     assert(data != NULL);
-    auto regIt = _regHash.find(std::string(name));
+    auto regIt = _regHash.find(name);
     if (regIt == _regHash.end())
       return false;
 
@@ -174,17 +193,12 @@ public:
   TSignalHash _signals;
 
   template<typename TSlotClass, typename... TVarArgs>
-  void RegisterSignal(const char* name, TSlotClass* pClass,
+  std::pair<size_t, DelegateMemento> RegisterSignal(const std::string& name, TSlotClass* pClass,
       void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
-
-    // All these string constructors...
-    // If we need to, we ought to be able to make a const char*
-    // representation for static strings that's faster here.
-    std::string signalName(name);
 
     // So we use the function signature plus the signal name to generate
     // a hash that references the specific signal.
-    size_t hashVal = HashSignalParamsAndName(signalName, 
+    size_t hashVal = HashSignalParamsAndName(name, 
         typeid(SignalN<TVarArgs...>).hash_code());
 
     SignalN<TVarArgs...>* pSignaler;
@@ -198,18 +212,36 @@ public:
       pSignaler = (SignalN<TVarArgs...>*)signalerIt->second;
     }
 
-    pSignaler->Connect(pClass, pFunc);
-  // This isn't quite going to work as unregistration won't have type info
-  // So we'll need to return both the hash so we can find the right signaler
-  // as well as some signal key so disconnect can happen
+    SignalN<TVarArgs...>::_Delegate delegate = pSignaler->Connect(pClass, pFunc); 
+    return std::make_pair(hashVal, delegate.GetMemento());
   }
 
+  void UnregisterSignal(size_t signalHash, DelegateMemento delegateMem) {
+    auto signalerIt = _signals.find(signalHash);
+    if (signalerIt == _signals.end()) {
+      assert(false); // should have found it
+      return;
+    }
 
+    // So here is the ugly...
+    // We cast to a different kind of signal to delete
+    SignalN<int>* pSignaler = (SignalN<int>*)signalerIt->second;
 
-  //template<TSignalType>
-  //void RegisterSignal(const char* name, void* pClass, 
-  //    _bus->RegisterSignal("Step", this, &::SuicideComponent::OnStepSignal);
-
+    // then do the same with the delegate
+    DelegateN<void, int> delegate;
+    delegate.SetMemento(delegateMem);
+    pSignaler->Disconnect(delegate);
+  }
 };
+
+  inline void Component::UnregisterAllSignals() {
+    if(_bus) {
+      for(auto sigDelegatePair : _registeredSignals) {
+        _bus->UnregisterSignal(sigDelegatePair.first, sigDelegatePair.second);        
+      }
+    }
+    _registeredSignals.resize(0);
+  }
+
 
 } //namespace fd

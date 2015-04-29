@@ -1,5 +1,6 @@
 // All credit to Jarod42 from stackoverflow, from
 // https://stackoverflow.com/questions/25740734/macro-for-static-stdstring-object-from-literal
+// Although it turns out msvc can't actually compile this yet
 #pragma once
 
 #include <cstdint>

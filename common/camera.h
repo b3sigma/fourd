@@ -29,8 +29,8 @@ public:
     _cameraPos.storeZero();
 
     bool success = _componentBus.RegisterOwnerData(
-        "orientation", &_cameraMatrix, true);
-    success &= _componentBus.RegisterOwnerData("position", &_cameraPos, true);
+        std::string("orientation"), &_cameraMatrix, true);
+    success &= _componentBus.RegisterOwnerData(std::string("position"), &_cameraPos, true);
     assert(success == true);
   }
 

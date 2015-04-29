@@ -27,22 +27,26 @@ private:
 	DelegateList delegateList;
 
 public:
-	void Connect( _Delegate delegate )
+	_Delegate Connect( _Delegate delegate )
 	{
 		delegateList.insert( delegate );
+    return delegate;
 	}
 
 	template< class X, class Y >
-	void Connect( Y * obj, void (X::*func)( TVarParams... varParams ) )
+	_Delegate Connect( Y * obj, void (X::*func)( TVarParams... varParams ) )
 	{
     _Delegate delegate = MakeDelegateN( obj, func );
 		delegateList.insert( delegate );
+    return delegate;
 	}
 
 	template< class X, class Y >
-	void Connect( Y * obj, void (X::*func)( TVarParams... varParams ) const )
+	_Delegate Connect( Y * obj, void (X::*func)( TVarParams... varParams ) const )
 	{
-		delegateList.insert( MakeDelegateN( obj, func ) );
+    _Delegate delegate = MakeDelegateN( obj, func );
+		delegateList.insert( delegate );
+    return delegate;
 	}
 
 	void Disconnect( _Delegate delegate )
