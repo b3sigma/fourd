@@ -47,12 +47,27 @@ class Render {
   typedef std::vector<View*> TViewList;
   TViewList _views;
 
+  // shouldn't be here..
+  // should be in a scene or something
   ::fd::Timer timer_;
+  double _lastTotalTime;
+  double _frameTime;
+
 
 public:
-  Render() {}
+  Render() : _frameTime(0.0), _lastTotalTime(0.0) {}
+
+  void Step() {
+    double totalTime = GetTotalTime();
+    _frameTime = totalTime - _lastTotalTime;
+    _lastTotalTime = totalTime;
+  }
 
   double GetFrameTime() {
+    return _frameTime;
+  }
+
+  double GetTotalTime() {
     return timer_.GetElapsed();
   }
 

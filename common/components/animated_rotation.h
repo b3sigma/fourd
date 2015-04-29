@@ -53,7 +53,7 @@ public:
   void OnStepSignal(float delta) {
     assert(_pOwnerMatrix != NULL);
 
-    float stepAmount = std::min(_duration - _current, delta);
+    float stepAmount = (::std::min)(_duration - _current, delta);
 
     Mat4f rot;
     float amount = _radians / _duration * stepAmount;

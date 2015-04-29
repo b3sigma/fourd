@@ -75,6 +75,13 @@ public:
       _aligned_free(p);
   }
 
+  void Step(float fDeltaTime) {
+    // after all this component stuff,
+    // now I want to not do it this way and instead do crazy things
+    // like make camera a component of render and chain stuff magically...
+    _componentBus.Step(fDeltaTime);
+  }
+
   ComponentBus& GetComponentBus() { return _componentBus; }
   static void TestComponents();
 

@@ -19,8 +19,8 @@
 #include "render.h"
 #include "../common/chunkloader.h"
 #include "shader.h"
-
 #include "texture.h"
+#include "../common/components/animated_rotation.h"
 
 using namespace ::fd;
 
@@ -359,10 +359,16 @@ void Update(int key, int x, int y) {
       _camera.ApplyRollInput(rollAmount, Camera::UP, Camera::INSIDE);
     } break;
     case 'i' : {
-      _camera.ApplyWorldRotation(0.5f * (float)PI, Camera::INSIDE, Camera::RIGHT);
+      _camera.GetComponentBus().AddComponent(
+          new AnimatedRotation((float)PI * 0.5f,
+          (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
+          2.0f /* duration */, true /* worldSpace */));
     } break;
     case 'k' : {
-      _camera.ApplyWorldRotation(-0.5f * (float)PI, Camera::INSIDE, Camera::RIGHT);
+      _camera.GetComponentBus().AddComponent(
+          new AnimatedRotation(-(float)PI * 0.5f,
+          (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
+          2.0f /* duration */, true /* worldSpace */));
     } break;
     // Sure this looks like an unsorted mess, but is spatially aligned kinda.
     case 'x' : {
@@ -558,6 +564,8 @@ void ApplyMouseMove() {
 
 void OnIdle() {
   ApplyMouseMove();
+  renderer.Step();
+  _camera.Step((float)renderer.GetFrameTime());
   glutPostRedisplay();
 }
 
