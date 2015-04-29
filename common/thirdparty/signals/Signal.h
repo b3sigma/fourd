@@ -19,11 +19,11 @@ template<typename... TVarParams>
 class SignalN
 {
 public:
-	typedef DelegateN<TVarParams...> _Delegate;
+	typedef DelegateN<void, TVarParams...> _Delegate;
 
 private:
 	typedef std::set<_Delegate> DelegateList;
-	typedef typename DelegateList::const_iterator DelegateIterator;
+  typedef typename DelegateList::const_iterator DelegateIterator;
 	DelegateList delegateList;
 
 public:
@@ -35,13 +35,14 @@ public:
 	template< class X, class Y >
 	void Connect( Y * obj, void (X::*func)( TVarParams... varParams ) )
 	{
-		delegateList.insert( MakeDelegate( obj, func ) );
+    _Delegate delegate = MakeDelegateN( obj, func );
+		delegateList.insert( delegate );
 	}
 
 	template< class X, class Y >
 	void Connect( Y * obj, void (X::*func)( TVarParams... varParams ) const )
 	{
-		delegateList.insert( MakeDelegate( obj, func ) );
+		delegateList.insert( MakeDelegateN( obj, func ) );
 	}
 
 	void Disconnect( _Delegate delegate )
@@ -52,13 +53,13 @@ public:
 	template< class X, class Y >
 	void Disconnect( Y * obj, void (X::*func)( TVarParams... varParams ) )
 	{
-		delegateList.erase( MakeDelegate( obj, func ) );
+		delegateList.erase( MakeDelegateN( obj, func ) );
 	}
 
 	template< class X, class Y >
 	void Disconnect( Y * obj, void (X::*func)( TVarParams... varParams ) const )
 	{
-		delegateList.erase( MakeDelegate( obj, func ) );
+		delegateList.erase( MakeDelegateN( obj, func ) );
 	}
 
 	void Clear()

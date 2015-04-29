@@ -934,7 +934,7 @@ public:
 			function_to_bind); }
 	// Invoke the delegate
 	RetType operator() (TVarParams... varParams) const {
-	return (m_Closure.GetClosureThis()->*(m_Closure.GetClosureMemPtr()))(varParams...); }
+	  return (m_Closure.GetClosureThis()->*(m_Closure.GetClosureMemPtr()))(varParams...); }
 	// Implicit conversion to "bool" using the safe_bool idiom
 private:
 	typedef struct SafeBoolStruct {
@@ -962,7 +962,7 @@ public:
 
 private:	// Invoker for static functions
 	RetType InvokeStaticFunction(TVarParams... varParams) const {
-	return (*(m_Closure.GetStaticFunction()))(varParams...); }
+	  return (*(m_Closure.GetStaticFunction()))(varParams...); }
 };
 
 
@@ -2120,6 +2120,17 @@ public:
 #else
 #define FASTDLGT_RETTYPE RetType
 #endif
+
+//N=N
+template <class X, class Y, class RetType, typename... TVarParams>
+DelegateN<FASTDLGT_RETTYPE, TVarParams...> MakeDelegateN(Y* x, RetType (X::*func)(TVarParams... varParams)) {
+	return DelegateN<FASTDLGT_RETTYPE, TVarParams...>(x, func);
+}
+
+template <class X, class Y, class RetType, typename... TVarParams>
+DelegateN<FASTDLGT_RETTYPE, TVarParams...> MakeDelegateN(Y* x, RetType (X::*func)(TVarParams... varParams) const) {
+	return DelegateN<FASTDLGT_RETTYPE, TVarParams...>(x, func);
+}
 
 //N=0
 template <class X, class Y, class RetType>

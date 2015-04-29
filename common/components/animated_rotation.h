@@ -21,29 +21,37 @@ protected:
   bool  _isWorldRotation;
 
   float _current;
-  Mat4f* _ownerMatrix;
+  Mat4f* _pOwnerMatrix;
+
 
 public:
   AnimatedRotation(float radians, int targetDir, int sourceDir, 
       float duration, bool worldRotation)
-      : Component() 
-      , _radians(radians)
+      : _radians(radians)
       , _targetDirection(targetDir)
       , _sourceDirection(sourceDir)
       , _duration(duration)
       , _isWorldRotation(worldRotation)
       , _current(0.0f)
-      , _ownerMatrix(NULL)
-  {}
+      , _pOwnerMatrix(NULL)
+  {
+    assert(duration != 0.0f);
+  }
+
+  virtual ~AnimatedRotation() {
+    assert(_duration != 0.0f); // just need a line for the debugger
+  }
 
   virtual void OnConnected() {
-    if(!_bus->GetOwnerData<Mat4f>("orientation", true, &_ownerMatrix)) {
+    if(!_bus->GetOwnerData("orientation", true, &_pOwnerMatrix)) {
+      assert(false);
       SelfDestruct();
     }
+    _bus->RegisterSignal("Step", this, &AnimatedRotation::OnStepSignal);
   }
 
   void OnStepSignal(float delta) {
-    assert(_ownerMatrix != NULL);
+    assert(_pOwnerMatrix != NULL);
 
     float stepAmount = std::min(_duration - _current, delta);
 
@@ -52,16 +60,22 @@ public:
     rot.buildRotation(amount, _targetDirection, _sourceDirection);
 
     if (_isWorldRotation) {
-      *_ownerMatrix = (*_ownerMatrix) * rot.transpose();
+      *_pOwnerMatrix = (*_pOwnerMatrix) * rot.transpose();
     } else {
-      *_ownerMatrix = rot.transpose() * (*_ownerMatrix);
+      *_pOwnerMatrix = rot.transpose() * (*_pOwnerMatrix);
     }
 
     _current += delta;
-    if(_current > _duration) {
+    if(_current >= _duration) {
       SelfDestruct();
     }
   }
+
+private:
+  AnimatedRotation() {}
+  // don't allow copies
+  AnimatedRotation(const AnimatedRotation& copy) { assert(false); }
+
 };
 
 } // namespace fd

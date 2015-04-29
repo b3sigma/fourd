@@ -65,10 +65,14 @@ protected:
   TRegHash _regHash;
 
   TComponentList _components;
-  Signal1<float> _sig_step;
+  SignalN<float> _sig_step;
 
 public:
-  ComponentBus() {}
+  ComponentBus() {
+    _signals.insert(std::make_pair(HashSignalParamsAndName(
+        std::string("Step"), typeid(_sig_step).hash_code()), &_sig_step));
+  }
+
   ~ComponentBus() {
     for(auto& pComponent : _components) {
       pComponent->PreBusDelete();
@@ -102,8 +106,21 @@ public:
 
   template <typename TData>
   bool GetOwnerData(const char* name, bool permanentStorage, TData** data) {
+    assert(data != NULL);
+    auto regIt = _regHash.find(std::string(name));
+    if (regIt == _regHash.end())
+      return false;
 
-    return false;
+    RegData* pReg = regIt->second;
+    assert(pReg->_type_hash == typeid(TData).hash_code());
+    if(pReg->_isPermanentStorage || !permanentStorage) {
+      // Yeah another void* cast, but the typeid check above provides hope.
+      *data = (TData*)pReg->_data;
+      return true;
+    } else {
+      // Don't give out temporary pointers for permanent storage
+      return false;
+    }
   }
 
   void AddComponent(Component* baby) {
@@ -145,21 +162,54 @@ public:
   // to know all the signals it has registered, so it can un-register on
   // destruction.
 
+  size_t HashSignalParamsAndName(const std::string& name, size_t typeHash) {
+    static std::hash<std::string> stringHasher; // is this silly pre-opt?
+    return stringHasher(name) ^ (typeHash << 1);
+  }
+
+  // Might want to do SignalN_baseclass instead of void*
+  // Also I think we are hashing the combination of the
+  // string hash and the hashed type. I hate your cpu cycles is why.
+  typedef std::unordered_map<size_t, void*> TSignalHash;
+  TSignalHash _signals;
+
+  template<typename TSlotClass, typename... TVarArgs>
+  void RegisterSignal(const char* name, TSlotClass* pClass,
+      void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
+
+    // All these string constructors...
+    // If we need to, we ought to be able to make a const char*
+    // representation for static strings that's faster here.
+    std::string signalName(name);
+
+    // So we use the function signature plus the signal name to generate
+    // a hash that references the specific signal.
+    size_t hashVal = HashSignalParamsAndName(signalName, 
+        typeid(SignalN<TVarArgs...>).hash_code());
+
+    SignalN<TVarArgs...>* pSignaler;
+    auto signalerIt = _signals.find(hashVal);
+    if (signalerIt == _signals.end()) {
+      pSignaler = new SignalN<TVarArgs...>();
+      _signals.insert(std::make_pair(hashVal, (void*)pSignaler));
+    } else {
+      // Here we go from the void* to the real type.
+      // A hash collision will definitely cause a crash.
+      pSignaler = (SignalN<TVarArgs...>*)signalerIt->second;
+    }
+
+    pSignaler->Connect(pClass, pFunc);
+  // This isn't quite going to work as unregistration won't have type info
+  // So we'll need to return both the hash so we can find the right signaler
+  // as well as some signal key so disconnect can happen
+  }
+
+
+
   //template<TSignalType>
   //void RegisterSignal(const char* name, void* pClass, 
   //    _bus->RegisterSignal("Step", this, &::SuicideComponent::OnStepSignal);
 
 };
-
-//template<typename... TVarArgs>
-//class Signal {
-//
-//};
-//
-//template<typename TSlotClass, typename... TVarArgs>
-//void RegisterSignal(const char* name, void* pClass,
-//    void (TSlotClass::*func)(TVarArgs... varParameters)) {
-//  
-//}
 
 } //namespace fd
