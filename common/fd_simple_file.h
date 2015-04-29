@@ -1,9 +1,10 @@
-// A single-header file implementation of file utilities in the style of stb
+// A single-header file implementation of file utilities in the style of stb,
+// except shittier because std::string makes it C++ only.
 //
 // To use, define FD_SIMPLE_FILE_IMPLEMENTATION in one cpp file,
 // then #include in that file.
 // In any other cpp file, #include as necessary.
-// 
+//
 // Easy and super-inefficient!
 // Uses google style where string inputs are const char* and outputs are string
 

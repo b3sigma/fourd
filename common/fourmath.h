@@ -179,6 +179,9 @@ public:
   bool operator ==(const FdMat& c) const {
     return d(0) == c.d(0) && d(1) == c.d(1) && d(2) == c.d(2) && d(3) == c.d(3);
   }
+  bool operator !=(const FdMat& c) const {
+    return !(operator ==(c));
+  }
 
   FdMat& operator =(const FdMat& right) {
     setEigen(right.eigen());
@@ -326,6 +329,16 @@ public:
     viewTarget.d(1).w = 0;
     viewTarget.d(2).w = 0;
     viewTarget.d(3).set(0, 0, 0, 1);
+  }
+
+  void* operator new(size_t i)
+  {
+      return _aligned_malloc(i, 16);
+  }
+
+  void operator delete(void* p)
+  {
+      _aligned_free(p);
   }
 };
 

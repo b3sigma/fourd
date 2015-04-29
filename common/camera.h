@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fourmath.h"
+#include "component.h"
 
 namespace fd {
 
@@ -20,10 +21,17 @@ public:
   MovementMode _movement;
   Vec4f _cameraLookAt;
 
+  ComponentBus _componentBus;
+
   Camera()
       : _movement(ORBIT) {
     _cameraMatrix.storeIdentity();
     _cameraPos.storeZero();
+
+    bool success = _componentBus.RegisterOwnerData(
+        "orientation", &_cameraMatrix, true);
+    success &= _componentBus.RegisterOwnerData("position", &_cameraPos, true);
+    assert(success == true);
   }
 
   Camera(MovementMode mode)
@@ -43,8 +51,6 @@ public:
 
   void ApplyTranslationInput(float amount, Direction direction);
 
-  void SetCardinalDirections(Direction right, Direction up, Direction forward);
-
   void printIt();
 
   const Mat4f& getCameraMatrix() const {
@@ -58,6 +64,19 @@ public:
   void setMovementMode(MovementMode mode) {
     _movement = mode;
   }
+
+  void* operator new(size_t i)
+  {
+      return _aligned_malloc(i, 16);
+  }
+
+  void operator delete(void* p)
+  {
+      _aligned_free(p);
+  }
+
+  ComponentBus& GetComponentBus() { return _componentBus; }
+  static void TestComponents();
 
 private:
   void RenormalizeCamera(Direction changeBasis);

@@ -24,10 +24,8 @@ Shader::~Shader() {
 }
 
 void Shader::Release() {
-  for (TVecShaderIds::iterator shadIt = _subShaders.begin();
-      shadIt != _subShaders.end();
-      ++shadIt) {
-    glDeleteShader(*shadIt);
+  for (auto shaderId : _subShaders) {
+    glDeleteShader(shaderId);
   }
   _subShaders.resize(0);
   if(_programId != 0) {
@@ -89,18 +87,14 @@ bool Shader::LoadFromFile(const char* refName,
     return false;
   }
 
-  for (TVecShaderIds::iterator shadIt = _subShaders.begin();
-      shadIt != _subShaders.end();
-      ++shadIt) {
-    glAttachShader(programId, *shadIt);
+  for (auto shaderId : _subShaders) {
+    glAttachShader(programId, shaderId);
   }
 
   glLinkProgram(programId);
   
-  for (TVecShaderIds::iterator shadIt = _subShaders.begin();
-      shadIt != _subShaders.end();
-      ++shadIt) {
-    glDetachShader(programId, *shadIt);
+  for (auto shaderId : _subShaders) {
+    glDetachShader(programId, shaderId);
   }
 
   GLint linkSuccess = GL_TRUE;

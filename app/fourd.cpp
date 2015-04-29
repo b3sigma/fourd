@@ -610,10 +610,16 @@ void RunTests() {
 //  threeMat.eigen().
 
   Shader::TestShaderHash();
+  Camera::TestComponents();
 }
 
+// Soooo tacky!
+//#define RUN_TESTS
+
 int main(int argc, char *argv[]) {
+#ifdef RUN_TESTS
   RunTests();
+#endif // RUN_TESTS
   
   glutInit(&argc, argv);
   glutInitWindowPosition(0, 0);

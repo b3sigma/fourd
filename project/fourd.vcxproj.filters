@@ -77,6 +77,18 @@
     <ClInclude Include="..\common\fd_simple_file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\components\animated_rotation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\thirdparty\signals\Signal.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\thirdparty\signals\Delegate.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">
