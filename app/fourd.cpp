@@ -24,7 +24,7 @@
 
 using namespace ::fd;
 
-// apparantly the right way to do most of these in GL is to make a
+// apparently the right way to do most of these in GL is to make a
 // shared uniform buffer
 // look like 56 floats would apply so far
 // doing things so inefficiently already that much more refactoring necessary
@@ -51,21 +51,19 @@ Mat4f fourToThree;
 Vec4f wPlaneNearFar;
 Vec4f wProjectionFlags;
 Mesh tesseract;
-Camera _camera;
+Camera g_camera;
 float _fov = 90.0f;
 float _near = 0.1f;
 float _far = 100000.0f;
 int _width = 800;
 int _height = 600;
 int cubeIndex = 0;
-::fd::Render renderer;
+::fd::Render g_renderer;
 ::fd::TVecQuaxol g_quaxols;
 ::fd::Texture g_texture;
 ::fd::Shader* g_shader = NULL;
-
-// trying out different naming conventions ok? quit complaining
-// couple days later: suuuure, "trying out" and not "whatever the fuck today"
-// don't worry though, "I'll clean it up later" bwahahahaha
+bool g_captureMouse = false;
+HWND g_windowHandle;
 
 typedef std::vector<Vec4f> VectorList;
 VectorList colorArray;
@@ -101,10 +99,6 @@ bool LoadShader(const char* shaderName) {
 
   ::fd::Shader* pExisting = ::fd::Shader::GetShaderByRefName(shaderName);
   if (pExisting) {
-    //// Shader reloading is broken?
-    //g_shader = pExisting;
-    //SetCommonShaderHandles(pExisting);
-    //return true;
     delete pExisting;
   }
 
@@ -170,9 +164,9 @@ bool Initialize() {
   wProjectionFlags.z = 1.0f; // ratio projection enabled
   
   // Set up some reasonable defaults
-  _camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
-  _camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
-  _camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
+  g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
+  g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
+  g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
   
   LoadLevel("level_4d_base_offset");
   
@@ -190,10 +184,10 @@ bool Initialize() {
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
 
-  SetAlphaAndDisableDepth(false);
+  SetAlphaAndDisableDepth(true);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  if (!LoadShader("BlendNoTex") || !LoadShader("AlphaTest")) {
+  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
     printf("Shader loading failed\n");
     exit(-1);
   }
@@ -243,6 +237,84 @@ void ReshapeGL(int width, int height) {
   glutPostRedisplay();
 }
 
+int mouseX = 0;
+int mouseY = 0;
+int accumulatedMouseX = 0;
+int accumulatedMouseY = 0;
+
+void PassiveMotion(int x, int y) {
+  int threshold = 20;
+  int deltaX = x - mouseX;
+  int deltaY = y - mouseY;
+  mouseX = x;
+  mouseY = y;
+
+  //printf("PassiveMotion x:%d y:%d deltaX:%d deltaY:%d accumX:%d accumY:%d\n",
+  //  x, y, deltaX, deltaY, accumulatedMouseX, accumulatedMouseY);
+
+  if (deltaX > threshold || deltaY > threshold) {
+    //printf("threshold moused\n");
+    return;
+  }
+  accumulatedMouseX += deltaX;
+  accumulatedMouseY += deltaY;
+
+  if(g_captureMouse) {
+    const int edgeWarp = 30;
+    int newX = mouseX;
+    int newY = mouseY;
+    if(mouseX < edgeWarp || mouseX > (_width - edgeWarp)) {
+      newX = _width / 2;
+    }
+    if(mouseY < edgeWarp || mouseY > (_height - edgeWarp)) {
+      newY = _height / 2;
+    }
+    if(newX != mouseX || newY != mouseY) {
+      mouseX = newX;
+      mouseY = newY;
+      glutWarpPointer(newX, newY);
+    }
+  }
+}
+
+void ApplyMouseMove() {
+  static float moveAmount = 0.01f;
+  if (accumulatedMouseX) {
+    g_camera.ApplyRotationInput(moveAmount * -accumulatedMouseX, Camera::FORWARD, Camera::RIGHT);
+    accumulatedMouseX = 0;
+  }
+
+  if (accumulatedMouseY) {
+    g_camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, Camera::UP);
+    accumulatedMouseY = 0;
+  }
+}
+
+void ToggleMouseCapture() {
+  g_captureMouse = !g_captureMouse;
+  if (g_captureMouse) {
+    RECT windowRect; // will include border
+    GetWindowRect(g_windowHandle, &windowRect);
+    RECT clientRect; // local window space
+    GetClientRect(g_windowHandle, &clientRect);
+
+    RECT interiorRect = clientRect;
+    interiorRect.left += windowRect.left;
+    interiorRect.right += windowRect.left;
+    interiorRect.top += windowRect.top;
+    interiorRect.bottom += windowRect.top;
+
+    // This is actually wrong, we aren't handling the border correctly,
+    // but it doesn't matter as the mouse move wrap handles it.
+    BOOL result = ClipCursor(&interiorRect);
+
+    glutSetCursor(GLUT_CURSOR_NONE);
+  } else {
+    ClipCursor(NULL);
+    glutSetCursor(GLUT_CURSOR_INHERIT);
+  }
+}
+
 void Update(int key, int x, int y) {
   UNUSED(x); UNUSED(y); // Required by glut prototype.
   static float moveAmount = 1.0f;
@@ -251,6 +323,9 @@ void Update(int key, int x, int y) {
   bool isShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
 
   switch (key) {
+    case '`' : {
+      ToggleMouseCapture();
+    } break;
     case '!' : {
       SetAlphaAndDisableDepth(glIsEnabled(GL_DEPTH_TEST) == GL_TRUE);
     } break;
@@ -317,57 +392,69 @@ void Update(int key, int x, int y) {
       }
     } break;
     case 'a' : {
-      _camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);
+      g_camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);
     } break;
     case 'd' : {
-      _camera.ApplyTranslationInput(moveAmount, Camera::RIGHT);
+      g_camera.ApplyTranslationInput(moveAmount, Camera::RIGHT);
     } break;
     case 'w' : {
-      _camera.ApplyTranslationInput(-moveAmount, Camera::FORWARD);
+      g_camera.ApplyTranslationInput(-moveAmount, Camera::FORWARD);
     } break;
     case 's' : {
-      _camera.ApplyTranslationInput(moveAmount, Camera::FORWARD);
+      g_camera.ApplyTranslationInput(moveAmount, Camera::FORWARD);
     } break;
     case 'q' : {
-      _camera.ApplyTranslationInput(-moveAmount, Camera::UP);
+      g_camera.ApplyTranslationInput(-moveAmount, Camera::UP);
     } break;
     case 'e' : {
-      _camera.ApplyTranslationInput(moveAmount, Camera::UP);
+      g_camera.ApplyTranslationInput(moveAmount, Camera::UP);
     } break;
     case 'r' : {
-      _camera.ApplyTranslationInput(moveAmount, Camera::INSIDE);
+      g_camera.ApplyTranslationInput(moveAmount, Camera::INSIDE);
     } break;
     case 'f' : {
-      _camera.ApplyTranslationInput(-moveAmount, Camera::INSIDE);
+      g_camera.ApplyTranslationInput(-moveAmount, Camera::INSIDE);
     } break;
     case 't' : {
-      _camera.ApplyRollInput(-rollAmount, Camera::RIGHT, Camera::UP);
+      g_camera.ApplyRollInput(-rollAmount, Camera::RIGHT, Camera::UP);
     } break;
     case 'g' : {
-      _camera.ApplyRollInput(rollAmount, Camera::RIGHT, Camera::UP);
+      g_camera.ApplyRollInput(rollAmount, Camera::RIGHT, Camera::UP);
     } break;
     case 'y' : {
-      _camera.ApplyRollInput(-rollAmount, Camera::INSIDE, Camera::RIGHT);
+      g_camera.ApplyRollInput(-rollAmount, Camera::INSIDE, Camera::RIGHT);
     } break;
     case 'h' : {
-      _camera.ApplyRollInput(rollAmount, Camera::INSIDE, Camera::RIGHT);
+      g_camera.ApplyRollInput(rollAmount, Camera::INSIDE, Camera::RIGHT);
     } break;
     case 'u' : {
-      _camera.ApplyRollInput(-rollAmount, Camera::UP, Camera::INSIDE);
+      g_camera.ApplyRollInput(-rollAmount, Camera::UP, Camera::INSIDE);
     } break;
     case 'j' : {
-      _camera.ApplyRollInput(rollAmount, Camera::UP, Camera::INSIDE);
+      g_camera.ApplyRollInput(rollAmount, Camera::UP, Camera::INSIDE);
     } break;
     case 'i' : {
-      _camera.GetComponentBus().AddComponent(
+      g_camera.GetComponentBus().AddComponent(
           new AnimatedRotation((float)PI * 0.5f,
           (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
           2.0f /* duration */, true /* worldSpace */));
     } break;
     case 'k' : {
-      _camera.GetComponentBus().AddComponent(
+      g_camera.GetComponentBus().AddComponent(
           new AnimatedRotation(-(float)PI * 0.5f,
           (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
+          2.0f /* duration */, true /* worldSpace */));
+    } break;
+    case 'o' : {
+      g_camera.GetComponentBus().AddComponent(
+          new AnimatedRotation((float)PI * 0.5f,
+          (int)::fd::Camera::UP, (int)::fd::Camera::INSIDE,
+          2.0f /* duration */, true /* worldSpace */));
+    } break;
+    case 'l' : {
+      g_camera.GetComponentBus().AddComponent(
+          new AnimatedRotation(-(float)PI * 0.5f,
+          (int)::fd::Camera::UP, (int)::fd::Camera::INSIDE,
           2.0f /* duration */, true /* worldSpace */));
     } break;
     // Sure this looks like an unsorted mess, but is spatially aligned kinda.
@@ -402,7 +489,7 @@ void Update(int key, int x, int y) {
       //UpdatePerspective();
     } break;
     case '?' : {
-      _camera.printIt();
+      g_camera.printIt();
       printf("\nwPlaneNearFar\n");
       wPlaneNearFar.printIt();
       printf("\nwProjectionFlags\n");
@@ -413,37 +500,33 @@ void Update(int key, int x, int y) {
       tesseract.printIt();
     } break;
     case '[' : {
-      if (_camera.getMovementMode() == Camera::LOOK) {
-        _camera.setMovementMode(Camera::ORBIT);
+      if (g_camera.getMovementMode() == Camera::LOOK) {
+        g_camera.setMovementMode(Camera::ORBIT);
       } else {
-        _camera.setMovementMode(Camera::LOOK);
+        g_camera.setMovementMode(Camera::LOOK);
       }
     } break;
-    case ']' : {
+    case ']' : { // ortho projection
       if (wProjectionFlags.x == 0.0f) {
         wProjectionFlags.x = 1.0f;
       } else {
         wProjectionFlags.x = 0.0f;
       }
     } break;
-    case 'o' : {
-      if (wProjectionFlags.y == 0.0f) {
-        wProjectionFlags.y = 1.0f;
-      } else {
-        wProjectionFlags.y = 0.0f;
-      }
-    } break;
-    case 'p' : {
+    //case 'o' : { // inv? didn't pan out
+    //  if (wProjectionFlags.y == 0.0f) {
+    //    wProjectionFlags.y = 1.0f;
+    //  } else {
+    //    wProjectionFlags.y = 0.0f;
+    //  }
+    //} break;
+    case 'p' : { // projective (ratio)
       if (wProjectionFlags.z == 0.0f) {
         wProjectionFlags.z = 1.0f;
       } else {
         wProjectionFlags.z = 0.0f;
       }
     } break;
-
-    //case ']' : {
-    //  loadShader();
-    //} break;
   }
   glutPostRedisplay();
 }
@@ -457,12 +540,8 @@ void Draw(void) {
 
   g_shader->StartUsing();
 
-  glUniform4fv(hCameraPosition, 1, _camera.getCameraPos().raw());
-  //Mat4f transposedCamera = _camera.getCameraMatrix().transpose();
-  //glUniformMatrix4fv(hCameraMatrix, 1, GL_FALSE, transposedCamera.raw());
-  glUniformMatrix4fv(hCameraMatrix, 1, GL_TRUE, _camera.getCameraMatrix().raw());
-  //Mat4f transposedFour = fourToThree.transpose();
-  //glUniformMatrix4fv(hFourToThree, 1, GL_FALSE, transposedFour.raw());
+  glUniform4fv(hCameraPosition, 1, g_camera.getCameraPos().raw());
+  glUniformMatrix4fv(hCameraMatrix, 1, GL_TRUE, g_camera.getCameraMatrix().raw());
   glUniformMatrix4fv(hFourToThree, 1, GL_TRUE, fourToThree.raw());
   glUniform4fv(hWPlaneNearFar, 1, wPlaneNearFar.raw());
   glUniform4fv(hProjectionFlags, 1, wProjectionFlags.raw());
@@ -471,7 +550,7 @@ void Draw(void) {
   // figure out the clipping issues (negative w?)
   // normalize the input amounts
   // refactor the input system
-  // switch the mat4 class to be column major (at least make the calls explicit)
+  // switch the mat4 class to be column major?
   // multi-view rendering
 
   glUniformMatrix4fv(hWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
@@ -530,42 +609,10 @@ void Motion(int x, int y) {
   //printf("Motion x:%d y:%d\n", x, y);
 }
 
-int mouseX = 0;
-int mouseY = 0;
-int accumulatedMouseX = 0;
-int accumulatedMouseY = 0;
-
-void PassiveMotion(int x, int y) {
-  int threshold = 20;
-  int deltaX = x - mouseX;
-  int deltaY = y - mouseY;
-  mouseX = x;
-  mouseY = y;
-  if (deltaX > threshold || deltaY > threshold) {
-    return;
-  }
-  accumulatedMouseX += deltaX;
-  accumulatedMouseY += deltaY;
-  //printf("PassiveMotion x:%d y:%d accumX:%d accumY:%d\n", x, y, accumulatedMouseX, accumulatedMouseY);
-}
-
-void ApplyMouseMove() {
-  static float moveAmount = 0.01f;
-  if (accumulatedMouseX) {
-    _camera.ApplyRotationInput(moveAmount * -accumulatedMouseX, Camera::FORWARD, Camera::RIGHT);
-    accumulatedMouseX = 0;
-  }
-
-  if (accumulatedMouseY) {
-    _camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, Camera::UP);
-    accumulatedMouseY = 0;
-  }
-}
-
 void OnIdle() {
   ApplyMouseMove();
-  renderer.Step();
-  _camera.Step((float)renderer.GetFrameTime());
+  g_renderer.Step();
+  g_camera.Step((float)g_renderer.GetFrameTime());
   glutPostRedisplay();
 }
 
@@ -642,6 +689,10 @@ int main(int argc, char *argv[]) {
     
   glutCreateWindow(argv[0]);
   
+  char windowTitle[] = "fourd";
+  glutSetWindowTitle(windowTitle);
+  g_windowHandle = FindWindow(NULL, windowTitle);
+
   glewExperimental=TRUE;
   GLenum err;
   if((err = glewInit()) != GLEW_OK) {
