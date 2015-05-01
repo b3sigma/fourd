@@ -16,11 +16,13 @@
 #include "../common/fourmath.h"
 #include "../common/mesh.h"
 #include "../common/camera.h"
-#include "render.h"
 #include "../common/chunkloader.h"
+#include "../common/components/animated_rotation.h"
+#include "entity.h"
+#include "render.h"
+#include "scene.h"
 #include "shader.h"
 #include "texture.h"
-#include "../common/components/animated_rotation.h"
 
 using namespace ::fd;
 
@@ -32,12 +34,12 @@ GLint hPosition;
 GLint hColor;
 GLint hWorldMatrix;
 GLint hWorldPosition;
-GLint hCameraPosition;
-GLint hCameraMatrix;
-GLint hProjectionMatrix;
-GLint hFourToThree;
-GLint hWPlaneNearFar;
-GLint hProjectionFlags;
+//GLint hCameraPosition;
+//GLint hCameraMatrix;
+//GLint hProjectionMatrix;
+//GLint hFourToThree;
+//GLint hWPlaneNearFar;
+//GLint hProjectionFlags;
 
 // TODO: Move most of the GL code to render, including the camera
 // Setup a render target approach
@@ -46,15 +48,15 @@ GLint hProjectionFlags;
 // Integrate rift
 
 Mat4f worldMatrix;
-Mat4f projectionMatrix;
-Mat4f fourToThree;
-Vec4f wPlaneNearFar;
-Vec4f wProjectionFlags;
+//Mat4f projectionMatrix;
+//Mat4f fourToThree;
+//Vec4f wPlaneNearFar;
+//Vec4f wProjectionFlags;
 Mesh tesseract;
 Camera g_camera;
-float _fov = 90.0f;
-float _near = 0.1f;
-float _far = 100000.0f;
+//float _fov = 90.0f;
+//float _near = 0.1f;
+//float _far = 100000.0f;
 int _width = 800;
 int _height = 600;
 int cubeIndex = 0;
@@ -81,12 +83,13 @@ void SetCommonShaderHandles(::fd::Shader* pShader) {
   hColor = pShader->getAttrib("vertColor");
   hWorldMatrix = pShader->getUniform("worldMatrix");
   hWorldPosition = pShader->getUniform("worldPosition");
-  hCameraPosition = pShader->getUniform("cameraPosition");
-  hCameraMatrix = pShader->getUniform("cameraMatrix");
-  hProjectionMatrix = pShader->getUniform("projectionMatrix");
-  hFourToThree = pShader->getUniform("fourToThree");
-  hWPlaneNearFar = pShader->getUniform("wPlaneNearFar");
-  hProjectionFlags = pShader->getUniform("wProjectionFlags");
+  pShader->SetCameraParams(&g_camera);
+  //hCameraPosition = pShader->getUniform("cameraPosition");
+  //hCameraMatrix = pShader->getUniform("cameraMatrix");
+  //hProjectionMatrix = pShader->getUniform("projectionMatrix");
+  //hFourToThree = pShader->getUniform("fourToThree");
+  //hWPlaneNearFar = pShader->getUniform("wPlaneNearFar");
+  //hProjectionFlags = pShader->getUniform("wProjectionFlags");
   pShader->StopUsing();
 }
 
@@ -159,11 +162,15 @@ bool Initialize() {
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
   tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
-  wProjectionFlags.x = 1.0f; // use projective 4d mode
-  wProjectionFlags.y = 0.0f; // project in instead of out
-  wProjectionFlags.z = 1.0f; // ratio projection enabled
+  //wProjectionFlags.x = 1.0f; // use projective 4d mode
+  //wProjectionFlags.y = 0.0f; // project in instead of out
+  //wProjectionFlags.z = 1.0f; // ratio projection enabled
   
   // Set up some reasonable defaults
+  g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
+      0.1f /* zNear */, 10000.0f /* zFar */);
+  g_camera.SetWProjection(
+      0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
@@ -193,37 +200,35 @@ bool Initialize() {
   }
 
   worldMatrix.storeIdentity();
-  projectionMatrix.storeIdentity();
-  fourToThree.storeIdentity();
-  float nearInside = 1.0f;
-  //float farInside = 1000.0f;
-  fourToThree[0][0] = nearInside;
-  fourToThree[1][1] = nearInside;
-  fourToThree[2][2] = nearInside;
-  wPlaneNearFar.x = 1.0f;
-  wPlaneNearFar.y = 40.0f;
-  wPlaneNearFar.z = 0.5f; // size of far w plane / size of near w plane
 
   buildColorArray();
 
   return true;
 }
 
-void Deinitialize(void) {
-  ::fd::Shader::ClearShaderHash();
-}
-
 void UpdatePerspective() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  float aspect = static_cast<float>(_width) / static_cast<float>(_height);
-  projectionMatrix.build3dProjection(_fov, aspect, _near, _far);
+  g_camera.SetZProjection(_width, _height,
+      g_camera._zFov, g_camera._zNear, g_camera._zFar);
 
-  if(!g_shader)
-    return;
-  g_shader->StartUsing();
-  glUniformMatrix4fv(hProjectionMatrix, 1, GL_FALSE, projectionMatrix.raw());
-  g_shader->StopUsing();
+  //if(!g_shader)
+  //  return;
+  //g_shader->StartUsing();
+  //glUniformMatrix4fv(hProjectionMatrix, 1, GL_FALSE, 
+  //  g_camera._zProjectionMatrix.raw());
+  //g_shader->StopUsing();
+}
+
+void SetSimpleProjectiveMode() {
+  g_camera.SetWProjection(-5.0f, 5.0f, 0.9f);
+  LoadShader("AlphaTest");
+  SetAlphaAndDisableDepth(false);
+  UpdatePerspective();
+}
+
+void Deinitialize(void) {
+  ::fd::Shader::ClearShaderHash();
 }
 
 void ReshapeGL(int width, int height) {
@@ -320,6 +325,7 @@ void Update(int key, int x, int y) {
   static float moveAmount = 1.0f;
   static float rollAmount = moveAmount * 2 * (float)PI / 100.0f;
 
+
   bool isShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
 
   switch (key) {
@@ -338,15 +344,7 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '$' : {
-      wPlaneNearFar.x = -5.0f; //w near
-      wPlaneNearFar.y = 5.0f; //w far
-      wPlaneNearFar.z = 0.9f; //far to near plane size ratio
-      wProjectionFlags.x = 1.0f; // projection enabled
-      wProjectionFlags.y = 0.0f; // inv proj disabled
-      wProjectionFlags.z = 1.0f; // proj ratio enabled
-      LoadShader("AlphaTest");
-      SetAlphaAndDisableDepth(false);
-      UpdatePerspective();
+      SetSimpleProjectiveMode();
     } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
@@ -470,42 +468,31 @@ void Update(int key, int x, int y) {
     } break;
     // Sure this looks like an unsorted mess, but is spatially aligned kinda.
     case 'x' : {
-      wPlaneNearFar.x -= 1.0f;
-      //_near *= 0.1f;
-      //UpdatePerspective();
+      g_camera.SetWProjection(
+          g_camera._wNear - 1.0f, g_camera._wFar, g_camera._wScreenSizeRatio);
     } break;
     case 'c' : {
-      wPlaneNearFar.x += 1.0f;
-      //_near *= 10.0f;
-      //UpdatePerspective();
+      g_camera.SetWProjection(
+          g_camera._wNear + 1.0f, g_camera._wFar, g_camera._wScreenSizeRatio);
     } break;
     case 'v' : {
-      wPlaneNearFar.y -= 1.0f;
-      //_far *= 0.1f;
-      //UpdatePerspective();
+      g_camera.SetWProjection(
+          g_camera._wNear, g_camera._wFar - 1.0f, g_camera._wScreenSizeRatio);
     } break;
     case 'b' : {
-      wPlaneNearFar.y += 1.0f;
-      //_far *= 10.0f;
-      //UpdatePerspective();
+      g_camera.SetWProjection(
+          g_camera._wNear, g_camera._wFar + 1.0f, g_camera._wScreenSizeRatio);
     } break;
     case 'n' : {
-      wPlaneNearFar.z -= 0.1f;
-      //_fov -= 5.0f;
-      //UpdatePerspective();
+      g_camera.SetWProjection(
+          g_camera._wNear, g_camera._wFar, g_camera._wScreenSizeRatio - 0.1f);
     } break;
     case 'm' : {
-      wPlaneNearFar.z += 0.1f;
-      //_fov += 5.0f;
-      //UpdatePerspective();
+      g_camera.SetWProjection(
+          g_camera._wNear, g_camera._wFar, g_camera._wScreenSizeRatio + 0.1f);
     } break;
     case '?' : {
       g_camera.printIt();
-      printf("\nwPlaneNearFar\n");
-      wPlaneNearFar.printIt();
-      printf("\nwProjectionFlags\n");
-      wProjectionFlags.printIt();
-      printf("\n");
     } break;
     case '\'' : {
       tesseract.printIt();
@@ -518,24 +505,15 @@ void Update(int key, int x, int y) {
       }
     } break;
     case ']' : { // ortho projection
-      if (wProjectionFlags.x == 0.0f) {
-        wProjectionFlags.x = 1.0f;
+      static float savedWScreenRatio = 0.5f;
+      float newWScreenRatio = savedWScreenRatio;
+      if (g_camera._wScreenSizeRatio == 1.0f) {
+        g_camera.SetWProjection(
+            g_camera._wNear, g_camera._wFar, savedWScreenRatio);
       } else {
-        wProjectionFlags.x = 0.0f;
-      }
-    } break;
-    //case 'o' : { // inv? didn't pan out
-    //  if (wProjectionFlags.y == 0.0f) {
-    //    wProjectionFlags.y = 1.0f;
-    //  } else {
-    //    wProjectionFlags.y = 0.0f;
-    //  }
-    //} break;
-    case 'p' : { // projective (ratio)
-      if (wProjectionFlags.z == 0.0f) {
-        wProjectionFlags.z = 1.0f;
-      } else {
-        wProjectionFlags.z = 0.0f;
+        savedWScreenRatio = g_camera._wScreenSizeRatio;
+        g_camera.SetWProjection(
+            g_camera._wNear, g_camera._wFar, 1.0f);
       }
     } break;
   }
@@ -550,12 +528,12 @@ void Draw(void) {
   glLoadIdentity();
 
   g_shader->StartUsing();
-
-  glUniform4fv(hCameraPosition, 1, g_camera.getCameraPos().raw());
-  glUniformMatrix4fv(hCameraMatrix, 1, GL_TRUE, g_camera.getCameraMatrix().raw());
-  glUniformMatrix4fv(hFourToThree, 1, GL_TRUE, fourToThree.raw());
-  glUniform4fv(hWPlaneNearFar, 1, wPlaneNearFar.raw());
-  glUniform4fv(hProjectionFlags, 1, wProjectionFlags.raw());
+  g_shader->SetCameraParams(&g_camera);
+  //glUniform4fv(hCameraPosition, 1, g_camera.getCameraPos().raw());
+  //glUniformMatrix4fv(hCameraMatrix, 1, GL_TRUE, g_camera.getCameraMatrix().raw());
+  //glUniformMatrix4fv(hFourToThree, 1, GL_TRUE, fourToThree.raw());
+  //glUniform4fv(hWPlaneNearFar, 1, wPlaneNearFar.raw());
+  //glUniform4fv(hProjectionFlags, 1, wProjectionFlags.raw());
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)

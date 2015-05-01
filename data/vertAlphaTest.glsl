@@ -10,8 +10,8 @@ uniform mat4 fourToThree;
 
 // wNear in x, wFar in y, wFarToNearSizeRatio in z
 uniform vec4 wPlaneNearFar;
-// any projection enabled in x, inv proj in y, ratio proj in z
-uniform vec4 wProjectionFlags;
+//// any projection enabled in x, inv proj in y, ratio proj in z
+//uniform vec4 wProjectionFlags;
 
 in vec4 vertPosition;
 in vec4 vertColor;
@@ -28,11 +28,13 @@ void main() {
 	
 	vec4 threeSpace = fourToThree * cameraSpace;
 	float wSpaceFrustrumPos = (wPlaneNearFar.y - threeSpace.w) / (wPlaneNearFar.y - wPlaneNearFar.x);
-	float wSpaceFrustrumPosInv = 1.0 / wSpaceFrustrumPos;
   float wFrustRatioScalar = mix(wPlaneNearFar.z, 1.0f, wSpaceFrustrumPos);
-  float projectionScalar = mix(wSpaceFrustrumPos, wSpaceFrustrumPosInv, wProjectionFlags.y);
-  projectionScalar = mix(projectionScalar, wFrustRatioScalar, wProjectionFlags.z);
-	threeSpace.xy = mix(threeSpace.xy, threeSpace.xy * projectionScalar, wProjectionFlags.x);
+  threeSpace.xy *= wFrustRatioScalar; 
+  //float wSpaceFrustrumPosInv = 1.0 / wSpaceFrustrumPos;
+  //float wFrustRatioScalar = mix(wPlaneNearFar.z, 1.0f, wSpaceFrustrumPos);
+  //float projectionScalar = mix(wSpaceFrustrumPos, wSpaceFrustrumPosInv, wProjectionFlags.y);
+  //projectionScalar = mix(projectionScalar, wFrustRatioScalar, wProjectionFlags.z);
+	//threeSpace.xy = mix(threeSpace.xy, threeSpace.xy * projectionScalar, wProjectionFlags.x);
   //threeSpace.z = mix(threeSpace.z, threeSpace.z * wSpaceFrustrumPos, wProjectionFlags.x);
 	//threeSpace.xy = mix(threeSpace.xy, threeSpace.xy * fourProjectionScalar, wProjectionFlags.x);
   float savedW = threeSpace.w;

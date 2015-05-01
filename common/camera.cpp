@@ -116,6 +116,8 @@ void Camera::printIt() {
   _cameraPos.printIt();
   printf("\nMatrix:\n");
   _cameraMatrix.printIt();
+  printf("zN:%f zF:%f zFov:%f\n", _zNear, _zFar, _zFov);
+  printf("wN:%f wF:%f wRatio:%f\n", _wNear, _wFar, _wScreenSizeRatio);
 }
 
 namespace _internal {

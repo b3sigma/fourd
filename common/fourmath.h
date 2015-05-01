@@ -135,6 +135,8 @@ public:
 
 typedef Vector4<float> Vec4f;
 
+typedef Eigen::Vector2f Vec2f;
+typedef Eigen::Vector2i Vec2i;
 
 template <typename T>
 class Matrix4 {
@@ -331,15 +333,8 @@ public:
     viewTarget.d(3).set(0, 0, 0, 1);
   }
 
-  void* operator new(size_t i)
-  {
-      return _aligned_malloc(i, 16);
-  }
-
-  void operator delete(void* p)
-  {
-      _aligned_free(p);
-  }
+  void* operator new(size_t size) { return _aligned_malloc(size, 16); }
+  void operator delete(void* p) { _aligned_free(p); }
 };
 
 typedef Matrix4<float> Mat4f;

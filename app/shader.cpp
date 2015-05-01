@@ -14,6 +14,7 @@
 #include "../common/fd_simple_file.h"
 
 #include "shader.h"
+#include "../common/camera.h"
 
 namespace fd {
 
@@ -24,30 +25,64 @@ Shader::~Shader() {
 }
 
 void Shader::Release() {
-  for (auto shaderId : _subShaders) {
+  for (auto shaderId : m_subShaders) {
     glDeleteShader(shaderId);
   }
-  _subShaders.resize(0);
-  if(_programId != 0) {
-    glDeleteProgram(_programId);
-    _programId = 0;
+  m_subShaders.resize(0);
+  if(m_programId != 0) {
+    glDeleteProgram(m_programId);
+    m_programId = 0;
   }
-  if(_uniforms) {
-    handle_hash_destroy(_uniforms);
-    _uniforms = NULL;
+  if(m_uniforms) {
+    handle_hash_destroy(m_uniforms);
+    m_uniforms = NULL;
   }
-  if(_attribs) {
-    handle_hash_destroy(_attribs);
-    _attribs = NULL;
+  if(m_attribs) {
+    handle_hash_destroy(m_attribs);
+    m_attribs = NULL;
   }
 }
 
 Shader::Shader() 
-    : _programId(0)
-    , _shaderType(0)
-    , _attribs(NULL)
-    , _uniforms(NULL) {
+    : m_programId(0)
+    , m_shaderType(0)
+    , m_attribs(NULL)
+    , m_uniforms(NULL) {
   s_test_shader_refs++;
+}
+
+
+void Shader::InitCameraParamHandles() {
+  assert(m_programId != 0);
+  m_cameraHandles[ECameraPosition] = getUniform("cameraPosition");
+  m_cameraHandles[ECameraMatrix] = getUniform("cameraMatrix");
+  m_cameraHandles[EProjectionMatrix] = getUniform("projectionMatrix");
+  m_cameraHandles[EFourToThree] = getUniform("fourToThree");
+  m_cameraHandles[EWPlaneNearFar] = getUniform("wPlaneNearFar");
+}
+
+void Shader::SetCameraParams(Camera* pCamera) {  
+  assert(pCamera != NULL);
+
+  // This global state with using is error prone
+  //StartUsing();
+  glUniform4fv(m_cameraHandles[ECameraPosition], 1, 
+      pCamera->getCameraPos().raw());
+  glUniformMatrix4fv(m_cameraHandles[ECameraMatrix], 1, GL_TRUE, 
+      pCamera->getCameraMatrix().raw());
+  // Sure is weird that this one isn't transposed...
+  // Thinking we are doing inconsistent row/col in the projection creation
+  glUniformMatrix4fv(m_cameraHandles[EProjectionMatrix], 1, GL_FALSE, 
+      pCamera->_zProjectionMatrix.raw());
+
+  // This isn't even used so far..
+  glUniformMatrix4fv(m_cameraHandles[EFourToThree], 1, GL_TRUE,
+      pCamera->_fourToThree.raw());
+  // As the calculation of wNear/wFar is happening manually
+  // Dunno if these param packing things are worthwhile
+  Vec4f wPlaneNearFar(pCamera->_wNear, pCamera->_wFar, pCamera->_wScreenSizeRatio, 0.0f);
+  glUniform4fv(m_cameraHandles[EWPlaneNearFar], 1, wPlaneNearFar.raw());
+  //StopUsing();
 }
 
 void Shader::ClearShaderHash() {
@@ -65,14 +100,14 @@ void Shader::AddToShaderHash() {
     s_pShaderhash = shader_hash_create();
   }
 
-  if (NULL == shader_hash_get(s_pShaderhash, _refName.c_str())) {
-    shader_hash_add(s_pShaderhash, _refName.c_str(), this);
+  if (NULL == shader_hash_get(s_pShaderhash, m_refName.c_str())) {
+    shader_hash_add(s_pShaderhash, m_refName.c_str(), this);
   }
 }
 
 void Shader::RemoveFromShaderHash() {
   if( s_pShaderhash) {
-    shader_hash_remove(s_pShaderhash, _refName.c_str(), NULL);
+    shader_hash_remove(s_pShaderhash, m_refName.c_str(), NULL);
   }
 }
 
@@ -87,13 +122,13 @@ bool Shader::LoadFromFile(const char* refName,
     return false;
   }
 
-  for (auto shaderId : _subShaders) {
+  for (auto shaderId : m_subShaders) {
     glAttachShader(programId, shaderId);
   }
 
   glLinkProgram(programId);
   
-  for (auto shaderId : _subShaders) {
+  for (auto shaderId : m_subShaders) {
     glDetachShader(programId, shaderId);
   }
 
@@ -112,11 +147,12 @@ bool Shader::LoadFromFile(const char* refName,
     return false;
   }
 
-  _programId = programId;
-  _attribs = handle_hash_create();
-  _uniforms = handle_hash_create();
-  _refName.assign(refName);
+  m_programId = programId;
+  m_attribs = handle_hash_create();
+  m_uniforms = handle_hash_create();
+  m_refName.assign(refName);
   AddToShaderHash();
+  InitCameraParamHandles();
 
   return true;
 }
@@ -151,14 +187,14 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
     return false;
   }
 
-  _subShaders.push_back(shaderId);
+  m_subShaders.push_back(shaderId);
 
   return true;
 }
 
 void Shader::StartUsing() const {
   assert(GetIsUsing() == false);
-  glUseProgram(_programId);
+  glUseProgram(m_programId);
   assert(GetIsUsing() == true);
 }
 
@@ -169,10 +205,10 @@ void Shader::StopUsing() const {
 }
 
 bool Shader::GetIsUsing() const {
-  if (_programId <= 0) return false;
+  if (m_programId <= 0) return false;
   GLint currentProgram = -1;
   glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-  return (currentProgram == _programId);
+  return (currentProgram == m_programId);
 }
 
 //////////////////
@@ -235,41 +271,41 @@ stb_define_hash_base(STB_noprefix, THandleHash, STB_nofields,
 
 GLint Shader::getAttrib(const char* name) const {
   assert(name != NULL);
-  assert(_programId != 0);
-  assert(_attribs != NULL);
+  assert(m_programId != 0);
+  assert(m_attribs != NULL);
   // Why do we assume GL isn't already doing something like this?
   // TODO: test whether this is a pre-optimization, dumbass.
-  GLint handle = handle_hash_get(_attribs, name);
+  GLint handle = handle_hash_get(m_attribs, name);
   if (handle != HANDLE_HASH_NULL)
     return handle;
 
-  handle = glGetAttribLocation(_programId, name);
+  handle = glGetAttribLocation(m_programId, name);
   if(handle == -1) {
     printf("Couldn't find attrib:%s\n", name);
     return handle;
   }
 
-  handle_hash_add(_attribs, name, handle);
+  handle_hash_add(m_attribs, name, handle);
   return handle;
 }
 
 GLint Shader::getUniform(const char* name) const {
   assert(name != NULL);
-  assert(_programId != 0);
-  assert(_uniforms != NULL);
+  assert(m_programId != 0);
+  assert(m_uniforms != NULL);
   // Why do we assume GL isn't already doing something like this?
   // TODO: test whether this is a pre-optimization, dumbass.
-  GLint handle = handle_hash_get(_uniforms, name);
+  GLint handle = handle_hash_get(m_uniforms, name);
   if (handle != HANDLE_HASH_NULL)
     return handle;
 
-  handle = glGetUniformLocation(_programId, name);
+  handle = glGetUniformLocation(m_programId, name);
   if(handle == -1) {
     printf("Couldn't find uniform:%s\n", name);
     return handle;
   }
 
-  handle_hash_add(_uniforms, name, handle);
+  handle_hash_add(m_uniforms, name, handle);
   return handle;
 }
 

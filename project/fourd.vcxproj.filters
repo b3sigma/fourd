@@ -45,6 +45,12 @@
     <ClCompile Include="..\app\thirdparty\glew\src\glew.c">
       <Filter>thirdparty</Filter>
     </ClCompile>
+    <ClCompile Include="..\app\entity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\app\scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -88,6 +94,12 @@
     </ClInclude>
     <ClInclude Include="..\common\thirdparty\signals\Delegate.h">
       <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\entity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\scene.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

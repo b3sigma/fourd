@@ -10,6 +10,20 @@ public:
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
 
+  Vec2i _screenBounds;
+  Mat4f _zProjectionMatrix;
+  Mat4f _fourToThree; // yeah went individual code instead of this so far
+
+  float _zNear;
+  float _zFar;
+  float _zFov;
+
+  float _wNear;
+  float _wFar;
+  // a different method than fov, near size / far size
+  float _wScreenSizeRatio;  
+  bool _wProjectionEnabled;
+ 
   enum Direction {
     RIGHT = 0, UP = 1, FORWARD = 2, INSIDE = 3,
   };
@@ -24,13 +38,22 @@ public:
   ComponentBus _componentBus;
 
   Camera()
-      : _movement(ORBIT) {
+      : _movement(ORBIT)
+      , _zNear(0.1f)
+      , _zFar(1000.0f)
+      , _zFov(90.0f)
+      , _wNear(0.0f)
+      , _wFar(40.0f)
+      , _wScreenSizeRatio(0.5)
+      , _wProjectionEnabled(true) {
     _cameraMatrix.storeIdentity();
     _cameraPos.storeZero();
+    _fourToThree.storeIdentity();
 
     bool success = _componentBus.RegisterOwnerData(
         std::string("orientation"), &_cameraMatrix, true);
-    success &= _componentBus.RegisterOwnerData(std::string("position"), &_cameraPos, true);
+    success &= _componentBus.RegisterOwnerData(
+        std::string("position"), &_cameraPos, true);
     assert(success == true);
   }
 
@@ -38,6 +61,24 @@ public:
       : _movement(mode) {
     _cameraMatrix.storeIdentity();
     _cameraPos.storeZero();
+  }
+
+  void SetZProjection(int width, int height, 
+      float zFov, float zNear, float zFar) {
+
+    _screenBounds.x() = width;
+    _screenBounds.y() = height;
+    _zFov = zFov;
+    _zNear = zNear;
+    _zFar = zFar;
+    float aspect = static_cast<float>(width) / static_cast<float>(height);
+    _zProjectionMatrix.build3dProjection(_zFov, aspect, _zNear, _zFar);
+  }
+
+  void SetWProjection(float wNear, float wFar, float wScreenSizeRatio) {
+    _wNear = wNear;
+    _wFar = wFar;
+    _wScreenSizeRatio = wScreenSizeRatio;
   }
 
   void SetCameraPosition(Vec4f position) {
@@ -65,15 +106,8 @@ public:
     _movement = mode;
   }
 
-  void* operator new(size_t i)
-  {
-      return _aligned_malloc(i, 16);
-  }
-
-  void operator delete(void* p)
-  {
-      _aligned_free(p);
-  }
+  void* operator new(size_t size) { return _aligned_malloc(size, 16); }
+  void operator delete(void* p) { _aligned_free(p); }
 
   void Step(float fDeltaTime) {
     // after all this component stuff,

@@ -9,14 +9,24 @@ Getting:
 ** git submodule init
 ** git submodule update
 
-Running:
+Running on Windows:
+open up the sln in under ./project/, build
+
+Running on Linux (haven't done this in a while, might be broken):
 make
 ./fourd
 
 Todo list:
-* Fix non-ortho projection.
-* Get shader reloading to work
-* Switch the mat4 class to be column major? (at least make the calls explicit)
+* Add texturing
+* Add Entity
+* Setup scene structure
+* Add collision
+* Add 120 cell
+* Add spin system
+* Add lisp parser (ecl? clisp?)
+* Add maxima
+* Switch the mat4 class to be column major?
+* Add text window with command entry
 
 Remnants of a Nehe starting tutorial are probably still around. Thanks!
 Using a Makefile from Michael Crawford. Thanks!

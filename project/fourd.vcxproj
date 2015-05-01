@@ -85,8 +85,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
     <ClCompile Include="..\app\render.cpp" />
+    <ClCompile Include="..\app\scene.cpp" />
     <ClCompile Include="..\app\shader.cpp" />
     <ClCompile Include="..\app\texture.cpp" />
     <ClCompile Include="..\app\thirdparty\glew\src\glew.c" />
@@ -96,7 +98,9 @@
     <ClCompile Include="..\common\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\render.h" />
+    <ClInclude Include="..\app\scene.h" />
     <ClInclude Include="..\app\shader.h" />
     <ClInclude Include="..\app\texture.h" />
     <ClInclude Include="..\common\camera.h" />

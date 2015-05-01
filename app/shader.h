@@ -1,6 +1,8 @@
 #pragma once
 
+#ifdef WIN32
 #include <Windows.h>
+#endif //WIN32
 
 #include "../stb/stb.h"
 #include <GL/glew.h>
@@ -9,6 +11,7 @@
   
 namespace fd {
 
+  class Camera;
   class Shader;
 
   stb_declare_hash(STB_noprefix, TShaderHash, shader_hash_,
@@ -20,20 +23,35 @@ namespace fd {
   class Shader {
   protected:
     typedef std::vector<GLuint> TVecShaderIds;
-    TVecShaderIds _subShaders;
-    std::string _refName;
+    TVecShaderIds m_subShaders;
+    std::string m_refName;
 
-    GLuint _programId;
-    GLenum _shaderType;
+    GLuint m_programId;
+    GLenum m_shaderType;
 
-    THandleHash* _attribs;
-    THandleHash* _uniforms;
+    THandleHash* m_attribs;
+    THandleHash* m_uniforms;
 
     static TShaderHash* s_pShaderhash;
+
+    // because msvc can't do constexpr quite right, must update cpp
+    // names if you change these in InitCameraParamHandles
+    enum cameraShaderHandleEnum {
+      ECameraPosition,
+      ECameraMatrix,
+      EProjectionMatrix,
+      EFourToThree,
+      EWPlaneNearFar,
+      ENumCameraShaderHandles,
+    };
+    GLint m_cameraHandles[ENumCameraShaderHandles];
 
   public:
     Shader();
     ~Shader();
+
+    void InitCameraParamHandles();
+    void SetCameraParams(Camera* pCamera);
 
     bool AddSubShader(const char* filename, GLenum shaderType);
     bool LoadFromFile(const char* refName, const char* vertexFile, const char* pixelFile);
