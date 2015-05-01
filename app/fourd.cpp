@@ -52,19 +52,23 @@ bool LoadShader(const char* shaderName) {
     + std::string(shaderName) + std::string(".glsl");
   std::string commonVert = shaderDir + std::string("vertCommonTransform.glsl");
 
-  ::fd::Shader* pExisting = ::fd::Shader::GetShaderByRefName(shaderName);
-  if (pExisting) {
-    delete pExisting;
+  std::unique_ptr<::fd::Shader> shaderMem;
+  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(shaderName);
+  if (pShader) {
+    pShader->Release();
+  } else {
+    pShader = new ::fd::Shader();
+    shaderMem.reset(pShader);
   }
 
-  std::unique_ptr<::fd::Shader> pShader(new ::fd::Shader());
   pShader->AddSubShader(commonVert.c_str(), GL_VERTEX_SHADER); 
   if(!pShader->LoadFromFile(shaderName, vertName.c_str(), fragName.c_str())) {
     printf("Failed loading shader!\n");
     return false;
   }
 
-  g_shader = pShader.release();
+  shaderMem.release();
+  g_shader = pShader;
   g_scene.m_pQuaxolShader = g_shader;
 
   return true;
@@ -449,12 +453,11 @@ void Update(int key, int x, int y) {
     case 'z' : {
       Entity* pEntity = g_scene.AddEntity();
       // ugh need like a mesh manager and better approach to shader handling
-      // This will crash on a shader reload right now.
       pEntity->Initialize(&tesseract, g_shader);
       pEntity->m_orientation.storeIdentity();
       
-      Vec4f forwardDir((Eigen::Vector4f)g_camera.getCameraMatrix().eigen().row(2));
-      forwardDir *= 50.0f;
+      Vec4f forwardDir = g_camera.getCameraMatrix()[Camera::FORWARD];
+      forwardDir *= -50.0f;
       pEntity->m_position = g_camera._cameraPos + forwardDir;
       
       pEntity->GetComponentBus().AddComponent(
@@ -466,17 +469,16 @@ void Update(int key, int x, int y) {
     case 'Z' : {
       Entity* pEntity = g_scene.AddEntity();
       // ugh need like a mesh manager and better approach to shader handling
-      // This will crash on a shader reload right now.
       pEntity->Initialize(&tesseract, g_shader);
       pEntity->m_orientation.storeIdentity();
 
       // Also put it in front of the camera.
-      Vec4f forwardDir((Eigen::Vector4f)g_camera.getCameraMatrix().eigen().row(2));
-      forwardDir *= 50.0f;
+      Vec4f forwardDir = g_camera.getCameraMatrix()[Camera::FORWARD];
+      forwardDir *= -50.0f;
       pEntity->m_position = g_camera._cameraPos + forwardDir;
 
-      Vec4f tangentDir((Eigen::Vector4f)g_camera.getCameraMatrix().eigen().row(3));
-      tangentDir *= 50.0f;
+      Vec4f tangentDir = g_camera.getCameraMatrix()[Camera::INSIDE];
+      tangentDir *= -50.0f;
 
       pEntity->GetComponentBus().AddComponent(
           new PeriodicMotion(10.0f /* duration */, 2.0f /* period */,

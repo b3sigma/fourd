@@ -177,6 +177,7 @@ public:
   T* raw() { return (T*)&d(0); }
   const T* raw() const { return (T*)&d(0); }
   Vec& operator[] (int index) { return d(index); }
+  const Vec& operator[] (int index) const { return d(index); }
   void setRow(int index, const Vec& row) { d(index) = row; }
 
   bool operator ==(const FdMat& c) const {
