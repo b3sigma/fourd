@@ -99,6 +99,7 @@ bool LoadShader(const char* shaderName) {
     + std::string(shaderName) + std::string(".glsl");
   std::string fragName = shaderDir + std::string("frag")
     + std::string(shaderName) + std::string(".glsl");
+  std::string commonVert = shaderDir + std::string("vertCommonTransform.glsl");
 
   ::fd::Shader* pExisting = ::fd::Shader::GetShaderByRefName(shaderName);
   if (pExisting) {
@@ -106,7 +107,7 @@ bool LoadShader(const char* shaderName) {
   }
 
   std::unique_ptr<::fd::Shader> pShader(new ::fd::Shader());
-
+  pShader->AddSubShader(commonVert.c_str(), GL_VERTEX_SHADER); 
   if(!pShader->LoadFromFile(shaderName, vertName.c_str(), fragName.c_str())) {
     printf("Failed loading shader!\n");
     return false;
@@ -194,7 +195,8 @@ bool Initialize() {
   SetAlphaAndDisableDepth(true);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
+  //if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
+  if (!LoadShader("BlendNoTex")) {
     printf("Shader loading failed\n");
     exit(-1);
   }

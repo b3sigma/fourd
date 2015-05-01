@@ -121,6 +121,7 @@
     <None Include="..\data\fragFourd.glsl" />
     <None Include="..\data\fragTrivial.glsl" />
     <None Include="..\data\vertAlphaTest.glsl" />
+    <None Include="..\data\vertCommonTransform.glsl" />
     <None Include="..\data\vertFourd.glsl" />
     <None Include="..\data\vertTrivial.glsl" />
   </ItemGroup>
