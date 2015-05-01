@@ -101,6 +101,12 @@
     <ClInclude Include="..\app\scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\components\periodic_motion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\components\timed_death.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">

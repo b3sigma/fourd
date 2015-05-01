@@ -43,7 +43,7 @@ public:
   }
 
   virtual void OnConnected() {
-    if(!_bus->GetOwnerData(std::string("orientation"), true, &_pOwnerMatrix)) {
+    if(!m_ownerBus->GetOwnerData(std::string("orientation"), true, &_pOwnerMatrix)) {
       assert(false);
       SelfDestruct();
     }
@@ -70,12 +70,6 @@ public:
       SelfDestruct();
     }
   }
-
-private:
-  AnimatedRotation() {}
-  // don't allow copies
-  AnimatedRotation(const AnimatedRotation& copy) { assert(false); }
-
 };
 
 } // namespace fd

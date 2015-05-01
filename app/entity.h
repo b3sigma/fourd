@@ -8,7 +8,7 @@ namespace fd {
 class Mesh;
 class Shader;
 
-class Entity {
+class Entity : Component {
 public:
   // leaving vars public to avoid getter/setter as an experiment
   // requires knowing about write update functions
@@ -21,6 +21,12 @@ public:
 
 public:
   Entity();
+  ~Entity();
+
+  virtual void OnConnected();
+
+  void OnStepSignal(float delta);
+  void OnDeleteSelf();
 
   bool Initialize(Mesh* pMesh, Shader* pShader);
 

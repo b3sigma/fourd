@@ -51,7 +51,10 @@ Shader::Shader()
   s_test_shader_refs++;
 }
 
-
+// apparently the right way to do most of these in GL is to make a
+// shared uniform buffer
+// look like 56 floats would apply so far
+// doing things so inefficiently already that much more refactoring necessary
 void Shader::InitCameraParamHandles() {
   assert(m_programId != 0);
   // per vertex

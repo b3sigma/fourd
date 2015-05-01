@@ -14,12 +14,15 @@ class Scene {
 protected:
   typedef std::vector<Entity*> TEntityList;
   TEntityList m_dynamicEntities;
+  TEntityList m_toBeDeleted;
 
   typedef std::vector<Camera*> TCameraList;
   TCameraList m_cameras;
 
   typedef std::vector<Vec4f> ColorList;
   ColorList m_colorArray;
+
+  ComponentBus m_componentBus;
 
 public:
   // leaving some vars public to avoid getter/setter as an experiment
@@ -40,6 +43,10 @@ public:
   // types would be better for this as we could pre-sort by shader/texture/mesh
   Entity* AddEntity();
   void RemoveEntity(Entity* pEntity);
+
+  void OnDeleteEntity(Entity* pEntity);
+
+  void Step(float fDelta);
 
   // ugh this is all wrong, not going to be shader sorted, etc
   // but let's just do the stupid thing first

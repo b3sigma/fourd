@@ -107,6 +107,8 @@
     <ClInclude Include="..\common\chunkloader.h" />
     <ClInclude Include="..\common\component.h" />
     <ClInclude Include="..\common\components\animated_rotation.h" />
+    <ClInclude Include="..\common\components\periodic_motion.h" />
+    <ClInclude Include="..\common\components\timed_death.h" />
     <ClInclude Include="..\common\fd_simple_file.h" />
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\mesh.h" />

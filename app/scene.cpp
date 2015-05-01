@@ -11,6 +11,9 @@ namespace fd {
 
 Scene::Scene() {
   BuildColorArray();
+
+  m_componentBus.RegisterSignal(std::string("EntityDeleted"), this, &Scene::RemoveEntity);  // notification from entity that it is being deleted
+  m_componentBus.RegisterSignal(std::string("DeleteEntity"), this, &Scene::OnDeleteEntity); // command from entity to delete it
 }
 
 void Scene::AddCamera(Camera* pCamera) {
@@ -22,6 +25,7 @@ Entity* Scene::AddEntity() {
   // the less stupid way to do this is batches
   Entity* pEntity = new Entity();
   m_dynamicEntities.push_back(pEntity);
+  m_componentBus.AddComponent((Component*)pEntity);
   return pEntity;
 }
 
@@ -31,8 +35,25 @@ void Scene::RemoveEntity(Entity* pEntity) {
       m_dynamicEntities.end());
 }
 
+void Scene::OnDeleteEntity(Entity* pEntity) {
+  m_toBeDeleted.push_back(pEntity);  
+}
+
+void Scene::Step(float fDelta) {
+  m_componentBus.Step(fDelta);
+  for(auto pCamera : m_cameras) {
+    pCamera->Step(fDelta);
+  }
+
+  for(auto pEntity : m_toBeDeleted) {
+    delete pEntity;
+  }
+  m_toBeDeleted.resize(0);
+}
+
 // ugh this is all wrong, not going to be shader sorted, etc
 // but let's just do the stupid thing first
+// Also, shouldn't this be in a render class instead of scene?
 void Scene::RenderEntitiesStupidly() {
 
   for(const auto pCamera : m_cameras) {

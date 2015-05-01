@@ -181,7 +181,7 @@ class SuicideComponent : public Component {
 
   void OnStepSignal(float delta) {
     Mat4f* mat;
-    _bus->GetOwnerData(std::string("orientation"), false, &mat);
+    m_ownerBus->GetOwnerData(std::string("orientation"), false, &mat);
     mat->storeZero(); // mess up matrix intentionally
   }
 };

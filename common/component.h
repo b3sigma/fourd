@@ -19,17 +19,20 @@ class ComponentBus;
 class Component {
 protected:
   friend ComponentBus;
-  ComponentBus* _bus;
+  ComponentBus* m_ownerBus;
   bool _beingDestroyed;
 
 public:
-  Component() : _bus(NULL), _beingDestroyed(false) {}
-  virtual ~Component() {}
+  Component() : m_ownerBus(NULL), _beingDestroyed(false) {}
+  inline virtual ~Component();
 
-  void PreBusDelete() {}
+  void PreBusDelete() {
+    // if the bus is deleting, don't do destructor callback stuff
+    m_ownerBus = NULL; 
+  }
   
   void RegisterBus(ComponentBus* bus) {
-    _bus = bus;
+    m_ownerBus = bus;
   }
 
   // Components should hook up data if necessary here
@@ -52,7 +55,7 @@ public:
     // need a way to store this delegate and then unconnect later...
     // Looking like we need the iterator of the set from the signal?
     // Plus the hash of the signal on the bus stack?
-    auto signalDelegatePair = _bus->RegisterSignal(name, pClass, pFunc);
+    auto signalDelegatePair = m_ownerBus->RegisterSignal(name, pClass, pFunc);
     _registeredSignals.push_back(signalDelegatePair);
   }
 };
@@ -85,6 +88,12 @@ protected:
 
   TComponentList _components;
   SignalN<float> _sig_step;
+
+  // Might want to do SignalN_baseclass instead of void*
+  // Also I think we are hashing the combination of the
+  // string hash and the hashed type. I hate your cpu cycles is why.
+  typedef std::unordered_map<size_t, void*> TSignalHash;
+  TSignalHash _signals;
 
 public:
   ComponentBus() {
@@ -149,6 +158,12 @@ public:
     baby->OnConnected();
   }
 
+  void RemoveComponent(Component* baby) {
+    _components.erase(
+        std::remove(_components.begin(), _components.end(), baby), 
+        _components.end());
+  }
+
   void CleanupDestroyed() {
     for(TComponentList::iterator compIt = _components.begin();
         compIt != _components.end();
@@ -156,6 +171,7 @@ public:
         ) {
       Component* pComp = *compIt;
       if(pComp->_beingDestroyed) {
+        pComp->PreBusDelete();
         delete pComp;
         compIt = _components.erase(compIt);
       } else {
@@ -187,11 +203,16 @@ public:
     return stringHasher(name) ^ (typeHash << 1);
   }
 
-  // Might want to do SignalN_baseclass instead of void*
-  // Also I think we are hashing the combination of the
-  // string hash and the hashed type. I hate your cpu cycles is why.
-  typedef std::unordered_map<size_t, void*> TSignalHash;
-  TSignalHash _signals;
+  template<typename TSignalClass, typename... TSignalParams>
+  void SendSignal(const std::string& name, 
+      TSignalClass signal, TSignalParams... signalParams) {
+    size_t signalHash = HashSignalParamsAndName(
+        name, typeid(signal).hash_code());
+    auto signalPairIt = _signals.find(signalHash);
+    if (signalPairIt != _signals.end()) {
+      ((TSignalClass*)signalPairIt->second)->Emit(signalParams...);
+    }
+  }
 
   template<typename TSlotClass, typename... TVarArgs>
   std::pair<size_t, DelegateMemento> RegisterSignal(const std::string& name, TSlotClass* pClass,
@@ -233,12 +254,21 @@ public:
     delegate.SetMemento(delegateMem);
     pSignaler->Disconnect(delegate);
   }
+
 };
 
+  inline Component::~Component() {
+    UnregisterAllSignals();
+    if(m_ownerBus) {
+      m_ownerBus->RemoveComponent(this);
+    }
+  }
+
   inline void Component::UnregisterAllSignals() {
-    if(_bus) {
+    if(m_ownerBus) {
       for(auto sigDelegatePair : _registeredSignals) {
-        _bus->UnregisterSignal(sigDelegatePair.first, sigDelegatePair.second);        
+        m_ownerBus->UnregisterSignal(
+            sigDelegatePair.first, sigDelegatePair.second);        
       }
     }
     _registeredSignals.resize(0);

@@ -18,6 +18,8 @@
 #include "../common/camera.h"
 #include "../common/chunkloader.h"
 #include "../common/components/animated_rotation.h"
+#include "../common/components/periodic_motion.h"
+#include "../common/components/timed_death.h"
 #include "entity.h"
 #include "render.h"
 #include "scene.h"
@@ -26,16 +28,6 @@
 
 using namespace ::fd;
 
-// apparently the right way to do most of these in GL is to make a
-// shared uniform buffer
-// look like 56 floats would apply so far
-// doing things so inefficiently already that much more refactoring necessary
-//GLint hPosition;
-//GLint hColor;
-//GLint hWorldMatrix;
-//GLint hWorldPosition;
-
-// TODO: Move most of the GL code to render, including the camera
 // Setup a render target approach
 // Get multi-view working
 // Get a post effect working
@@ -43,8 +35,6 @@ using namespace ::fd;
 
 int _width = 800;
 int _height = 600;
-//int cubeIndex = 0;
-//Mat4f worldMatrix;
 Mesh tesseract;
 ::fd::Scene g_scene;
 ::fd::Camera g_camera;
@@ -160,10 +150,6 @@ bool Initialize() {
   g_scene.AddCamera(&g_camera);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
-  
-  //worldMatrix.storeIdentity();
-
-  //buildColorArray();
 
   return true;
 }
@@ -344,17 +330,6 @@ void Update(int key, int x, int y) {
       Deinitialize();
       exit(0);
     } break;
-    //case ',' : {
-    //  int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
-    //  cubeIndex = (cubeIndex + 1) % numCubes;
-    // } break;
-    //case '.' : {
-    //  int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
-    //  cubeIndex = (cubeIndex - 1);
-    //  if (cubeIndex < 0) {
-    //    cubeIndex = numCubes - 1;
-    //  }
-    //} break;
     case 'a' : {
       g_camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);
     } break;
@@ -471,6 +446,44 @@ void Update(int key, int x, int y) {
             g_camera._wNear, g_camera._wFar, 1.0f);
       }
     } break;
+    case 'z' : {
+      Entity* pEntity = g_scene.AddEntity();
+      // ugh need like a mesh manager and better approach to shader handling
+      // This will crash on a shader reload right now.
+      pEntity->Initialize(&tesseract, g_shader);
+      pEntity->m_orientation.storeIdentity();
+      
+      Vec4f forwardDir((Eigen::Vector4f)g_camera.getCameraMatrix().eigen().row(2));
+      forwardDir *= 50.0f;
+      pEntity->m_position = g_camera._cameraPos + forwardDir;
+      
+      pEntity->GetComponentBus().AddComponent(
+          new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+          20.0f, true));
+      pEntity->GetComponentBus().AddComponent(
+          new TimedDeath(21.0f /* duration */));
+    } break;
+    case 'Z' : {
+      Entity* pEntity = g_scene.AddEntity();
+      // ugh need like a mesh manager and better approach to shader handling
+      // This will crash on a shader reload right now.
+      pEntity->Initialize(&tesseract, g_shader);
+      pEntity->m_orientation.storeIdentity();
+
+      // Also put it in front of the camera.
+      Vec4f forwardDir((Eigen::Vector4f)g_camera.getCameraMatrix().eigen().row(2));
+      forwardDir *= 50.0f;
+      pEntity->m_position = g_camera._cameraPos + forwardDir;
+
+      Vec4f tangentDir((Eigen::Vector4f)g_camera.getCameraMatrix().eigen().row(3));
+      tangentDir *= 50.0f;
+
+      pEntity->GetComponentBus().AddComponent(
+          new PeriodicMotion(10.0f /* duration */, 2.0f /* period */,
+              0.0f /* phase */, tangentDir));
+      pEntity->GetComponentBus().AddComponent(
+          new TimedDeath(13.0f /* duration */));
+    } break;
   }
   glutPostRedisplay();
 }
@@ -482,11 +495,6 @@ void Draw(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  g_scene.RenderEntitiesStupidly();
-
-  //g_shader->StartUsing();
-  //g_shader->SetCameraParams(&g_camera);
-
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)
   // normalize the input amounts
@@ -494,43 +502,8 @@ void Draw(void) {
   // switch the mat4 class to be column major?
   // multi-view rendering
 
-  //glUniformMatrix4fv(hWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
+  g_scene.RenderEntitiesStupidly();
 
-  //for (TVecQuaxol::iterator quax_it = g_quaxols.begin();
-  //  quax_it != g_quaxols.end();
-  //  ++quax_it) {
-  //  
-  //  const Quaxol& q = *quax_it;
-
-  //  float shift_amount = 10.0f;
-  //  Vec4f shift;
-  //  shift.x = shift_amount * q.x;
-  //  shift.y = shift_amount * q.y;
-  //  shift.z = shift_amount * q.z;
-  //  shift.w = shift_amount * q.w;
-  //  glUniform4fv(hWorldPosition, 1, shift.raw());
-
-  //  int tesseractTris = tesseract.getNumberTriangles();
-  //  int startTriangle = 0;
-  //  int endTriangle = tesseractTris;
-  //  glBegin(GL_TRIANGLES);
-  //  Vec4f a, b, c;
-  //  int colorIndex = 0;
-  //  for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
-  //    glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
-  //    tesseract.getTriangle(t, a, b, c);
-  //    glVertex4fv(a.raw());
-  //    glVertex4fv(b.raw());
-  //    glVertex4fv(c.raw());
-  //    if ((t+1) % 2 == 0) {
-  //      colorIndex = (colorIndex + 1) % colorArray.size();
-  //    }
-  //  }
-  //  glEnd();
-  //}
-
-  //g_shader->StopUsing();
-  
   glFlush();
   glutSwapBuffers();
 }
@@ -553,7 +526,8 @@ void Motion(int x, int y) {
 void OnIdle() {
   ApplyMouseMove();
   g_renderer.Step();
-  g_camera.Step((float)g_renderer.GetFrameTime());
+  g_scene.Step((float)g_renderer.GetFrameTime());
+  
   glutPostRedisplay();
 }
 

@@ -35,6 +35,7 @@ public:
   Vector4() : x(0), y(0), z(0), w(0) {}
 	Vector4(T inX, T inY, T inZ, T inI) : x(inX), y(inY), z(inZ), w(inI) {}
 	Vector4(const Vec& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+  Vector4(Eigen::Vector4f& v) : x(v.x()), y(v.y()), z(v.z()), w(v.w()) {}
 
 	T* raw() { return (T*)this; }
 	const T* raw() const { return (T*)this; }
