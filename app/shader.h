@@ -8,6 +8,8 @@
 #include <GL/glew.h>
 #include <string>
 #include <vector>
+
+#include "../common/fourmath.h"
   
 namespace fd {
 
@@ -36,22 +38,36 @@ namespace fd {
 
     // because msvc can't do constexpr quite right, must update cpp
     // names if you change these in InitCameraParamHandles
-    enum cameraShaderHandleEnum {
-      ECameraPosition,
-      ECameraMatrix,
-      EProjectionMatrix,
-      EFourToThree,
-      EWPlaneNearFar,
+    enum shaderHandleEnum {
+      // attribs
+      AVertPosition,
+      AVertColor,
+
+      // uniforms, per object
+      UWorldMatrix,
+      UWorldPosition,
+
+      // uniforms, camera
+      UCameraPosition,
+      UCameraMatrix,
+      UProjectionMatrix,
+      UFourToThree,
+      UWPlaneNearFar,
+      
+      // accounting
       ENumCameraShaderHandles,
     };
-    GLint m_cameraHandles[ENumCameraShaderHandles];
+    GLint m_handles[ENumCameraShaderHandles];
 
   public:
     Shader();
     ~Shader();
 
     void InitCameraParamHandles();
-    void SetCameraParams(Camera* pCamera);
+    void SetCameraParams(const Camera* pCamera) const; // const but gl side effects...
+    void SetOrientation(const Mat4f* pOrientation) const;
+    void SetPosition(const Vec4f* pPosition) const;
+    GLint GetColorHandle() const;
 
     bool AddSubShader(const char* filename, GLenum shaderType);
     bool LoadFromFile(const char* refName, const char* vertexFile, const char* pixelFile);

@@ -3,19 +3,19 @@
 namespace fd {
 
 Entity::Entity() 
-    : _pMesh(NULL)
-    , _pShader(NULL) {
-  _componentBus.RegisterOwnerData(
-      std::string("orientation"), &_orientation, true);
-  _componentBus.RegisterOwnerData(
-      std::string("position"), &_position, true);
+    : m_pMesh(NULL)
+    , m_pShader(NULL) {
+  m_componentBus.RegisterOwnerData(
+      std::string("orientation"), &m_orientation, true);
+  m_componentBus.RegisterOwnerData(
+      std::string("position"), &m_position, true);
 }
 
 bool Entity::Initialize(Mesh* pMesh, Shader* pShader) {
   if (!pMesh || !pShader) return false;
 
-  _pMesh = pMesh;
-  _pShader = pShader;
+  m_pMesh = pMesh;
+  m_pShader = pShader;
   return true;
 }
 

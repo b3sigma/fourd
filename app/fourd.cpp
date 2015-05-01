@@ -30,16 +30,10 @@ using namespace ::fd;
 // shared uniform buffer
 // look like 56 floats would apply so far
 // doing things so inefficiently already that much more refactoring necessary
-GLint hPosition;
-GLint hColor;
-GLint hWorldMatrix;
-GLint hWorldPosition;
-//GLint hCameraPosition;
-//GLint hCameraMatrix;
-//GLint hProjectionMatrix;
-//GLint hFourToThree;
-//GLint hWPlaneNearFar;
-//GLint hProjectionFlags;
+//GLint hPosition;
+//GLint hColor;
+//GLint hWorldMatrix;
+//GLint hWorldPosition;
 
 // TODO: Move most of the GL code to render, including the camera
 // Setup a render target approach
@@ -47,51 +41,18 @@ GLint hWorldPosition;
 // Get a post effect working
 // Integrate rift
 
-Mat4f worldMatrix;
-//Mat4f projectionMatrix;
-//Mat4f fourToThree;
-//Vec4f wPlaneNearFar;
-//Vec4f wProjectionFlags;
-Mesh tesseract;
-Camera g_camera;
-//float _fov = 90.0f;
-//float _near = 0.1f;
-//float _far = 100000.0f;
 int _width = 800;
 int _height = 600;
-int cubeIndex = 0;
+//int cubeIndex = 0;
+//Mat4f worldMatrix;
+Mesh tesseract;
+::fd::Scene g_scene;
+::fd::Camera g_camera;
 ::fd::Render g_renderer;
-::fd::TVecQuaxol g_quaxols;
 ::fd::Texture g_texture;
 ::fd::Shader* g_shader = NULL;
 bool g_captureMouse = false;
 HWND g_windowHandle;
-
-typedef std::vector<Vec4f> VectorList;
-VectorList colorArray;
-void buildColorArray() {
-  int numSteps = 8;
-  colorArray.reserve(numSteps);
-  for (int steps = 0; steps < numSteps; steps++) {
-    colorArray.push_back(Vec4f(0, (float)(steps + 1) / (float)numSteps, 0, 1));
-  }
-}
-
-void SetCommonShaderHandles(::fd::Shader* pShader) {
-  pShader->StartUsing();
-  hPosition = pShader->getAttrib("vertPosition");
-  hColor = pShader->getAttrib("vertColor");
-  hWorldMatrix = pShader->getUniform("worldMatrix");
-  hWorldPosition = pShader->getUniform("worldPosition");
-  pShader->SetCameraParams(&g_camera);
-  //hCameraPosition = pShader->getUniform("cameraPosition");
-  //hCameraMatrix = pShader->getUniform("cameraMatrix");
-  //hProjectionMatrix = pShader->getUniform("projectionMatrix");
-  //hFourToThree = pShader->getUniform("fourToThree");
-  //hWPlaneNearFar = pShader->getUniform("wPlaneNearFar");
-  //hProjectionFlags = pShader->getUniform("wProjectionFlags");
-  pShader->StopUsing();
-}
 
 bool LoadShader(const char* shaderName) {
   std::string shaderDir = "data\\";
@@ -113,10 +74,9 @@ bool LoadShader(const char* shaderName) {
     return false;
   }
 
-  SetCommonShaderHandles(pShader.get());
-
   g_shader = pShader.release();
-  
+  g_scene.m_pQuaxolShader = g_shader;
+
   return true;
 }
 
@@ -127,9 +87,9 @@ bool LoadLevel(const char* levelName) {
   std::string fullName = levelPath + nameBase + nameExt;
   ChunkLoader chunks;
   if (chunks.LoadFromFile(fullName.c_str())) {
-    std::swap(g_quaxols, chunks.quaxols_);
+    std::swap(g_scene.m_quaxols, chunks.quaxols_);
     printf("Level (%s) loaded %d quaxols!\n",
-        fullName.c_str(), (int)g_quaxols.size());
+        fullName.c_str(), (int)g_scene.m_quaxols.size());
     return true;
   }
   else {
@@ -163,9 +123,6 @@ bool Initialize() {
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
   tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
-  //wProjectionFlags.x = 1.0f; // use projective 4d mode
-  //wProjectionFlags.y = 0.0f; // project in instead of out
-  //wProjectionFlags.z = 1.0f; // ratio projection enabled
   
   // Set up some reasonable defaults
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
@@ -175,8 +132,7 @@ bool Initialize() {
   g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
-  
-  LoadLevel("level_4d_base_offset");
+
   
   g_texture.LoadFromFile("data\\orientedTexture.png");
 
@@ -195,15 +151,19 @@ bool Initialize() {
   SetAlphaAndDisableDepth(true);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  //if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
-  if (!LoadShader("BlendNoTex")) {
+  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
     printf("Shader loading failed\n");
     exit(-1);
   }
+  
+  LoadLevel("level_4d_base_offset");
+  g_scene.AddCamera(&g_camera);
+  g_scene.m_pQuaxolMesh = &tesseract;
+  g_scene.m_pQuaxolShader = g_shader;
+  
+  //worldMatrix.storeIdentity();
 
-  worldMatrix.storeIdentity();
-
-  buildColorArray();
+  //buildColorArray();
 
   return true;
 }
@@ -213,13 +173,6 @@ void UpdatePerspective() {
   glLoadIdentity();
   g_camera.SetZProjection(_width, _height,
       g_camera._zFov, g_camera._zNear, g_camera._zFar);
-
-  //if(!g_shader)
-  //  return;
-  //g_shader->StartUsing();
-  //glUniformMatrix4fv(hProjectionMatrix, 1, GL_FALSE, 
-  //  g_camera._zProjectionMatrix.raw());
-  //g_shader->StopUsing();
 }
 
 void SetSimpleProjectiveMode() {
@@ -391,17 +344,17 @@ void Update(int key, int x, int y) {
       Deinitialize();
       exit(0);
     } break;
-    case ',' : {
-      int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
-      cubeIndex = (cubeIndex + 1) % numCubes;
-     } break;
-    case '.' : {
-      int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
-      cubeIndex = (cubeIndex - 1);
-      if (cubeIndex < 0) {
-        cubeIndex = numCubes - 1;
-      }
-    } break;
+    //case ',' : {
+    //  int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
+    //  cubeIndex = (cubeIndex + 1) % numCubes;
+    // } break;
+    //case '.' : {
+    //  int numCubes = max((tesseract.getNumberTriangles() / 12), 1);
+    //  cubeIndex = (cubeIndex - 1);
+    //  if (cubeIndex < 0) {
+    //    cubeIndex = numCubes - 1;
+    //  }
+    //} break;
     case 'a' : {
       g_camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);
     } break;
@@ -529,13 +482,10 @@ void Draw(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  g_shader->StartUsing();
-  g_shader->SetCameraParams(&g_camera);
-  //glUniform4fv(hCameraPosition, 1, g_camera.getCameraPos().raw());
-  //glUniformMatrix4fv(hCameraMatrix, 1, GL_TRUE, g_camera.getCameraMatrix().raw());
-  //glUniformMatrix4fv(hFourToThree, 1, GL_TRUE, fourToThree.raw());
-  //glUniform4fv(hWPlaneNearFar, 1, wPlaneNearFar.raw());
-  //glUniform4fv(hProjectionFlags, 1, wProjectionFlags.raw());
+  g_scene.RenderEntitiesStupidly();
+
+  //g_shader->StartUsing();
+  //g_shader->SetCameraParams(&g_camera);
 
   // fix the rotation to be smoother
   // figure out the clipping issues (negative w?)
@@ -544,42 +494,42 @@ void Draw(void) {
   // switch the mat4 class to be column major?
   // multi-view rendering
 
-  glUniformMatrix4fv(hWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
+  //glUniformMatrix4fv(hWorldMatrix, 1, GL_FALSE, worldMatrix.raw());
 
-  for (TVecQuaxol::iterator quax_it = g_quaxols.begin();
-    quax_it != g_quaxols.end();
-    ++quax_it) {
-    
-    const Quaxol& q = *quax_it;
+  //for (TVecQuaxol::iterator quax_it = g_quaxols.begin();
+  //  quax_it != g_quaxols.end();
+  //  ++quax_it) {
+  //  
+  //  const Quaxol& q = *quax_it;
 
-    float shift_amount = 10.0f;
-    Vec4f shift;
-    shift.x = shift_amount * q.x;
-    shift.y = shift_amount * q.y;
-    shift.z = shift_amount * q.z;
-    shift.w = shift_amount * q.w;
-    glUniform4fv(hWorldPosition, 1, shift.raw());
+  //  float shift_amount = 10.0f;
+  //  Vec4f shift;
+  //  shift.x = shift_amount * q.x;
+  //  shift.y = shift_amount * q.y;
+  //  shift.z = shift_amount * q.z;
+  //  shift.w = shift_amount * q.w;
+  //  glUniform4fv(hWorldPosition, 1, shift.raw());
 
-    int tesseractTris = tesseract.getNumberTriangles();
-    int startTriangle = 0;
-    int endTriangle = tesseractTris;
-    glBegin(GL_TRIANGLES);
-    Vec4f a, b, c;
-    int colorIndex = 0;
-    for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
-      glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
-      tesseract.getTriangle(t, a, b, c);
-      glVertex4fv(a.raw());
-      glVertex4fv(b.raw());
-      glVertex4fv(c.raw());
-      if ((t+1) % 2 == 0) {
-        colorIndex = (colorIndex + 1) % colorArray.size();
-      }
-    }
-    glEnd();
-  }
+  //  int tesseractTris = tesseract.getNumberTriangles();
+  //  int startTriangle = 0;
+  //  int endTriangle = tesseractTris;
+  //  glBegin(GL_TRIANGLES);
+  //  Vec4f a, b, c;
+  //  int colorIndex = 0;
+  //  for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
+  //    glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
+  //    tesseract.getTriangle(t, a, b, c);
+  //    glVertex4fv(a.raw());
+  //    glVertex4fv(b.raw());
+  //    glVertex4fv(c.raw());
+  //    if ((t+1) % 2 == 0) {
+  //      colorIndex = (colorIndex + 1) % colorArray.size();
+  //    }
+  //  }
+  //  glEnd();
+  //}
 
-  g_shader->StopUsing();
+  //g_shader->StopUsing();
   
   glFlush();
   glutSwapBuffers();
@@ -652,8 +602,8 @@ void RunTests() {
   assert(rotXEighth * rotXEighth == rotXFourth);
   assert(!(rotXFourth * rotXFourth == rotXFourth));
 
-  Mat4f threeMat;
-//  threeMat.eigen().
+  //Mat4f threeMat;
+  //threeMat.eigen().
 
   Shader::TestShaderHash();
   Camera::TestComponents();

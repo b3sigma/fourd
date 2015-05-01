@@ -54,35 +54,55 @@ Shader::Shader()
 
 void Shader::InitCameraParamHandles() {
   assert(m_programId != 0);
-  m_cameraHandles[ECameraPosition] = getUniform("cameraPosition");
-  m_cameraHandles[ECameraMatrix] = getUniform("cameraMatrix");
-  m_cameraHandles[EProjectionMatrix] = getUniform("projectionMatrix");
-  m_cameraHandles[EFourToThree] = getUniform("fourToThree");
-  m_cameraHandles[EWPlaneNearFar] = getUniform("wPlaneNearFar");
+  // per vertex
+  m_handles[AVertPosition] = getAttrib("vertPosition");
+  m_handles[AVertColor] = getAttrib("vertColor");
+  // per object
+  m_handles[UWorldMatrix] = getUniform("worldMatrix");
+  m_handles[UWorldPosition] = getUniform("worldPosition");
+
+  // camera 
+  m_handles[UCameraPosition] = getUniform("cameraPosition");
+  m_handles[UCameraMatrix] = getUniform("cameraMatrix");
+  m_handles[UProjectionMatrix] = getUniform("projectionMatrix");
+  m_handles[UFourToThree] = getUniform("fourToThree");
+  m_handles[UWPlaneNearFar] = getUniform("wPlaneNearFar");
 }
 
-void Shader::SetCameraParams(Camera* pCamera) {  
+void Shader::SetOrientation(const Mat4f* pOrientation) const {
+  glUniformMatrix4fv(m_handles[UWorldMatrix], 1, GL_FALSE, pOrientation->raw());
+}
+
+void Shader::SetPosition(const Vec4f* pPosition) const {
+  glUniform4fv(m_handles[UWorldPosition], 1, pPosition->raw());
+}
+
+void Shader::SetCameraParams(const Camera* pCamera) const {  
   assert(pCamera != NULL);
 
   // This global state with using is error prone
   //StartUsing();
-  glUniform4fv(m_cameraHandles[ECameraPosition], 1, 
+  glUniform4fv(m_handles[UCameraPosition], 1, 
       pCamera->getCameraPos().raw());
-  glUniformMatrix4fv(m_cameraHandles[ECameraMatrix], 1, GL_TRUE, 
+  glUniformMatrix4fv(m_handles[UCameraMatrix], 1, GL_TRUE, 
       pCamera->getCameraMatrix().raw());
   // Sure is weird that this one isn't transposed...
   // Thinking we are doing inconsistent row/col in the projection creation
-  glUniformMatrix4fv(m_cameraHandles[EProjectionMatrix], 1, GL_FALSE, 
+  glUniformMatrix4fv(m_handles[UProjectionMatrix], 1, GL_FALSE, 
       pCamera->_zProjectionMatrix.raw());
 
   // This isn't even used so far..
-  glUniformMatrix4fv(m_cameraHandles[EFourToThree], 1, GL_TRUE,
+  glUniformMatrix4fv(m_handles[UFourToThree], 1, GL_TRUE,
       pCamera->_fourToThree.raw());
   // As the calculation of wNear/wFar is happening manually
   // Dunno if these param packing things are worthwhile
   Vec4f wPlaneNearFar(pCamera->_wNear, pCamera->_wFar, pCamera->_wScreenSizeRatio, 0.0f);
-  glUniform4fv(m_cameraHandles[EWPlaneNearFar], 1, wPlaneNearFar.raw());
+  glUniform4fv(m_handles[UWPlaneNearFar], 1, wPlaneNearFar.raw());
   //StopUsing();
+}
+
+GLint Shader::GetColorHandle() const {
+  return m_handles[AVertColor];
 }
 
 void Shader::ClearShaderHash() {
@@ -152,7 +172,9 @@ bool Shader::LoadFromFile(const char* refName,
   m_uniforms = handle_hash_create();
   m_refName.assign(refName);
   AddToShaderHash();
+  StartUsing();
   InitCameraParamHandles();
+  StopUsing();
 
   return true;
 }

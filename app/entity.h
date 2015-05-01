@@ -9,20 +9,22 @@ class Mesh;
 class Shader;
 
 class Entity {
-protected:
-  Mat4f _orientation;
-  Vec4f _position;
+public:
+  // leaving vars public to avoid getter/setter as an experiment
+  // requires knowing about write update functions
+  Mat4f m_orientation;
+  Vec4f m_position;
 
-  ComponentBus _componentBus;
-  Mesh* _pMesh; // not owned
-  Shader* _pShader; // not owned
+  ComponentBus m_componentBus;
+  Mesh* m_pMesh; // not owned
+  Shader* m_pShader; // not owned
 
 public:
   Entity();
 
   bool Initialize(Mesh* pMesh, Shader* pShader);
 
-  ComponentBus& GetComponentBus() { return _componentBus; }
+  ComponentBus& GetComponentBus() { return m_componentBus; }
 
   void* operator new(size_t size) { return _aligned_malloc(size, 16); }
   void operator delete(void* p) { _aligned_free(p); }
