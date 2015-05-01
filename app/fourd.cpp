@@ -337,6 +337,17 @@ void Update(int key, int x, int y) {
       LoadShader("AlphaTest");
       UpdatePerspective();
     } break;
+    case '$' : {
+      wPlaneNearFar.x = -5.0f; //w near
+      wPlaneNearFar.y = 5.0f; //w far
+      wPlaneNearFar.z = 0.9f; //far to near plane size ratio
+      wProjectionFlags.x = 1.0f; // projection enabled
+      wProjectionFlags.y = 0.0f; // inv proj disabled
+      wProjectionFlags.z = 1.0f; // proj ratio enabled
+      LoadShader("AlphaTest");
+      SetAlphaAndDisableDepth(false);
+      UpdatePerspective();
+    } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
