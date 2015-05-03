@@ -7,9 +7,15 @@ namespace fd {
   bool ChunkLoader::LoadFromFile(const char* filename) {
     quaxols_.resize(0);
 
+#pragma warning(push)
+#pragma warning(disable: 4996)
     FILE* hFile;
-    if (0 != fopen_s(&hFile, filename, "rt"))
+    errno_t err;
+    if (0 != (err = fopen_s(&hFile, filename, "rt"))) {
+      printf("Opening %s failed with err:%s", filename, strerror(err));
       return false;
+    }
+#pragma warning(pop)
 
     Quaxol q;
 

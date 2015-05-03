@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <vector>
 
 namespace fd {
   class Texture {
@@ -21,5 +22,6 @@ namespace fd {
     GLuint GetTextureID() const { return texture_id_; }
 
   };
+  typedef std::vector<Texture*> TTextureList;
 
 }; // namespace fd

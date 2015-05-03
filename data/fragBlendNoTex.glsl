@@ -1,6 +1,9 @@
 // # verasion 150
 // OpenGL 3.2 apparently
 
+
+uniform sampler2D texDiffuse0;
+
 in vec4 fragHPos;
 in vec4 fragCol0;
 

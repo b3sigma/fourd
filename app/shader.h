@@ -46,6 +46,7 @@ namespace fd {
       // uniforms, per object
       UWorldMatrix,
       UWorldPosition,
+      UTexDiffuse0,
 
       // uniforms, camera
       UCameraPosition,
@@ -79,6 +80,11 @@ namespace fd {
 
     GLint getAttrib(const char* name) const;
     GLint getUniform(const char* name) const;
+
+    static bool CheckGLShaderCompileStatus(
+        GLuint shaderId, const char* filename);
+    static bool CheckGLShaderLinkStatus(
+        GLuint programId, const char* vertFilename, const char* fragFilename);
 
     static void ClearShaderHash();
     static Shader* GetShaderByRefName(const char* refName);

@@ -25,6 +25,7 @@
 #include "scene.h"
 #include "shader.h"
 #include "texture.h"
+#include "glhelper.h"
 
 using namespace ::fd;
 
@@ -129,23 +130,34 @@ bool Initialize() {
 
   
   g_texture.LoadFromFile("data\\orientedTexture.png");
+  WasGLErrorPlusPrint();
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  WasGLErrorPlusPrint();
   glClearDepth(1.0f);
-
+  WasGLErrorPlusPrint();
   glDisable(GL_CULL_FACE); // no backface culling for 4d
-  glBlendEquation(GL_ADD);
+  WasGLErrorPlusPrint();
+  //glBlendEquation(GL_ADD);
+  WasGLErrorPlusPrint();
   //glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // 
+  WasGLErrorPlusPrint();
   glShadeModel(GL_FLAT);
+  WasGLErrorPlusPrint();
   //glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+  WasGLErrorPlusPrint();
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
+  WasGLErrorPlusPrint();
+  //glDisable(GL_MIPMAP);
+  //WasGLErrorPlusPrint();
 
   SetAlphaAndDisableDepth(true);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")) {
+  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")
+    || !LoadShader("AlphaTestTex")) {
     printf("Shader loading failed\n");
     exit(-1);
   }
@@ -154,6 +166,9 @@ bool Initialize() {
   g_scene.AddCamera(&g_camera);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
+  g_scene.m_pQuaxolTex = &g_texture;
+
+  WasGLErrorPlusPrint();
 
   return true;
 }
@@ -166,7 +181,7 @@ void UpdatePerspective() {
 }
 
 void SetSimpleProjectiveMode() {
-  g_camera.SetWProjection(-5.0f, 5.0f, 0.9f);
+  g_camera.SetWProjection(-5.5f, 5.5f, 0.9f);
   LoadShader("AlphaTest");
   SetAlphaAndDisableDepth(false);
   UpdatePerspective();
@@ -289,6 +304,10 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '$' : {
+      LoadShader("AlphaTestTex");
+      UpdatePerspective();
+    } break;
+    case '%' : {
       SetSimpleProjectiveMode();
     } break;
     case '1' : {
@@ -328,7 +347,7 @@ void Update(int key, int x, int y) {
       LoadLevel("level_4d_base_offset");
     } break;
     case '0' : {
-      LoadLevel("level_arch_wth_w_overhang");
+      LoadLevel("level_trivial");
     } break;
     case 27: {
       Deinitialize();
@@ -453,7 +472,7 @@ void Update(int key, int x, int y) {
     case 'z' : {
       Entity* pEntity = g_scene.AddEntity();
       // ugh need like a mesh manager and better approach to shader handling
-      pEntity->Initialize(&tesseract, g_shader);
+      pEntity->Initialize(&tesseract, g_shader, NULL);
       pEntity->m_orientation.storeIdentity();
       
       Vec4f forwardDir = g_camera.getCameraMatrix()[Camera::FORWARD];
@@ -469,7 +488,7 @@ void Update(int key, int x, int y) {
     case 'Z' : {
       Entity* pEntity = g_scene.AddEntity();
       // ugh need like a mesh manager and better approach to shader handling
-      pEntity->Initialize(&tesseract, g_shader);
+      pEntity->Initialize(&tesseract, g_shader, NULL);
       pEntity->m_orientation.storeIdentity();
 
       // Also put it in front of the camera.
@@ -585,6 +604,9 @@ void RunTests() {
   Camera::TestComponents();
 }
 
+//#define DERP
+#ifndef DERP
+
 // Soooo tacky!
 #define RUN_TESTS
 
@@ -629,3 +651,269 @@ int main(int argc, char *argv[]) {
   glutMainLoop();
   return 0;
 }
+
+
+#else // DERP
+
+void derpIdle() {
+  glutPostRedisplay();
+}
+
+void derpReshapeGL(int width, int height) {
+  _width = width;
+  _height = height;
+
+  glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+  glViewport(0, 0, (GLsizei) (_width), (GLsizei) (_height));
+
+  if(height == 0)
+	  height = 1;
+	float ratio = 1.0f * width / height;
+  gluPerspective(45,ratio,1,1000);
+	glMatrixMode(GL_MODELVIEW);
+
+  glutPostRedisplay();
+}
+
+void derpKey(unsigned char key, int x, int y) {
+  switch(key) {
+      case 27: {
+      Deinitialize();
+      exit(0);
+    } break;
+  }
+}
+
+//#define DERP_INLINE_SHADERS
+#ifdef DERP_INLINE_SHADERS
+GLuint v,f,p;
+void loadInlineShaders() {
+	v = glCreateShader(GL_VERTEX_SHADER);
+	f = glCreateShader(GL_FRAGMENT_SHADER);
+  WasGLErrorPlusPrint();
+
+	char vs[] = R"foo(
+varying vec3 normal;
+uniform vec4 worldPosition;
+
+//in vec3 vertPosition;
+//in vec3 vertColor;
+//in vec3 vertNormal;
+//in vec2 vertTexCoord0;
+
+out vec2 fragTex0;
+
+void main()
+{
+  gl_Position = ftransform() + worldPosition;	
+  normal = gl_Normal; //vertNormal;
+  fragTex0 = gl_MultiTexCoord0.xy; // vertTexCoord0;
+ 
+  //normal = gl_Normal;
+	//gl_Position = ftransform() + worldPosition;
+  //fragTex0 = gl_MultiTexCoord0.xy;
+  //fragTex0.xy = gl_Position.xy;
+}
+)foo";
+	char fs[] = R"foo(
+varying vec3 normal;
+
+uniform sampler2D texDiffuse0;
+in vec2 fragTex0;
+
+void main()
+{
+	vec4 color;
+  color = vec4(0.1,0.2,0.1,1.0); // * 0.1;
+  //color.xyz += normal * 0.1; 
+  //color += texture2D(texDiffuse0, fragTex0);
+  color.xy += fragTex0;
+  //color.z = 1.0;
+  color.a = 1.0;
+	gl_FragColor = color;
+}
+)foo";
+  const char* vsPtr = &vs[0]; 
+  const char* fsPtr = &fs[0];
+
+	glShaderSource(v, 1, &vsPtr,NULL);
+  WasGLErrorPlusPrint();
+	glShaderSource(f, 1, &fsPtr,NULL);
+  WasGLErrorPlusPrint();
+
+	glCompileShader(v);
+  if(!Shader::CheckGLShaderCompileStatus(v, "inline_vertex")) {
+    exit(-1);
+  }
+	glCompileShader(f);
+  if(!Shader::CheckGLShaderCompileStatus(f, "inline_frag")) {
+    exit(-1);
+  }
+	
+	p = glCreateProgram();
+  WasGLErrorPlusPrint();
+  glAttachShader(p,f);
+  WasGLErrorPlusPrint();
+	glAttachShader(p,v);
+  WasGLErrorPlusPrint();
+
+	glLinkProgram(p);
+  if(!Shader::CheckGLShaderLinkStatus(p, "inline_vert", "inline_frag")) {
+    exit(-1);
+  }
+	glUseProgram(p);
+  WasGLErrorPlusPrint();
+  glUseProgram(0);
+}
+#else // DERP_INLINE_SHADERS
+fd::Shader derpShader;
+#endif // DERP_INLINE_SHADERS
+
+void derpRenderScene(void) {
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  static float timey = 0.0f;
+  timey += 0.008f;
+  float movey = 1.0f + sinf(timey / 10.0f) * 1.0f;
+  char uniformName[] = "worldPosition";
+  char texHandle[] = "texDiffuse0";
+#ifdef DERP_INLINE_SHADERS
+  glUseProgram(p);
+  GLint handle = glGetUniformLocation(p, uniformName);
+  if (handle == -1) {
+    printf ("couldn't get handle %s\n", uniformName);
+  } else {
+    Vec4f moveIt(movey, movey, movey, 1.0f);
+    glUniform4fv(handle, 1, moveIt.raw());
+  }
+
+  GLint hTex = glGetUniformLocation(p, texHandle);
+  if (hTex == -1) {
+    printf ("couldn't get handle %s\n", texHandle);
+  } else {
+    WasGLErrorPlusPrint();
+    glActiveTexture(GL_TEXTURE0);
+    WasGLErrorPlusPrint();
+    glBindTexture(GL_TEXTURE_2D, g_texture.GetTextureID());
+    WasGLErrorPlusPrint();    
+    glUniform1i(hTex, 0);
+  }
+
+#else //ifdef DERP_INLINE_SHADERS
+  derpShader.StartUsing();
+
+  derpShader.getUniform("worldMatrix");
+  derpShader.getUniform("worldPosition");
+  derpShader.getUniform("cameraPosition");
+  derpShader.getUniform("cameraMatrix");
+  derpShader.getUniform("projectionMatrix");
+  derpShader.getUniform("fourToThree");
+  derpShader.getUniform("wPlaneNearFar");
+
+  GLint handle = derpShader.getUniform(uniformName);
+  if (handle == -1) {
+    printf ("couldn't get handle %s\n", uniformName);
+  } else {
+    Vec4f moveIt(movey, movey, movey, 1.0f);
+    glUniform4fv(handle, 1, moveIt.raw());
+  }
+
+  GLint hTex = derpShader.getUniform(texHandle);
+  if (hTex == -1) {
+    printf ("couldn't get handle %s\n", texHandle);
+  } else {
+    WasGLErrorPlusPrint();
+    glActiveTexture(GL_TEXTURE0);
+    WasGLErrorPlusPrint();
+    glBindTexture(GL_TEXTURE_2D, g_texture.GetTextureID());
+    WasGLErrorPlusPrint();    
+    glUniform1i(hTex, 0);
+  }
+#endif //def DERP_INLINE_SHADERS
+
+	glBegin(GL_TRIANGLES);
+    glVertex3f(-0.5,-0.5,0.0);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glNormal3f(0.7f, 0.7f, 0.7f);
+//    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(0.5,0.0,0.0);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glNormal3f(0.7f, 0.7f, 0.7f);
+//		glTexCoord2f(0.5f, 1.0f);
+    glVertex3f(0.0,0.5,0.0);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glNormal3f(0.7f, 0.7f, 0.7f);
+//		glTexCoord2f(1.0f, 0.5f);
+	glEnd();
+
+  glLoadIdentity();
+	gluLookAt(0.0,0.0,5.0, 
+  		      0.0,0.0,-1.0,
+	    		  0.0f,1.0f,0.0f);
+
+	float lpos[4] = {1,0.5,1,0};
+  glLightfv(GL_LIGHT0, GL_POSITION, lpos);
+  glUseProgram(0);
+
+//#ifdef DERP_INLINE_SHADERS
+//  glUseProgram(p);
+//	glutSolidTeapot(1);
+//  glUseProgram(0);
+//#else
+//  derpShader.StartUsing();
+//	glutSolidTeapot(1);
+//  derpShader.StopUsing();
+//#endif //def DERP_INLINE_SHADERS
+
+  glFlush();
+
+	glutSwapBuffers();
+}
+
+int main(int argc, char *argv[]) {
+  
+  glutInit(&argc, argv);
+  glutInitWindowPosition(0, 0);
+  glutInitWindowSize(640, 480);
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+//  glutInitContextVersion(3, 2);
+  GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
+//#ifdef _DEBUG
+//  contextFlags |= GLUT_DEBUG;
+//#endif // _DEBUG
+  glutInitContextFlags(contextFlags);
+    
+  glutCreateWindow(argv[0]);
+  
+  glewExperimental = TRUE;
+  if(glewInit() != GLEW_OK) {
+    printf("glew init fail\n");
+    return false;
+  }
+
+  glutReshapeFunc(derpReshapeGL);
+  glutKeyboardFunc(derpKey);
+  glutDisplayFunc(derpRenderScene);
+  glutIdleFunc(derpIdle);
+
+  Initialize();
+  WasGLErrorPlusPrint();
+
+#ifdef DERP_INLINE_SHADERS
+  loadInlineShaders();
+#else
+  derpShader.Release();
+  derpShader.LoadFromFile(
+      "trivial", "data\\vertTrivial.glsl", "data\\fragTrivial.glsl");
+#endif
+  g_texture.LoadFromFile("data\\orientedTexture.png");
+
+
+  glutMainLoop();
+  return 0;
+}
+
+#endif // DERP

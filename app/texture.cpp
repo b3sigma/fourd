@@ -1,4 +1,6 @@
+#include "glhelper.h"
 #include "texture.h"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stb/stb_image.h"
@@ -45,18 +47,41 @@ namespace fd {
     }
 
     glGenTextures(1, &texture_id_);
+    WasGLErrorPlusPrint();
     glBindTexture(GL_TEXTURE_2D, texture_id_);
-    glTexImage2D(GL_TEXTURE_2D, 0, // level
-      internal_format_, width_, height_, 0, // border
-      format_, GL_UNSIGNED_BYTE, data);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    WasGLErrorPlusPrint();
+    // TODO: Check if img format that includes mips, like dxt
+    bool generateMipmaps = true; 
+    if (generateMipmaps) {
+      if(!CheckGLUErr(gluBuild2DMipmaps(GL_TEXTURE_2D, channels, 
+          width_, height_, format_, GL_UNSIGNED_BYTE, data))) {
+        stbi_image_free(data);
+        glDeleteTextures(1, &texture_id_);
+        texture_id_ = -1;
+        return false;
+      }
+    } else {
+      glTexImage2D(GL_TEXTURE_2D, 0 /* level */,
+          internal_format_, width_, height_, 0 /* border */,
+          format_, GL_UNSIGNED_BYTE, data);
+    }
+    WasGLErrorPlusPrint();
 
+    //glGenerateTextureMipmap(texture_id_);
+    //WasGLErrorPlusPrint();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    WasGLErrorPlusPrint();
+
+    
     stbi_image_free(data);
     return true;
   }
 
   void Texture::Release() {
-    glDeleteTextures(1, &texture_id_);
+    if (texture_id_ >= 0) {
+      glDeleteTextures(1, &texture_id_);
+    }
   }
 
   Texture::~Texture() {

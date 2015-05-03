@@ -7,6 +7,7 @@ namespace fd {
 
 class Mesh;
 class Shader;
+class Texture;
 
 class Entity : Component {
 public:
@@ -18,6 +19,8 @@ public:
   ComponentBus m_componentBus;
   Mesh* m_pMesh; // not owned
   Shader* m_pShader; // not owned
+  typedef std::vector<Texture*> TTextureList;
+  TTextureList m_textures;
 
 public:
   Entity();
@@ -28,7 +31,7 @@ public:
   void OnStepSignal(float delta);
   void OnDeleteSelf();
 
-  bool Initialize(Mesh* pMesh, Shader* pShader);
+  bool Initialize(Mesh* pMesh, Shader* pShader, const TTextureList* textures);
 
   ComponentBus& GetComponentBus() { return m_componentBus; }
 

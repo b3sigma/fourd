@@ -18,8 +18,7 @@ make
 
 Todo list:
 * Add texturing
-* Add Entity
-* Setup scene structure
+* Setup real quaxol rendering
 * Add collision
 * Add 120 cell
 * Add spin system

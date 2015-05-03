@@ -3,13 +3,19 @@
 
 #include "../common/camera.h"
 #include "../common/mesh.h"
+#include "glhelper.h"
 #include "scene.h"
 #include "entity.h"
 #include "shader.h"
+#include "texture.h"
 
 namespace fd {
 
-Scene::Scene() {
+Scene::Scene() 
+  : m_pQuaxolShader(NULL)
+  , m_pQuaxolMesh(NULL)
+  , m_pQuaxolTex(NULL)
+{
   BuildColorArray();
 
   m_componentBus.RegisterSignal(std::string("EntityDeleted"), this, &Scene::RemoveEntity);  // notification from entity that it is being deleted
@@ -92,12 +98,30 @@ void Scene::RenderEntitiesStupidly() {
       pShader->StopUsing();
     }
 
+    if(!m_pQuaxolShader || !m_pQuaxolMesh)
+      continue;
+
     // if you thought the above was ugly and wasteful, just wait!
+    WasGLErrorPlusPrint();
     m_pQuaxolShader->StartUsing();
     m_pQuaxolShader->SetCameraParams(pCamera);
+    WasGLErrorPlusPrint();
     Mat4f worldMatrix;
     worldMatrix.storeIdentity();
     m_pQuaxolShader->SetOrientation(&worldMatrix);
+    WasGLErrorPlusPrint();
+    if(m_pQuaxolTex) {
+      GLint hTex0 = m_pQuaxolShader->getUniform("texDiffuse0");
+      WasGLErrorPlusPrint();
+      if (hTex0 != -1) {
+        glActiveTexture(GL_TEXTURE0);
+        WasGLErrorPlusPrint();
+        glBindTexture(GL_TEXTURE_2D, m_pQuaxolTex->GetTextureID());
+        WasGLErrorPlusPrint();
+        glUniform1i(hTex0, 0);
+        WasGLErrorPlusPrint();
+      }
+    }
 
     for (auto quaxol : m_quaxols) {
     
@@ -110,28 +134,40 @@ void Scene::RenderEntitiesStupidly() {
       shift.z = shift_amount * q.z;
       shift.w = shift_amount * q.w;
       m_pQuaxolShader->SetPosition(&shift);
+      WasGLErrorPlusPrint();
 
       int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
       int startTriangle = 0;
       int endTriangle = tesseractTris;
+      WasGLErrorPlusPrint();
+
+      GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
       glBegin(GL_TRIANGLES);
+      WasGLErrorPlusPrint();
       Vec4f a, b, c;
       int colorIndex = 0;
       for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
-        glVertexAttrib4fv(m_pQuaxolShader->GetColorHandle(),
-            m_colorArray[colorIndex].raw());
+        if(colorHandle != -1) {
+          glVertexAttrib4fv(colorHandle,
+              m_colorArray[colorIndex].raw());
+        }
+        WasGLErrorPlusPrint();
         m_pQuaxolMesh->getTriangle(t, a, b, c);
         glVertex4fv(a.raw());
         glVertex4fv(b.raw());
         glVertex4fv(c.raw());
+        WasGLErrorPlusPrint();
         if ((t+1) % 2 == 0) {
           colorIndex = (colorIndex + 1) % m_colorArray.size();
         }
       }
+      WasGLErrorPlusPrint();
       glEnd();
+      WasGLErrorPlusPrint();
     }
 
     m_pQuaxolShader->StopUsing();
+    WasGLErrorPlusPrint();
     
   }
 }
@@ -143,6 +179,5 @@ void Scene::BuildColorArray() {
     m_colorArray.push_back(Vec4f(0, (float)(steps + 1) / (float)numSteps, 0, 1));
   }
 }
-
 
 } // namespace fd

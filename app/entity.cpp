@@ -1,4 +1,5 @@
 #include "entity.h"
+#include "texture.h"
 
 namespace fd {
 
@@ -36,11 +37,16 @@ void Entity::OnDeleteSelf() {
       SignalN<Entity*>(), this);
 }
 
-bool Entity::Initialize(Mesh* pMesh, Shader* pShader) {
+bool Entity::Initialize(Mesh* pMesh, Shader* pShader,
+      const TTextureList* pTextures) {
   if (!pMesh || !pShader) return false;
 
   m_pMesh = pMesh;
   m_pShader = pShader;
+
+  if(pTextures) {
+    m_textures.assign(pTextures->begin(), pTextures->end());
+  }
   return true;
 }
 

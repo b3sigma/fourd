@@ -9,6 +9,7 @@ namespace fd {
 class Camera;
 class Entity;
 class Shader;
+class Texture;
 
 class Scene {
 protected:
@@ -30,6 +31,7 @@ public:
   TVecQuaxol m_quaxols;
   Shader* m_pQuaxolShader;
   Mesh* m_pQuaxolMesh;
+  Texture* m_pQuaxolTex;
 
 public:
   Scene();

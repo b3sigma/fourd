@@ -15,6 +15,7 @@
 
 #include "shader.h"
 #include "../common/camera.h"
+#include "glhelper.h"
 
 namespace fd {
 
@@ -57,12 +58,15 @@ Shader::Shader()
 // doing things so inefficiently already that much more refactoring necessary
 void Shader::InitCameraParamHandles() {
   assert(m_programId != 0);
+
   // per vertex
   m_handles[AVertPosition] = getAttrib("vertPosition");
   m_handles[AVertColor] = getAttrib("vertColor");
+
   // per object
   m_handles[UWorldMatrix] = getUniform("worldMatrix");
   m_handles[UWorldPosition] = getUniform("worldPosition");
+  m_handles[UTexDiffuse0] = getUniform("texDiffuse0");
 
   // camera 
   m_handles[UCameraPosition] = getUniform("cameraPosition");
@@ -136,8 +140,10 @@ void Shader::RemoveFromShaderHash() {
 
 bool Shader::LoadFromFile(const char* refName, 
     const char* vertexFile, const char* pixelFile) {
-  AddSubShader(vertexFile, GL_VERTEX_SHADER);
-  AddSubShader(pixelFile, GL_FRAGMENT_SHADER);
+  if(!AddSubShader(vertexFile, GL_VERTEX_SHADER))
+    return false;
+  if(!AddSubShader(pixelFile, GL_FRAGMENT_SHADER))
+    return false;
 
   GLuint programId = glCreateProgram();
   if(programId == 0) {
@@ -155,17 +161,7 @@ bool Shader::LoadFromFile(const char* refName,
     glDetachShader(programId, shaderId);
   }
 
-  GLint linkSuccess = GL_TRUE;
-  glGetProgramiv(programId, GL_COMPILE_STATUS, &linkSuccess);
-  if(linkSuccess != GL_TRUE) {
-    printf("program linking failed v:%s f:%s err:%d\n",
-        vertexFile, pixelFile, linkSuccess);
-    GLint errorLength;
-    glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &errorLength);
-    std::string error;
-    error.resize(errorLength);
-    glGetProgramInfoLog(programId, errorLength, NULL, (GLchar*)&error[0]);
-    printf("error msg: %s\n", error.c_str());
+  if(!CheckGLShaderLinkStatus(programId, vertexFile, pixelFile)) {
     glDeleteProgram(programId);
     return false;
   }
@@ -181,6 +177,51 @@ bool Shader::LoadFromFile(const char* refName,
 
   return true;
 }
+
+bool Shader::CheckGLShaderCompileStatus(GLuint shaderId, const char* filename) {
+  GLint compileSuccess = GL_TRUE;
+  glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compileSuccess);
+  if(WasGLErrorPlusPrint() || compileSuccess != GL_TRUE) {
+    printf("Shader compilation failed!\n");
+    if(filename != NULL) {
+      printf("shader filename:%s\n", filename);
+    }
+    GLint errorLength;
+    glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &errorLength);
+    std::string error;
+    error.resize(errorLength);
+    glGetShaderInfoLog(shaderId, errorLength, NULL, (GLchar*)&error[0]);
+    printf("error msg: %s\n", error.c_str());
+    return false;
+  } else {
+    return true;
+  }
+}
+
+bool Shader::CheckGLShaderLinkStatus(
+    GLuint programId, const char* vertFilename, const char* fragFilename) {
+  GLint linkSuccess = GL_TRUE;
+  glGetProgramiv(programId, GL_LINK_STATUS, &linkSuccess);
+  if(WasGLErrorPlusPrint() || linkSuccess != GL_TRUE) {
+    printf("program linking failed err:%d\n", linkSuccess);
+    if(vertFilename) {
+      printf("vert filename:%s\n", vertFilename);
+    }
+    if(fragFilename) {
+      printf("frag filename:%s\n", fragFilename);
+    }
+    GLint errorLength;
+    glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &errorLength);
+    std::string error;
+    error.resize(errorLength);
+    glGetProgramInfoLog(programId, errorLength, NULL, (GLchar*)&error[0]);
+    printf("error msg: %s\n", error.c_str());
+    return false;
+  } else {
+    return true;
+  }
+}
+
 
 bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
   std::string buffer;
@@ -198,16 +239,7 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
   glShaderSource(shaderId, 1, (const GLchar* const*)&(bufferString), NULL);
   glCompileShader(shaderId);
 
-  GLint compileSuccess = GL_TRUE;
-  glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compileSuccess);
-  if(compileSuccess != GL_TRUE) {
-    printf("Shader compilation failed:%s\ndump:%s\n", filename, buffer.c_str());
-    GLint errorLength;
-    glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &errorLength);
-    std::string error;
-    error.resize(errorLength);
-    glGetShaderInfoLog(shaderId, errorLength, NULL, (GLchar*)&error[0]);
-    printf("error msg: %s\n", error.c_str());
+  if(!CheckGLShaderCompileStatus(shaderId, filename)) {
     glDeleteShader(shaderId);
     return false;
   }
@@ -305,6 +337,7 @@ GLint Shader::getAttrib(const char* name) const {
     return handle;
 
   handle = glGetAttribLocation(m_programId, name);
+  WasGLErrorPlusPrint();
   if(handle == -1) {
     printf("Couldn't find attrib:%s\n", name);
     return handle;
@@ -325,6 +358,7 @@ GLint Shader::getUniform(const char* name) const {
     return handle;
 
   handle = glGetUniformLocation(m_programId, name);
+  WasGLErrorPlusPrint();
   if(handle == -1) {
     printf("Couldn't find uniform:%s\n", name);
     return handle;
