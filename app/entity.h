@@ -8,6 +8,7 @@ namespace fd {
 class Mesh;
 class Shader;
 class Texture;
+class MeshBuffer;
 
 class Entity : Component {
 public:
@@ -17,6 +18,7 @@ public:
   Vec4f m_position;
 
   ComponentBus m_componentBus;
+  MeshBuffer* m_pMeshBuffer;
   Mesh* m_pMesh; // not owned
   Shader* m_pShader; // not owned
   typedef std::vector<Texture*> TTextureList;

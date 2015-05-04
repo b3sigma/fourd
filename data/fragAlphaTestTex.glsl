@@ -1,5 +1,3 @@
-// # verasion 150
-// OpenGL 3.2 apparently
 
 uniform sampler2D texDiffuse0;
 

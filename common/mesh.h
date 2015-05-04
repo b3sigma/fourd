@@ -39,7 +39,7 @@ public:
   void buildFourCylinder(float radius, float length, float inside, int faceCount);
   void projectIntoFour(float insideDist, Vec4f step);
   void merge(const Mesh& other);
-
+  
 private:
   void populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& step);
   void buildNormals(const VertList& verts, const IndexList& indices, VertList& normals);
