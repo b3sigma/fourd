@@ -96,6 +96,8 @@
     <ClCompile Include="..\common\camera.cpp" />
     <ClCompile Include="..\common\chunkloader.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
+    <ClCompile Include="..\common\physics.cpp" />
+    <ClCompile Include="..\common\quaxol.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -110,10 +112,13 @@
     <ClInclude Include="..\common\component.h" />
     <ClInclude Include="..\common\components\animated_rotation.h" />
     <ClInclude Include="..\common\components\periodic_motion.h" />
+    <ClInclude Include="..\common\components\physics_component.h" />
     <ClInclude Include="..\common\components\timed_death.h" />
     <ClInclude Include="..\common\fd_simple_file.h" />
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\mesh.h" />
+    <ClInclude Include="..\common\physics.h" />
+    <ClInclude Include="..\common\quaxol.h" />
     <ClInclude Include="..\common\thirdparty\signals\Delegate.h" />
     <ClInclude Include="..\common\thirdparty\signals\Signal.h" />
     <ClInclude Include="..\common\timer.h" />

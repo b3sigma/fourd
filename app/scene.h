@@ -9,10 +9,12 @@ namespace fd {
 
 class Camera;
 class Entity;
-class Shader;
-class Texture;
 class MeshBuffer;
 class Mesh;
+class Physics;
+class Shader;
+class Texture;
+
 
 class Scene {
 protected:
@@ -27,6 +29,8 @@ protected:
   ColorList m_colorArray;
 
   ComponentBus m_componentBus;
+
+  Physics* m_pPhysics; //owned
 
 public:
   // leaving some vars public to avoid getter/setter as an experiment

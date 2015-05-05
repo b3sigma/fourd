@@ -17,7 +17,7 @@ namespace fd {
     }
 #pragma warning(pop)
 
-    Quaxol q;
+    QuaxolSpec q;
 
     // Note: before you do anything more complicated than this,
     // check out capnproto. Probably less efficient than direct binary

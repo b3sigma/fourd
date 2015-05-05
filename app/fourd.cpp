@@ -17,6 +17,7 @@
 #include "../common/mesh.h"
 #include "../common/camera.h"
 #include "../common/chunkloader.h"
+#include "../common/physics.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/periodic_motion.h"
 #include "../common/components/timed_death.h"
@@ -125,7 +126,8 @@ bool Initialize() {
   g_camera.SetWProjection(
       0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
-  g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
+  g_camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 15.5f, 4.5f));
+  //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
 
   
@@ -156,13 +158,15 @@ bool Initialize() {
   SetAlphaAndDisableDepth(true);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  if (!LoadShader("AlphaTest") || !LoadShader("BlendNoTex")
-    || !LoadShader("AlphaTestTex")) {
+  if (!LoadShader("AlphaTest")
+    || !LoadShader("AlphaTestTex")
+    || !LoadShader("BlendNoTex")
+    ) {
     printf("Shader loading failed\n");
     exit(-1);
   }
   
-  LoadLevel("level_4d_base_offset");
+  LoadLevel("level_4d_base");
   g_scene.AddCamera(&g_camera);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
@@ -602,6 +606,7 @@ void RunTests() {
 
   Shader::TestShaderHash();
   Camera::TestComponents();
+  Physics::TestPhysics();
 }
 
 //#define DERP

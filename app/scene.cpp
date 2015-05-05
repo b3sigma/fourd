@@ -5,6 +5,8 @@
 
 #include "../common/camera.h"
 #include "../common/mesh.h"
+#include "../common/physics.h"
+#include "../common/components/physics_component.h"
 
 #include "entity.h"
 #include "glhelper.h"
@@ -22,16 +24,20 @@ Scene::Scene()
 {
   BuildColorArray();
 
+  m_pPhysics = new Physics();
+
   m_componentBus.RegisterSignal(std::string("EntityDeleted"), this, &Scene::RemoveEntity);  // notification from entity that it is being deleted
   m_componentBus.RegisterSignal(std::string("DeleteEntity"), this, &Scene::OnDeleteEntity); // command from entity to delete it
 }
 
 Scene::~Scene() {
   delete m_pQuaxolBuffer;
+  delete m_pPhysics;
 }
 
 void Scene::AddCamera(Camera* pCamera) {
   m_cameras.push_back(pCamera);
+  pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
 }
 
 // Let the scene do the allocation to allow for mem opt
@@ -133,7 +139,7 @@ void Scene::RenderEntitiesStupidly() {
 
     for (auto quaxol : m_quaxols) {
     
-      const Quaxol& q = quaxol;
+      const QuaxolSpec& q = quaxol;
 
       float shift_amount = 10.0f;
       Vec4f shift;
