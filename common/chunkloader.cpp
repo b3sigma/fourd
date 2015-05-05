@@ -19,6 +19,9 @@ namespace fd {
 
     Quaxol q;
 
+    // Note: before you do anything more complicated than this,
+    // check out capnproto. Probably less efficient than direct binary
+    // fread and such, but probably much more flexible and versioning resistant.
     while (4 == fscanf_s(hFile, "%d %d %d %d\n", &q.x, &q.y, &q.z, &q.w)) {
       quaxols_.push_back(q);
     }

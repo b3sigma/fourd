@@ -8,6 +8,7 @@ class Mesh;
 class MeshBuffer {
 public:
   GLuint m_vertsId;
+  GLuint m_vertAttribuesId;
   GLuint m_indicesId;
   GLenum m_primitiveType;
   GLint  m_count;
@@ -19,6 +20,7 @@ public:
   ~MeshBuffer();
 
   bool LoadFromMesh(Mesh* pMesh);
+  bool Draw(GLuint vertPositionId);
 
 };
 
