@@ -1,11 +1,14 @@
 
-#include <gl/glew.h>
+#include <GL/glew.h>
+
+#include "scene.h"
 
 #include "../common/camera.h"
 #include "../common/mesh.h"
-#include "glhelper.h"
-#include "scene.h"
+
 #include "entity.h"
+#include "glhelper.h"
+#include "meshbuffer.h"
 #include "shader.h"
 #include "texture.h"
 
@@ -15,11 +18,16 @@ Scene::Scene()
   : m_pQuaxolShader(NULL)
   , m_pQuaxolMesh(NULL)
   , m_pQuaxolTex(NULL)
+  , m_pQuaxolBuffer(NULL)
 {
   BuildColorArray();
 
   m_componentBus.RegisterSignal(std::string("EntityDeleted"), this, &Scene::RemoveEntity);  // notification from entity that it is being deleted
   m_componentBus.RegisterSignal(std::string("DeleteEntity"), this, &Scene::OnDeleteEntity); // command from entity to delete it
+}
+
+Scene::~Scene() {
+  delete m_pQuaxolBuffer;
 }
 
 void Scene::AddCamera(Camera* pCamera) {
@@ -143,7 +151,7 @@ void Scene::RenderEntitiesStupidly() {
 
       GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
       glBegin(GL_TRIANGLES);
-      WasGLErrorPlusPrint();
+      //WasGLErrorPlusPrint();
       Vec4f a, b, c;
       int colorIndex = 0;
       for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
@@ -151,17 +159,17 @@ void Scene::RenderEntitiesStupidly() {
           glVertexAttrib4fv(colorHandle,
               m_colorArray[colorIndex].raw());
         }
-        WasGLErrorPlusPrint();
+        //WasGLErrorPlusPrint();
         m_pQuaxolMesh->getTriangle(t, a, b, c);
         glVertex4fv(a.raw());
         glVertex4fv(b.raw());
         glVertex4fv(c.raw());
-        WasGLErrorPlusPrint();
+        //WasGLErrorPlusPrint();
         if ((t+1) % 2 == 0) {
           colorIndex = (colorIndex + 1) % m_colorArray.size();
         }
       }
-      WasGLErrorPlusPrint();
+      //WasGLErrorPlusPrint();
       glEnd();
       WasGLErrorPlusPrint();
     }

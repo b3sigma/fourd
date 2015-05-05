@@ -3,6 +3,7 @@
 #include <vector>
 #include "../common/chunkloader.h"
 #include "../common/component.h"
+#include "../common/fourmath.h"
 
 namespace fd {
 
@@ -10,6 +11,8 @@ class Camera;
 class Entity;
 class Shader;
 class Texture;
+class MeshBuffer;
+class Mesh;
 
 class Scene {
 protected:
@@ -18,7 +21,7 @@ protected:
   TEntityList m_toBeDeleted;
 
   typedef std::vector<Camera*> TCameraList;
-  TCameraList m_cameras;
+  TCameraList m_cameras; //not owned
 
   typedef std::vector<Vec4f> ColorList;
   ColorList m_colorArray;
@@ -29,12 +32,15 @@ public:
   // leaving some vars public to avoid getter/setter as an experiment
   // requires knowing about write update functions
   TVecQuaxol m_quaxols;
-  Shader* m_pQuaxolShader;
-  Mesh* m_pQuaxolMesh;
-  Texture* m_pQuaxolTex;
+  Shader* m_pQuaxolShader; //not owned
+  Mesh* m_pQuaxolMesh; //not owned
+  Texture* m_pQuaxolTex; //not owned
+  MeshBuffer* m_pQuaxolBuffer; // owned
 
 public:
   Scene();
+  ~Scene();
+
 
   // should only be one or two of these any style is fine
   // but this is inconsistent with the entity thing...
