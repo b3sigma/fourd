@@ -17,6 +17,8 @@
 #include "../common/camera.h"
 #include "glhelper.h"
 
+//#define SHADER_DEBUG_SPAM
+
 namespace fd {
 
 Shader::~Shader() {
@@ -339,7 +341,9 @@ GLint Shader::getAttrib(const char* name) const {
   handle = glGetAttribLocation(m_programId, name);
   WasGLErrorPlusPrint();
   if(handle == -1) {
-    printf("Couldn't find attrib:%s\n", name);
+    #ifdef SHADER_DEBUG_SPAM
+      printf("Couldn't find attrib:%s\n", name);
+    #endif //def SHADER_DEBUG_SPAM
     return handle;
   }
 
@@ -360,7 +364,9 @@ GLint Shader::getUniform(const char* name) const {
   handle = glGetUniformLocation(m_programId, name);
   WasGLErrorPlusPrint();
   if(handle == -1) {
-    printf("Couldn't find uniform:%s\n", name);
+    #ifdef SHADER_DEBUG_SPAM
+      printf("Couldn't find uniform:%s\n", name);
+    #endif //def SHADER_DEBUG_SPAM
     return handle;
   }
 

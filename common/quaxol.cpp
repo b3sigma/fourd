@@ -7,7 +7,9 @@
 
 namespace fd {
 
-QuaxolChunk::QuaxolChunk() {
+QuaxolChunk::QuaxolChunk(Vec4f position, Vec4f blockSize)
+    : m_position(position)
+    , m_blockSize(blockSize) {
 }
 
 QuaxolChunk::~QuaxolChunk() {}

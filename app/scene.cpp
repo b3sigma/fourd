@@ -6,6 +6,7 @@
 #include "../common/camera.h"
 #include "../common/mesh.h"
 #include "../common/physics.h"
+#include "../common/quaxol.h"
 #include "../common/components/physics_component.h"
 
 #include "entity.h"
@@ -21,6 +22,7 @@ Scene::Scene()
   , m_pQuaxolMesh(NULL)
   , m_pQuaxolTex(NULL)
   , m_pQuaxolBuffer(NULL)
+  , m_pQuaxolChunk(NULL)
 {
   BuildColorArray();
 
@@ -35,9 +37,20 @@ Scene::~Scene() {
   delete m_pPhysics;
 }
 
+void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
+  m_quaxols.assign(pChunk->quaxols_.begin(), pChunk->quaxols_.end());
+
+  QuaxolSpec offset(0, 0, 0, 0);
+  Vec4f position(0, 0, 0, 0); // need to fill these out with appropriate values
+  Vec4f blockSize(1.0f, 1.0f, 1.0f, 1.0f); // 1 light-second, everything in light-seconds
+  m_pQuaxolChunk = new QuaxolChunk(position, blockSize);
+  m_pQuaxolChunk->LoadFromList(&m_quaxols, &offset);
+  m_pPhysics->AddChunk(m_pQuaxolChunk);
+}
+
 void Scene::AddCamera(Camera* pCamera) {
   m_cameras.push_back(pCamera);
-  pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
+  //pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
 }
 
 // Let the scene do the allocation to allow for mem opt

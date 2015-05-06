@@ -12,6 +12,7 @@ class Entity;
 class MeshBuffer;
 class Mesh;
 class Physics;
+class QuaxolChunk;
 class Shader;
 class Texture;
 
@@ -41,10 +42,13 @@ public:
   Texture* m_pQuaxolTex; //not owned
   MeshBuffer* m_pQuaxolBuffer; // owned
 
+  QuaxolChunk* m_pQuaxolChunk;
+
 public:
   Scene();
   ~Scene();
 
+  void AddLoadedChunk(const ChunkLoader* pChunk);
 
   // should only be one or two of these any style is fine
   // but this is inconsistent with the entity thing...

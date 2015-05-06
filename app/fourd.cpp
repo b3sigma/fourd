@@ -83,7 +83,7 @@ bool LoadLevel(const char* levelName) {
   std::string fullName = levelPath + nameBase + nameExt;
   ChunkLoader chunks;
   if (chunks.LoadFromFile(fullName.c_str())) {
-    std::swap(g_scene.m_quaxols, chunks.quaxols_);
+    g_scene.AddLoadedChunk(&chunks);
     printf("Level (%s) loaded %d quaxols!\n",
         fullName.c_str(), (int)g_scene.m_quaxols.size());
     return true;
@@ -131,7 +131,8 @@ bool Initialize() {
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
 
   
-  g_texture.LoadFromFile("data\\orientedTexture.png");
+  //g_texture.LoadFromFile("data\\textures\\orientedTexture.png");
+  g_texture.LoadFromFile("data\\textures\\wood.jpg");
   WasGLErrorPlusPrint();
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -348,10 +349,10 @@ void Update(int key, int x, int y) {
       }
     } break;
     case '9' : {
-      LoadLevel("level_4d_base_offset");
+      LoadLevel("level_4d_base");
     } break;
     case '0' : {
-      LoadLevel("level_trivial");
+      LoadLevel("level_single");
     } break;
     case 27: {
       Deinitialize();

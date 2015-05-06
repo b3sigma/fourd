@@ -41,6 +41,7 @@ public:
 	const T* raw() const { return (T*)this; }
 	T& operator()(int index) { return d[index]; }
 	T& operator[](int index) { return d[index]; }
+	const T& operator[](int index) const { return d[index]; }
 	void set(int index, T val) { d[index] = val; }
 	void set(const Vec& rVal) {
 	  x = rVal.x; y = rVal.y; z = rVal.z; w = rVal.w;
