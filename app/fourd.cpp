@@ -285,6 +285,37 @@ void ToggleMouseCapture() {
   }
 }
 
+bool AddTesseractLineCallback(const QuaxolChunk* chunk, int x, int y, int z, int w) {
+  //g_scene.m_quaxols.emplace_back(x, y, z, w);
+  //printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
+  Entity* pEntity = g_scene.AddEntity();
+  // ugh need like a mesh manager and better approach to shader handling
+  pEntity->Initialize(&tesseract, g_shader, NULL);
+  pEntity->m_orientation.storeIdentity();
+  
+  const float blockSize = 10.0f;
+  Vec4f position(x * blockSize, y * blockSize, z * blockSize, w * blockSize);
+  pEntity->m_position = position;
+
+  //pEntity->GetComponentBus().AddComponent(
+  //    new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+  //    20.0f, true));
+  pEntity->GetComponentBus().AddComponent(
+      new TimedDeath(21.0f /* duration */));
+  return true;
+}
+
+void AddTesseractLine() {
+  Vec4f cameraPos = g_camera.getCameraPos();
+  cameraPos *= 1.0f / 10.0f;
+  Vec4f ray = -g_camera.getCameraMatrix()[Camera::FORWARD];
+  ray *= 10.0f;
+  float lazyInterfaceClutter;
+  DelegateN<bool, const QuaxolChunk*, int, int, int, int> delegate;
+  delegate.Bind(AddTesseractLineCallback);
+  g_scene.m_pPhysics->LineDraw4D(cameraPos, ray, &lazyInterfaceClutter, delegate);
+}
+
 void Update(int key, int x, int y) {
   UNUSED(x); UNUSED(y); // Required by glut prototype.
   static float moveAmount = 1.0f;
@@ -475,20 +506,7 @@ void Update(int key, int x, int y) {
       }
     } break;
     case 'z' : {
-      Entity* pEntity = g_scene.AddEntity();
-      // ugh need like a mesh manager and better approach to shader handling
-      pEntity->Initialize(&tesseract, g_shader, NULL);
-      pEntity->m_orientation.storeIdentity();
-      
-      Vec4f forwardDir = g_camera.getCameraMatrix()[Camera::FORWARD];
-      forwardDir *= -50.0f;
-      pEntity->m_position = g_camera._cameraPos + forwardDir;
-      
-      pEntity->GetComponentBus().AddComponent(
-          new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
-          20.0f, true));
-      pEntity->GetComponentBus().AddComponent(
-          new TimedDeath(21.0f /* duration */));
+      AddTesseractLine();
     } break;
     case 'Z' : {
       Entity* pEntity = g_scene.AddEntity();

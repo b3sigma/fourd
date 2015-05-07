@@ -31,11 +31,12 @@ protected:
 
   ComponentBus m_componentBus;
 
-  Physics* m_pPhysics; //owned
 
 public:
   // leaving some vars public to avoid getter/setter as an experiment
   // requires knowing about write update functions
+  Physics* m_pPhysics; //owned
+
   TVecQuaxol m_quaxols;
   Shader* m_pQuaxolShader; //not owned
   Mesh* m_pQuaxolMesh; //not owned

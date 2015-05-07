@@ -79,7 +79,7 @@ inline int GetAbsMaxComponent(const float* vec, int numExclusions, int exclude[N
     if (skip)
       continue;
     if(abs(vec[c]) >= max) {
-      max = vec[c];
+      max = abs(vec[c]);
       maxIndex = c;
     }
   }
@@ -133,7 +133,9 @@ void Physics::LineDraw4D(const Vec4f& position, const Vec4f& ray, float* outDist
   // do the start
   callback(NULL, pos[0], pos[1], pos[2], pos[3]);
   // loop until we're at the end
-  while(pos != end) {
+  int totalSteps = abs(end[axis[0]] - pos[axis[0]]); 
+  //while(pos != end) {
+  for(int mainSteps = 0; mainSteps <= totalSteps; mainSteps++) {
     count[0]--;
     if(count[0] < 0 && countdown[0] > 0) {
       pos[axis[1]] += step[axis[1]];
@@ -158,6 +160,7 @@ void Physics::LineDraw4D(const Vec4f& position, const Vec4f& ray, float* outDist
 
     pos[axis[0]] += step[axis[0]];
     callback(NULL, pos[0], pos[1], pos[2], pos[3]);
+    if(pos == end) break;
   }
 }
 
@@ -299,7 +302,15 @@ void Physics::TestPhysics() {
   assert(s_testQuaxols.size() == 4); //(1,1,1,1), (1,1,1,0), (1,1,1,-1), (1,2,1,-1)
   assert(s_testQuaxols[0] == QuaxolSpec(1,1,1,1));
   assert(s_testQuaxols[3] == QuaxolSpec(1,2,1,-1));
-  
+
+  pos.set(1.5f, 1.5f, 1.5f, 1.5f);
+  ray.set(-2.5f, 1.0f, 1.7f, -2.0f);
+  s_testQuaxols.resize(0);
+  physTest.LineDraw4D(pos, ray, &dist, stepCallback);
+  assert(s_testQuaxols.size() == 6);
+  assert(s_testQuaxols[0] == QuaxolSpec(1,1,1,1));
+  assert(s_testQuaxols[5] == QuaxolSpec(-2,1,2,0)); //is this even right?
+
 }
 
 } // namespace fd
