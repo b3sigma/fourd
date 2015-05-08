@@ -135,7 +135,8 @@ bool Initialize() {
   g_texture.LoadFromFile("data\\textures\\wood.jpg");
   WasGLErrorPlusPrint();
 
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
   WasGLErrorPlusPrint();
   glClearDepth(1.0f);
   WasGLErrorPlusPrint();
