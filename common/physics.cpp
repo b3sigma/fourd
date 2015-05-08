@@ -1,6 +1,7 @@
 #include <math.h>
 
 #include "physics.h"
+#include "physics_help.h"
 #include "quaxol.h"
 
 namespace fd {
@@ -40,20 +41,22 @@ void Physics::ClampToGround(Vec4f* position) {
 
 // Thinking 4d breseham line thing?
 bool Physics::RayCastChunk(const QuaxolChunk& chunk,
-    const Vec4f& position, const Vec4f& direction, float* outDistance) {
+    const Vec4f& position, const Vec4f& ray, float* outDistance) {
 
   Vec4f localPos(position);
   localPos -= chunk.m_position;
 
-  // normalized direction is converted into n ints for n-dim
-  // The algorithm is to progress along a specific direction and decrement
-  // each counter along the largest direction
-  // In 2d this means 4 different cardinal directions, but two different
-  // primary axes, each that can step in negative. But there are two different
-  // code paths
-  // In 3d this means 3*2*1 different code paths, or n! different code paths.
-  // This can be done more generally with indices probably.
+  // should cap ray to the possible chunk positions
+  Vec4f boxMax(chunk.m_blockSize);
+  Vec4f localRay(ray);
+ 
 
+  return PhysicsHelp::WithinBox(Vec4f(), boxMax, localPos);
+
+  float outDist = 9999999.0f;
+  //LineDraw4D(localPos, direction, 
+
+ 
   return false;
 }
 
@@ -86,6 +89,14 @@ inline int GetAbsMaxComponent(const float* vec, int numExclusions, int exclude[N
   return maxIndex;
 }
 
+// normalized direction is converted into n ints for n-dim
+// The algorithm is to progress along a specific direction and decrement
+// each counter along the largest direction
+// In 2d this means 4 different cardinal directions, but two different
+// primary axes, each that can step in negative. But there are two different
+// code paths
+// In 3d this means 3*2*1 different code paths, or n! different code paths.
+// This is made tractable with generalized indices.
 // Harder version, draw a line in 4d
 void Physics::LineDraw4D(const Vec4f& position, const Vec4f& ray, float* outDist,
     DelegateN<bool, const QuaxolChunk*, int, int, int, int> callback) {

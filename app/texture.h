@@ -2,26 +2,40 @@
 
 #include <GL/glew.h>
 #include <vector>
+#include <set>
+#include <string>
 
 namespace fd {
+
+  class Texture;
+  typedef std::vector<Texture*> TTextureList;
+  typedef std::set<Texture*> TTextureSet;
+
   class Texture {
   protected:
-    GLuint texture_id_;
-    GLsizei width_;
-    GLsizei height_;
-    GLenum format_;
-    GLenum internal_format_;
+    GLuint m_texture_id;
+    GLsizei m_width;
+    GLsizei m_height;
+    GLenum m_format;
+    GLenum m_internal_format;
+    std::string m_name;
+
+    static TTextureSet s_textureCache; //ugh;
 
   public:
-    Texture() : texture_id_(0) {}
+    Texture() : m_texture_id(0) {}
     ~Texture();
 
     bool LoadFromFile(const char* filename);
     void Release();
 
-    GLuint GetTextureID() const { return texture_id_; }
+    GLuint GetTextureID() const { return m_texture_id; }
 
+  public:
+    static void DeinitializeTextureCache();
+
+  protected:
+    static void AddToTextureCache(Texture* pTexture);
   };
-  typedef std::vector<Texture*> TTextureList;
 
 }; // namespace fd

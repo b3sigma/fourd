@@ -7,6 +7,20 @@
 
 namespace fd {
 
+  TTextureSet Texture::s_textureCache;
+
+  void Texture::DeinitializeTextureCache() {
+    for (auto pTex : s_textureCache) {
+      delete pTex;
+    }
+    s_textureCache.clear();
+  }
+
+  void Texture::AddToTextureCache(Texture* pTexture) {
+    // as it's pointer based, should be idempotent
+    s_textureCache.insert(pTexture); 
+  }
+
   bool Texture::LoadFromFile(const char* filename) {
     int width = 0;
     int height = 0;
@@ -17,28 +31,28 @@ namespace fd {
       return false;
     }
 
-    width_ = static_cast<GLsizei>(width);
-    height_ = static_cast<GLsizei>(height);
+    m_width = static_cast<GLsizei>(width);
+    m_height = static_cast<GLsizei>(height);
 
-    format_ = 0;
-    internal_format_ = 0;
+    m_format = 0;
+    m_internal_format = 0;
 
     switch (channels) {
     case 1:
-      format_ = GL_LUMINANCE;
-      internal_format_ = format_;
+      m_format = GL_LUMINANCE;
+      m_internal_format = m_format;
       break;
     case 2:
-      format_ = GL_LUMINANCE_ALPHA;
-      internal_format_ = format_;
+      m_format = GL_LUMINANCE_ALPHA;
+      m_internal_format = m_format;
       break;
     case 3:
-      format_ = GL_RGB;
-      internal_format_ = GL_SRGB;
+      m_format = GL_RGB;
+      m_internal_format = GL_SRGB;
       break;
     case 4:
-      format_ = GL_RGBA;
-      internal_format_ = GL_SRGB_ALPHA;
+      m_format = GL_RGBA;
+      m_internal_format = GL_SRGB_ALPHA;
       break;
     default:
       printf("Texture had unexpected number of channels: %d\n", channels);
@@ -46,24 +60,24 @@ namespace fd {
       return false;
     }
 
-    glGenTextures(1, &texture_id_);
+    glGenTextures(1, &m_texture_id);
     WasGLErrorPlusPrint();
-    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glBindTexture(GL_TEXTURE_2D, m_texture_id);
     WasGLErrorPlusPrint();
     // TODO: Check if img format that includes mips, like dxt
     bool generateMipmaps = true; 
     if (generateMipmaps) {
       if(!CheckGLUErr(gluBuild2DMipmaps(GL_TEXTURE_2D, channels, 
-          width_, height_, format_, GL_UNSIGNED_BYTE, data))) {
+          m_width, m_height, m_format, GL_UNSIGNED_BYTE, data))) {
         stbi_image_free(data);
-        glDeleteTextures(1, &texture_id_);
-        texture_id_ = -1;
+        glDeleteTextures(1, &m_texture_id);
+        m_texture_id = -1;
         return false;
       }
     } else {
       glTexImage2D(GL_TEXTURE_2D, 0 /* level */,
-          internal_format_, width_, height_, 0 /* border */,
-          format_, GL_UNSIGNED_BYTE, data);
+          m_internal_format, m_width, m_height, 0 /* border */,
+          m_format, GL_UNSIGNED_BYTE, data);
     }
     WasGLErrorPlusPrint();
 
@@ -75,12 +89,14 @@ namespace fd {
 
     
     stbi_image_free(data);
+    
+    AddToTextureCache(this);
     return true;
   }
 
   void Texture::Release() {
-    if (texture_id_ >= 0) {
-      glDeleteTextures(1, &texture_id_);
+    if (m_texture_id >= 0) {
+      glDeleteTextures(1, &m_texture_id);
     }
   }
 

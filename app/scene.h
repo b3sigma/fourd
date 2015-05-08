@@ -40,7 +40,9 @@ public:
   TVecQuaxol m_quaxols;
   Shader* m_pQuaxolShader; //not owned
   Mesh* m_pQuaxolMesh; //not owned
-  Texture* m_pQuaxolTex; //not owned
+
+  typedef std::vector<Texture*> TTextureList;
+  TTextureList m_texList;
   MeshBuffer* m_pQuaxolBuffer; // owned
 
   QuaxolChunk* m_pQuaxolChunk;
@@ -54,6 +56,8 @@ public:
   // should only be one or two of these any style is fine
   // but this is inconsistent with the entity thing...
   void AddCamera(Camera* pCamera);
+
+  void AddTexture(Texture* pTex);
 
   // Let the scene do the allocation to allow for mem opt
   // Some kind of entity def that at least includes shader, texture and mesh
@@ -71,6 +75,12 @@ public:
 
   // Hacky garbage, should be on the mesh/quaxol
   void BuildColorArray();
+
+protected:
+  // horrible way to index textures
+  // going to need a shader context or something soon
+  void SetTexture(int index, GLint hTex);
+
 };
 
 } // namespace fd

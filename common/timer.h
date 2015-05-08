@@ -4,11 +4,14 @@
 #include <windows.h>
 #endif // WIN32
 
+#include <string>
+
 namespace fd {
 
   class Timer
   {
   protected:
+    std::string m_message;
     double _elapsed;
 #ifdef WIN32
     LARGE_INTEGER _start;
@@ -18,9 +21,12 @@ namespace fd {
 #endif
 
   public:
+    Timer(const std::string& message) : Timer() {
+      m_message = message;
+    }
+
     Timer()
     {
-      _start.QuadPart = 0;
       if (_frequency == 1.0) {
         LARGE_INTEGER frequency;
         frequency.QuadPart = 2;
@@ -28,6 +34,17 @@ namespace fd {
         QueryPerformanceFrequency(&frequency);
         _frequency = static_cast<double>(frequency.QuadPart);
       }
+      Start();
+    }
+
+    ~Timer() {
+      if(!m_message.empty()) {
+        printf("Timer '%s' expired after %f seconds\n", m_message.c_str(), GetElapsed());
+      }
+    }
+
+    void Start() {
+      QueryPerformanceCounter(&_start);
     }
 
     double GetElapsed() {

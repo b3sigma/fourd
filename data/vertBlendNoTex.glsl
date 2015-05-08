@@ -23,13 +23,14 @@ void main() {
 	//fragHPos = mul(megaMatrix, worldSpace);
 	
   fragCol0.a = 0.2;
-  fragCol0.g = vertColor.y;
+  fragCol0.rgb = vertColor.xyz;
+  
+  //fragCol0.r = 1.0 - abs((savedW - 0.5) * 2);
+  //fragCol0.b = abs(threeSpace.x / 10);
+	//fragCol0.g = vertColor.y;
   //fragCol0.r = abs(worldSpace.z / 10);
   //fragCol0.b = abs(worldSpace.w / 10);
-  fragCol0.r = 1.0 - abs((savedW - 0.5) * 2);
-  fragCol0.b = abs(threeSpace.x / 10);
-	//fragCol0.xyz = vertcolor.xyz;
-	//fragCol0.xyz = vec3(savedW, savedW, savedW);
+  //fragCol0.xyz = vec3(savedW, savedW, savedW);
 	//fragCol0.xyz = vertposition.xyz;
 	//fragCol0.xyz = worldSpace.xyz;
 	//fragCol0.xyz = homogenousCoords.xyz;

@@ -41,7 +41,6 @@ Mesh tesseract;
 ::fd::Scene g_scene;
 ::fd::Camera g_camera;
 ::fd::Render g_renderer;
-::fd::Texture g_texture;
 ::fd::Shader* g_shader = NULL;
 bool g_captureMouse = false;
 HWND g_windowHandle;
@@ -130,11 +129,6 @@ bool Initialize() {
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
 
-  
-  //g_texture.LoadFromFile("data\\textures\\orientedTexture.png");
-  g_texture.LoadFromFile("data\\textures\\wood.jpg");
-  WasGLErrorPlusPrint();
-
   //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
   WasGLErrorPlusPrint();
@@ -172,9 +166,24 @@ bool Initialize() {
   g_scene.AddCamera(&g_camera);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
-  g_scene.m_pQuaxolTex = &g_texture;
 
-  WasGLErrorPlusPrint();
+  {
+    Timer texTimer(std::string("texture loading"));
+    std::vector<std::string> texList = {
+      "data\\textures\\wood.png",
+      "data\\textures\\thatch.png",
+      "data\\textures\\concrete_brick.png",
+      "data\\textures\\orientedTexture.png",
+    };
+
+    for (auto texName : texList) {
+      std::unique_ptr<::fd::Texture> pTex(new ::fd::Texture());
+      if(pTex->LoadFromFile(texName.c_str())) {
+        g_scene.AddTexture(pTex.release());
+      }
+    }
+    WasGLErrorPlusPrint();
+  }
 
   return true;
 }
@@ -194,6 +203,7 @@ void SetSimpleProjectiveMode() {
 }
 
 void Deinitialize(void) {
+  ::fd::Texture::DeinitializeTextureCache();
   ::fd::Shader::ClearShaderHash();
 }
 
@@ -287,22 +297,22 @@ void ToggleMouseCapture() {
 }
 
 bool AddTesseractLineCallback(const QuaxolChunk* chunk, int x, int y, int z, int w) {
-  //g_scene.m_quaxols.emplace_back(x, y, z, w);
-  //printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
-  Entity* pEntity = g_scene.AddEntity();
-  // ugh need like a mesh manager and better approach to shader handling
-  pEntity->Initialize(&tesseract, g_shader, NULL);
-  pEntity->m_orientation.storeIdentity();
-  
-  const float blockSize = 10.0f;
-  Vec4f position(x * blockSize, y * blockSize, z * blockSize, w * blockSize);
-  pEntity->m_position = position;
+  g_scene.m_quaxols.emplace_back(x, y, z, w);
+  ////printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
+  //Entity* pEntity = g_scene.AddEntity();
+  //// ugh need like a mesh manager and better approach to shader handling
+  //pEntity->Initialize(&tesseract, g_shader, NULL);
+  //pEntity->m_orientation.storeIdentity();
+  //
+  //const float blockSize = 10.0f;
+  //Vec4f position(x * blockSize, y * blockSize, z * blockSize, w * blockSize);
+  //pEntity->m_position = position;
 
+  ////pEntity->GetComponentBus().AddComponent(
+  ////    new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+  ////    20.0f, true));
   //pEntity->GetComponentBus().AddComponent(
-  //    new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
-  //    20.0f, true));
-  pEntity->GetComponentBus().AddComponent(
-      new TimedDeath(21.0f /* duration */));
+  //    new TimedDeath(21.0f /* duration */));
   return true;
 }
 
@@ -796,6 +806,7 @@ void main()
 fd::Shader derpShader;
 #endif // DERP_INLINE_SHADERS
 
+::fd::Texture g_texture;
 void derpRenderScene(void) {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -925,6 +936,9 @@ int main(int argc, char *argv[]) {
   glutIdleFunc(derpIdle);
 
   Initialize();
+  
+  g_texture.LoadFromFile("data\\textures\\orientedTexture.png");
+
   WasGLErrorPlusPrint();
 
 #ifdef DERP_INLINE_SHADERS

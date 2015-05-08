@@ -20,7 +20,6 @@ namespace fd {
 Scene::Scene() 
   : m_pQuaxolShader(NULL)
   , m_pQuaxolMesh(NULL)
-  , m_pQuaxolTex(NULL)
   , m_pQuaxolBuffer(NULL)
   , m_pQuaxolChunk(NULL)
 {
@@ -51,6 +50,22 @@ void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
 void Scene::AddCamera(Camera* pCamera) {
   m_cameras.push_back(pCamera);
   //pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
+}
+
+void Scene::AddTexture(Texture* pTex) {
+  m_texList.push_back(pTex);
+}
+
+void Scene::SetTexture(int index, GLint hTex) {
+  assert(index >= 0 && index < (int)m_texList.size());
+
+  Texture* pTex = m_texList[index];
+  glActiveTexture(GL_TEXTURE0);
+  WasGLErrorPlusPrint();
+  glBindTexture(GL_TEXTURE_2D, pTex->GetTextureID());
+  WasGLErrorPlusPrint();
+  glUniform1i(hTex, 0);
+  WasGLErrorPlusPrint();
 }
 
 // Let the scene do the allocation to allow for mem opt
@@ -137,17 +152,11 @@ void Scene::RenderEntitiesStupidly() {
     worldMatrix.storeIdentity();
     m_pQuaxolShader->SetOrientation(&worldMatrix);
     WasGLErrorPlusPrint();
-    if(m_pQuaxolTex) {
-      GLint hTex0 = m_pQuaxolShader->getUniform("texDiffuse0");
-      WasGLErrorPlusPrint();
-      if (hTex0 != -1) {
-        glActiveTexture(GL_TEXTURE0);
-        WasGLErrorPlusPrint();
-        glBindTexture(GL_TEXTURE_2D, m_pQuaxolTex->GetTextureID());
-        WasGLErrorPlusPrint();
-        glUniform1i(hTex0, 0);
-        WasGLErrorPlusPrint();
-      }
+
+    GLint hTex0 = m_pQuaxolShader->getUniform("texDiffuse0");
+    WasGLErrorPlusPrint();
+    if (hTex0 != -1) {
+      SetTexture(0, hTex0);
     }
 
     for (auto quaxol : m_quaxols) {
@@ -163,6 +172,9 @@ void Scene::RenderEntitiesStupidly() {
       m_pQuaxolShader->SetPosition(&shift);
       WasGLErrorPlusPrint();
 
+      int layerTexIndex = abs(q.w) % m_texList.size();
+      SetTexture(layerTexIndex, hTex0);
+
       int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
       int startTriangle = 0;
       int endTriangle = tesseractTris;
@@ -172,7 +184,7 @@ void Scene::RenderEntitiesStupidly() {
       glBegin(GL_TRIANGLES);
       //WasGLErrorPlusPrint();
       Vec4f a, b, c;
-      int colorIndex = 0;
+      int colorIndex = abs(q.w) % m_colorArray.size();
       for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
         if(colorHandle != -1) {
           glVertexAttrib4fv(colorHandle,
@@ -184,9 +196,9 @@ void Scene::RenderEntitiesStupidly() {
         glVertex4fv(b.raw());
         glVertex4fv(c.raw());
         //WasGLErrorPlusPrint();
-        if ((t+1) % 2 == 0) {
-          colorIndex = (colorIndex + 1) % m_colorArray.size();
-        }
+        //if ((t+1) % 2 == 0) {
+        //  colorIndex = (colorIndex + 1) % m_colorArray.size();
+        //}
       }
       //WasGLErrorPlusPrint();
       glEnd();
@@ -203,7 +215,11 @@ void Scene::BuildColorArray() {
   int numSteps = 8;
   m_colorArray.reserve(numSteps);
   for (int steps = 0; steps < numSteps; steps++) {
-    m_colorArray.push_back(Vec4f(0, (float)(steps + 1) / (float)numSteps, 0, 1));
+    m_colorArray.push_back(Vec4f(
+      (float)((steps + 2) % 3) / 2.0f, 
+      (float)(steps + 1) / (float)numSteps, 
+      (float)((steps + 3) % 5) / 4.0f,
+      1));
   }
 }
 
