@@ -17,7 +17,6 @@ make
 ./fourd
 
 Todo list:
-* Add texturing
 * Setup real quaxol rendering
 * Add collision
 * Add 120 cell
@@ -26,6 +25,7 @@ Todo list:
 * Add maxima
 * Switch the mat4 class to be column major?
 * Add text window with command entry
+* Load compressed textures with mipmaps directly
 
 Remnants of a Nehe starting tutorial are probably still around. Thanks!
 Using a Makefile from Michael Crawford. Thanks!
