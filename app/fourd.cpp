@@ -93,26 +93,6 @@ bool LoadLevel(const char* levelName) {
   }
 }
 
-void SetAlphaAndDisableDepth(bool bAlphaAndDisableDepth) {
-  if (bAlphaAndDisableDepth) {
-    glEnable(GL_BLEND);
-    glAlphaFunc(GL_ALWAYS, 0.0f);
-    glDisable(GL_ALPHA_TEST);
-
-    glDepthFunc(GL_ALWAYS);
-    glDisable(GL_DEPTH_TEST);
-  } else {
-    
-    //glDisable(GL_BLEND);
-    glEnable(GL_BLEND);
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GEQUAL, 154.0f / 255.0f);
-    
-    glDepthFunc(GL_LESS); // GL_GREATER); //GL_LEQUAL);
-    glEnable(GL_DEPTH_TEST);
-  }
-}
-
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
@@ -129,17 +109,12 @@ bool Initialize() {
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
 
-  //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  //glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
   WasGLErrorPlusPrint();
   glClearDepth(1.0f);
   WasGLErrorPlusPrint();
   glDisable(GL_CULL_FACE); // no backface culling for 4d
-  WasGLErrorPlusPrint();
-  //glBlendEquation(GL_ADD);
-  WasGLErrorPlusPrint();
-  //glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA); //GL_ONE_MINUS_SRC_ALPHA); // 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // 
   WasGLErrorPlusPrint();
   glShadeModel(GL_FLAT);
   WasGLErrorPlusPrint();
@@ -151,11 +126,12 @@ bool Initialize() {
   //glDisable(GL_MIPMAP);
   //WasGLErrorPlusPrint();
 
-  SetAlphaAndDisableDepth(true);
+  g_renderer.ToggleAlphaDepthModes(Render::AlphaOnDepthOffSrcDest);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
   if (!LoadShader("AlphaTest")
     || !LoadShader("AlphaTestTex")
+    || !LoadShader("ColorBlend")
     || !LoadShader("BlendNoTex")
     ) {
     printf("Shader loading failed\n");
@@ -198,7 +174,7 @@ void UpdatePerspective() {
 void SetSimpleProjectiveMode() {
   g_camera.SetWProjection(-5.5f, 5.5f, 0.9f);
   LoadShader("AlphaTest");
-  SetAlphaAndDisableDepth(false);
+  g_renderer.ToggleAlphaDepthModes(Render::AlphaTestDepthOnSrcDest);
   UpdatePerspective();
 }
 
@@ -340,7 +316,7 @@ void Update(int key, int x, int y) {
       ToggleMouseCapture();
     } break;
     case '!' : {
-      SetAlphaAndDisableDepth(glIsEnabled(GL_DEPTH_TEST) == GL_TRUE);
+      g_renderer.ToggleAlphaDepthModes(Render::EToggleModes);
     } break;
     case '@' : {
       LoadShader("BlendNoTex");

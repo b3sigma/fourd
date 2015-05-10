@@ -44,8 +44,9 @@ class View {
 
 
 class Render {
-  typedef std::vector<View*> TViewList;
-  TViewList _views;
+  //TODO: This stuff is in the scene currently... move here?
+  //typedef std::vector<View*> TViewList;
+  //TViewList _views;
 
   // shouldn't be here..
   // should be in a scene or something
@@ -71,6 +72,18 @@ public:
     return timer_.GetElapsed();
   }
 
+  // Right now this is convenient, but separate calls are fine too.
+  enum EAlphaDepthModes {
+    AlphaOnDepthOffSrcDest = 0,
+    AlphaOnDepthOffAdditive = 1,
+    AlphaTestDepthOnSrcDest = 2,
+    AlphaOffDepthOn = 3,
+    ENumAlphaDepthModes,
+    EToggleModes
+  };
+  EAlphaDepthModes m_alphaDepthMode = ENumAlphaDepthModes;
+
+  void ToggleAlphaDepthModes(EAlphaDepthModes mode = EToggleModes);
 
 };
 
