@@ -45,7 +45,7 @@ namespace fd {
   };
   
   const int c_mxSz = 16; // this means 16^4 blocks, or 32k
-  // should be indexed [x][y][z][w]?
+  // should be indexed [x][y][z][w]? or maybe [w][x][y][z]?
   // would imply cache locality pulls up w first
 
   class QuaxolChunk {

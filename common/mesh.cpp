@@ -234,7 +234,7 @@ int64 Mesh::makeUniqueTriCode(int a, int b, int c) {
       | (((int64)indices[2] & indexMask) << (shiftAmount * 2)));
 }
 
-Mesh::Connectivity::Triangle::Triangle(int startIndex, const VertList& verts, const IndexList& indices)
+Mesh::TriConnectivity::Triangle::Triangle(int startIndex, const VertList& verts, const IndexList& indices)
     : _globalVerts(verts) {
   _triIndex = startIndex / 3;
   _indices.resize(3);
@@ -250,7 +250,7 @@ Mesh::Connectivity::Triangle::Triangle(int startIndex, const VertList& verts, co
   }
 }
 
-Mesh::Connectivity::~Connectivity() {
+Mesh::TriConnectivity::~TriConnectivity() {
   for (TriangleHash::iterator iTri = _triHash.begin();
       iTri != _triHash.end();
       ++iTri) {
@@ -259,7 +259,7 @@ Mesh::Connectivity::~Connectivity() {
   }
 }
 
-void Mesh::Connectivity::buildGraph() {
+void Mesh::TriConnectivity::buildGraph() {
   int numIndices = (int)(_indices.size());
   // first just build all the triangles
   for (int iT = 0; iT < numIndices; iT = iT + 3) {
@@ -292,7 +292,7 @@ void Mesh::Connectivity::buildGraph() {
   }
 }
 
-Mesh::Connectivity::Triangle* Mesh::Connectivity::getTriangle(int triIndex) {
+Mesh::TriConnectivity::Triangle* Mesh::TriConnectivity::getTriangle(int triIndex) {
   TriangleHash::iterator iTri = _triHash.find(triIndex);
   if (iTri != _triHash.end()) {
     return iTri->second;
@@ -300,7 +300,7 @@ Mesh::Connectivity::Triangle* Mesh::Connectivity::getTriangle(int triIndex) {
   return NULL;
 }
 
-bool Mesh::Connectivity::Triangle::isNextTo(const Triangle* other) const {
+bool Mesh::TriConnectivity::Triangle::isNextTo(const Triangle* other) const {
   EdgeSet intersectionSet;
   std::set_intersection(_edges.begin(), _edges.end(),
       other->_edges.begin(), other->_edges.end(),
@@ -308,7 +308,7 @@ bool Mesh::Connectivity::Triangle::isNextTo(const Triangle* other) const {
   return !intersectionSet.empty();
 }
 
-bool Mesh::Connectivity::Triangle::isCoplanarWith(const Triangle* other) const {
+bool Mesh::TriConnectivity::Triangle::isCoplanarWith(const Triangle* other) const {
   EdgeSet disjointSet;
   std::set_symmetric_difference(_edges.begin(), _edges.end(),
       other->_edges.begin(), other->_edges.end(),
@@ -337,22 +337,22 @@ bool Mesh::Connectivity::Triangle::isCoplanarWith(const Triangle* other) const {
 // TODO setup eclipse pretty printing of STL structures
 
 Mesh::Shape* Mesh::collectCoPlanar(
-    Connectivity& connectivity, int triIndex, TriHash& unique) {
+    TriConnectivity& connectivity, int triIndex, TriHash& unique) {
   Shape* shape = connectivity.buildEmptyShape();
 
-  Connectivity::Triangle* triangle = connectivity.getTriangle(triIndex);
-  shape->addTriangle(triangle->getIndex(0), triangle->getIndex(1), triangle->getIndex(2));
+  TriConnectivity::Triangle* triangle = connectivity.getTriangle(triIndex);
+  shape->addTriangleWithEdges(triangle->getIndex(0), triangle->getIndex(1), triangle->getIndex(2));
   unique.insert(std::make_pair(triangle->getTriCode(), triangle->getTriIndex()));
 
-  for (Connectivity::Triangle::iterator iC = triangle->begin();
+  for (TriConnectivity::Triangle::iterator iC = triangle->begin();
       iC != triangle->end();
       ++iC) {
-    Connectivity::Triangle* query = *iC;
+    TriConnectivity::Triangle* query = *iC;
     if (unique.find(query->getTriCode()) != unique.end())
       continue;
 
     if (triangle->isCoplanarWith(query)) {
-      shape->addTriangle(query->getIndex(0), query->getIndex(1), query->getIndex(2));
+      shape->addTriangleWithEdges(query->getIndex(0), query->getIndex(1), query->getIndex(2));
       unique.insert(std::make_pair(query->getTriCode(), query->getTriIndex()));
     }
     //shape->printIt();
@@ -402,8 +402,8 @@ void Mesh::Shape::printIt() {
   }
 }
 
-void Mesh::buildShapes(const VertList& verts, const IndexList& indices, Shapes& outShapes) {
-  Connectivity connectivity(verts, indices);
+void Mesh::buildShapes(VertList& verts, IndexList& indices, Shapes& outShapes) {
+  TriConnectivity connectivity(verts, indices);
   connectivity.buildGraph();
 
   TriHash triHash;
@@ -538,6 +538,10 @@ void Mesh::buildCircle(float radius, Vec4f center, Vec4f right, Vec4f up, int fa
   // I am sorry Stephanie that I could not present more of myself to make a connection.
   // I suspect I could have learned much from you but would have liked to lend more of
   // a hand than a burrito.
+  // Retrospective note: Wow this read weird until I remembered Stephanie was a homeless
+  // lady who had asked for some change and instead bought her a burrito. Then went back
+  // to coding without actually helping her in a long term meaningful way... So it goes.
+  // Seriously who writes these kinds of notes in a public codebase anyway?
   for (int face = 0; face < faceCount; face++) {
     float rotation = (float)face / (float)faceCount * 2.0f * (float)PI;
     float rightAmount = cos(rotation) * radius;
@@ -583,7 +587,66 @@ void Mesh::buildFourCylinder(float radius, float length, float inside, int faceC
   projectIntoFour(inside, fd::Vec4f());
 }
 
-void Mesh::Shape::addTriangle(int a, int b, int c) {
+// Basically a tetrad that is extruded into an inverted tetrad. All the faces
+// should line up so there are 16 tetrads (cells).
+// Schlafli {3,3,4}.
+// So the first 3 means 3 edges in 2d (triangle) to make a face.
+// Second 3 means 3 faces per vertex (tetrad) to make a cell.
+// Third 4 means 4 tetrads per edge.
+void Mesh::build16cell(float radius, Vec4f offset) {
+  _verts.resize(0);
+  _verts.reserve(8);
+  // An alternate construction would keep all edge lengths equal. Too lazy.
+  _verts.emplace_back(radius, 0.0f, 0.0f, 0.0f);
+  _verts.emplace_back(0.0f, radius, 0.0f, 0.0f);
+  _verts.emplace_back(0.0f, 0.0f, radius, 0.0f);
+  _verts.emplace_back(0.0f, 0.0f, 0.0f, radius);
+  _verts.emplace_back(-radius, 0.0f, 0.0f, 0.0f);
+  _verts.emplace_back(0.0f, -radius, 0.0f, 0.0f);
+  _verts.emplace_back(0.0f, 0.0f, -radius, 0.0f);
+  _verts.emplace_back(0.0f, 0.0f, 0.0f, -radius);
+
+  Shape shape(_verts, _indices);
+  // Every vert is linked to every other vert, except the one directly across.
+  // We can brute force this by just making triangles for any set of verts that
+  // connect to each other.
+  // Maybe after this one we look into arbitrary generation from schlafli codes?
+  for (int a = 0; a < 8; ++a) {
+    for (int b = 0; b < 8; ++b) {
+      if((a + 4) % 8 == b || a == b)
+        continue;
+      // each a should have 6 connections to b
+      for (int c = 0; c < 8; ++c) {
+        if(c == a || c == b) continue;
+        if((a + 4) % 8 == c) continue;
+        if((b + 4) % 8 == c) continue;
+        // each a ends up with 4 triangles per b
+
+        shape.addUniqueTriangle(a, b, c);
+      }
+    }
+  }
+
+  _indices.assign(shape.getTriangles().begin(), shape.getTriangles().end());
+
+  //printf("Had %d verts and %d indices for %d tris\n",
+  //    _verts.size(), _indices.size(), _indices.size() / 3);
+}
+
+void Mesh::Shape::addUniqueTriangle(int a, int b, int c) {
+  int64 triCode = makeUniqueTriCode(a, b, c);
+  TriHash::iterator iTri = _uniqueTris.find(triCode);
+  if (iTri == _uniqueTris.end()) {
+    int triIndex = _uniqueTris.size() + 1;
+    _uniqueTris.insert(std::make_pair(triCode, triIndex));
+    // totally gave up on windings
+    _triangles.push_back(a);
+    _triangles.push_back(b);
+    _triangles.push_back(c);
+  }
+}
+
+void Mesh::Shape::addTriangleWithEdges(int a, int b, int c) {
   _triangles.push_back(a);
   _triangles.push_back(b);
   _triangles.push_back(c);

@@ -154,6 +154,15 @@
     <None Include="..\data\vertCommonTransform.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\data\fragColorBlend.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\vertBlendNoTex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\vertColorBlend.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\data\level.txt">

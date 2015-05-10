@@ -1,6 +1,5 @@
-Basic four dimensional renderer using glut/OpenGL in C++/Cg.
-
-Not tuned for external users in terms of UI. Use qawsedftgyh for various kinds of movement or rotation in different dimensions.
+Four dimensional minecraft thing!
+OpenGL, GLSL and C++11ish.
 
 Getting:
 * Make sure you use --recursive on your clone command as this project uses submodules.
@@ -10,22 +9,53 @@ Getting:
 ** git submodule update
 
 Running on Windows:
-open up the sln in under ./project/, build
+* open up the .sln in under ./project/, build
 
-Running on Linux (haven't done this in a while, might be broken):
-make
-./fourd
+Running on Linux (haven't done this in a while, likely broken):
+* make
+* ./fourd
 
-Todo list:
+Controls UI:
+w/s = forward/backward
+a/d = strafe left/right
+q/e = strafe up/down
+r/f = inward/outward
+t/g = roll left/right
+y/h = rotate between inside right
+u/j = rotate between inside up
+i/k = animated pi/2 rotation between inside right (seems like miegakure button)
+o/l = animated pi/2 rotation between inside up
+
+Rendering UI:
+0-9 load different base shapes and different levels. (Default is quaxols in 4d.)
+!-% load different shaders and alpha/depth options
+x/c Decrease/increase near w-plane
+v/b Decrease/increase far w-plane
+n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
+] toggles w-ortho and w-projection (w-ortho can also be set by far/near ratio=1)
+
+Action UI (vague due to being in flux):
+z adds some quaxols
+Z adds some dynamic entites
+
+
+Game TODOs:
 * Setup real quaxol rendering
 * Add collision
 * Add 120 cell
+* Load compressed textures with mipmaps directly
+
+QM/Physics TODOs:
 * Add spin system
 * Add lisp parser (ecl? clisp?)
 * Add maxima
-* Switch the mat4 class to be column major?
+
+General TODOs:
+* Switch the mat4 class to be column major? Cleanup matrix math?
+** Why is this really important cleanup so low on the list?
+** It will only get worse.....
 * Add text window with command entry
-* Load compressed textures with mipmaps directly
+* Fix portability, CMake
 
 Remnants of a Nehe starting tutorial are probably still around. Thanks!
 Using a Makefile from Michael Crawford. Thanks!

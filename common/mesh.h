@@ -29,14 +29,25 @@ public:
   void getTriangle(int index, Vec4f& a, Vec4f& b, Vec4f& c);
   void printIt();
 
-  void buildQuad(float size, Vec4f offset, Vec4f step);
-  void buildCube(float size, Vec4f offset, Vec4f step);
-  void buildTesseract(float size, Vec4f offset, Vec4f step);
-  void buildReferenceTesseract(float size, Vec4f offset, Vec4f step);
-  void buildFourTetrad(float size, Vec4f offset);
+  // Schlafli description explaination.
+  // Read from left to right, recursively up a dimension per comma.
+  // Eg {4,3,3} tesseract:
+  // So the first 4 means 4 edges in 2d (square) to make a face.
+  // Second 3 means 3 faces per vertex (cube) to make a cell.
+  // Third 3 means 3 cubes per edge.
+  // But everything has to be connected up, so you get a closed tesseract.
+  // Nice math description, not so great for imperative code.
+  // Also only good for nice symmetric stuff, so the four-cylinder is no go.
+  void buildQuad(float size, Vec4f offset, Vec4f step); // {4}
+  void buildCube(float size, Vec4f offset, Vec4f step); // {4,3}
+  void buildTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
+  void buildReferenceTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
+  void buildFourTetrad(float size, Vec4f offset); // 5-cell {3,3,3}
   void buildCircle(float radius, Vec4f center, Vec4f right, Vec4f up, int faceCount);
   void buildCylinder(float radius, float length, int faceCount);
   void buildFourCylinder(float radius, float length, float inside, int faceCount);
+  void build16cell(float radius, Vec4f offset); // {3,3,4}
+
   void projectIntoFour(float insideDist, Vec4f step);
   void merge(const Mesh& other);
   
@@ -53,13 +64,14 @@ private:
   typedef std::vector<Edge> Edges;
   class Shape;
   typedef std::vector<Shape*> Shapes;
+  typedef std::map<int64, int> TriHash;
 
   class Shape {
    private:
     // vertex storage elsewhere
-    const VertList& _globalVerts;
+    VertList& _globalVerts;
     // index storage elsewhere
-    const IndexList& _globalIndices;
+    IndexList& _globalIndices;
 
     IndexList _triangles;
 
@@ -68,31 +80,33 @@ private:
     Edges _interiors;
     Edges _exteriors;
 
+    TriHash _uniqueTris;
+
    public:
-    Shape(const VertList& verts, const IndexList& indices) : _globalVerts(verts), _globalIndices(indices) {}
+    Shape(VertList& verts, IndexList& indices) : _globalVerts(verts), _globalIndices(indices) {}
     const Edges& getExteriors() const { return _exteriors; }
     const IndexList& getTriangles() const { return _triangles; }
-    void addTriangle(int a, int b, int c);
+
     void analyzeEdges();
     void printIt();
 
+    void addTriangleWithEdges(int a, int b, int c); // doesn't update unique tri list, adds edges
+    void addEdge(int a, int b); // Handles dups.
+    void addUniqueTriangle(int a, int b, int c); // handles dups, no edges added
+
     static void cleanupShapes(Shapes& shapes);
-
-   private:
-    void addEdge(int a, int b);
   };
-  typedef std::map<int64, int> TriHash;
 
 
-  class Connectivity {
+  class TriConnectivity {
     // vertex storage elsewhere
-    const VertList& _verts;
+    VertList& _verts;
     // index storage elsewhere
-    const IndexList& _indices;
+    IndexList& _indices;
 
    public:
-    Connectivity(const VertList& verts, const IndexList& indices) : _verts(verts), _indices(indices) {}
-    ~Connectivity();
+    TriConnectivity(VertList& verts, IndexList& indices) : _verts(verts), _indices(indices) {}
+    ~TriConnectivity();
 
     Shape* buildEmptyShape() const { return new Shape(_verts, _indices); }
     void buildGraph();
@@ -146,8 +160,8 @@ private:
   static int64 makeUniqueEdgeCode(int a, int b);
   static Edge decodeEdgeCode(int64 edgeCode);
 
-  Shape* collectCoPlanar(Connectivity& connectivity, int triangle, TriHash& unique);
-  void buildShapes(const VertList& verts, const IndexList& indices, Shapes& outShapes);
+  Shape* collectCoPlanar(TriConnectivity& connectivity, int triangle, TriHash& unique);
+  void buildShapes(VertList& verts, IndexList& indices, Shapes& outShapes);
 };
 
 }  // namespace fd

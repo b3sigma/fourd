@@ -357,6 +357,25 @@ void Update(int key, int x, int y) {
     case '%' : {
       SetSimpleProjectiveMode();
     } break;
+    case '^' : {
+      LoadShader("ColorBlend");
+      UpdatePerspective();
+    } break;
+    case '&' : {
+      LoadLevel("level_single");
+    } break;
+    case '*' : {
+      LoadLevel("level_4d_base");
+    } break;
+    case '(' : {
+      static bool fill = false;
+      fill = !fill;
+      if (fill) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      }
+    } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
@@ -381,20 +400,8 @@ void Update(int key, int x, int y) {
     case '8' : {
       tesseract.buildFourCylinder(10.0f, 10.f, 10.0f, 6);
     } break;
-    case '(' : {
-      static bool fill = false;
-      fill = !fill;
-      if (fill) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      } else {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      }
-    } break;
     case '9' : {
-      LoadLevel("level_4d_base");
-    } break;
-    case '0' : {
-      LoadLevel("level_single");
+      tesseract.build16cell(10.0f, Vec4f(0,0,0,0));
     } break;
     case 27: {
       Deinitialize();
