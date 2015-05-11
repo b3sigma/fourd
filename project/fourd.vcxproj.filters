@@ -163,6 +163,12 @@
     <None Include="..\data\vertColorBlend.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\data\fragAlphaTestTex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\vertAlphaTestTex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\data\level.txt">

@@ -124,11 +124,15 @@ public:
 
 	bool operator == (const Vec& c) const {
 	  static const T threshold = (T)0.00001;
+    return approxEqual(c, threshold);
+	}
+
+  bool approxEqual(const Vec& c, T threshold) const {
 	  return abs(x - c.x) < threshold
 	      && abs(y - c.y) < threshold
         && abs(z - c.z) < threshold
         && abs(w - c.w) < threshold;
-	}
+  }
 
 	void printIt() const {
 	  printf("%f\t%f\t%f\t%f", x, y, z, w);

@@ -13,8 +13,8 @@ vec4 getThreeSpace(vec4);
 void main() {
  	vec4 threeSpace = getThreeSpace(vertPosition); 
 
-  fragTex0.x = sin(vertPosition.x + vertPosition.z);
-  fragTex0.y = sin(vertPosition.y + vertPosition.w);
+  fragTex0.x = sin(0.45 * vertPosition.y + -1.2 * vertPosition.x + 0.71 * vertPosition.z);
+  fragTex0.y = sin(1.4 * vertPosition.z + 0.69 * vertPosition.y + -0.34 * vertPosition.w);
   //fragTex0.x = sin(threeSpace.x + threeSpace.z);
   //fragTex0.y = sin(threeSpace.y + threeSpace.w);
 

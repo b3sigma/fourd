@@ -47,6 +47,9 @@ public:
   void buildCylinder(float radius, float length, int faceCount);
   void buildFourCylinder(float radius, float length, float inside, int faceCount);
   void build16cell(float radius, Vec4f offset); // {3,3,4}
+  void buildGeneralized16cell(float radius, Vec4f offset);
+
+  //void carveSolids(
 
   void projectIntoFour(float insideDist, Vec4f step);
   void merge(const Mesh& other);
@@ -59,6 +62,8 @@ private:
   void addTri(int a, int b, int c, IndexList& indices);
   void addQuad(int a, int b, int c, int d, IndexList& indices);
   void addCube(int a, int b, int c, int d, int e, int f, int g, int h);
+  void addUniqueVert(const Vec4f& vert); // wow this is slow and inaccurate
+  void addPolyVerts(float radius, Vec4f center, Vec4f right, Vec4f up, int faceCount);
 
   typedef std::pair<int, int> Edge;
   typedef std::vector<Edge> Edges;

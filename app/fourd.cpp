@@ -338,7 +338,8 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '&' : {
-      LoadLevel("level_single");
+      LoadLevel("level_sparse");
+      //LoadLevel("level_single");
     } break;
     case '*' : {
       LoadLevel("level_4d_base");
@@ -632,7 +633,7 @@ int main(int argc, char *argv[]) {
 #ifdef RUN_TESTS
   RunTests();
 #endif // RUN_TESTS
-  
+
   glutInit(&argc, argv);
   glutInitWindowPosition(0, 0);
   glutInitWindowSize(640, 580);

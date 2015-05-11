@@ -633,6 +633,65 @@ void Mesh::build16cell(float radius, Vec4f offset) {
   //    _verts.size(), _indices.size(), _indices.size() / 3);
 }
 
+void Mesh::addPolyVerts(float radius, Vec4f center, Vec4f normalRight, Vec4f normalUp, int faceCount) {
+  assert(faceCount >= 3);
+
+  _verts.reserve(_verts.size() + faceCount);
+  for (int face = 0; face < faceCount; face++) {
+    float rotation = (float)face / (float)faceCount * 2.0f * (float)PI;
+    float rightAmount = cos(rotation) * radius;
+    float upAmount = sin(rotation) * radius;
+    Vec4f next(center + (normalRight * rightAmount) + (normalUp * upAmount));
+    _verts.push_back(next);
+  }
+}
+
+// This was going to be the same 16 cell but in a more generalized way.
+// So far not panning out in a way that will actually be general.
+// Maybe that's a bad plan anyway?
+void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
+  const int polyVerts = 3;
+  float polyAngle = (float)PI * (float)(polyVerts - 2) / (float)polyVerts;
+  float betweenVertAngle = (float)PI - polyAngle;
+  float sideLength = 2.0f * radius * sinf(betweenVertAngle * 0.5f);
+  Vec4f right(1.0f, 0.0f, 0.0f, 0.0f);
+  Vec4f forward(0.0f, 1.0f, 0.0f, 0.0f);
+  Vec4f up(0.0f, 0.0f, 1.0f, 0.0f);
+  Vec4f inward(0.0f, 0.0f, 0.0f, 1.0f);
+   // first build the face
+  _verts.resize(0);
+  _indices.resize(0);
+  addPolyVerts(radius, offset, right, forward, polyVerts); 
+ 
+  for(int vert = 0; vert < polyVerts; vert++) {
+    const Vec4f& pos = _verts[vert];
+    const Vec4f& prev = _verts[(vert - 1 + polyVerts) % polyVerts];
+    const Vec4f& next = _verts[(vert + 1) % polyVerts];
+
+    Vec4f prevRay = prev - pos;
+    Vec4f nextRay = next - pos;
+    Vec4f centerRay = (prevRay + nextRay) * 0.5f;
+
+    Vec4f perpRay = prevRay.cross(nextRay, inward);
+    perpRay.storeNormalized();
+    float perpHeight = sqrt((sideLength * sideLength) - (radius * radius));
+    Vec4f perp = offset + (perpRay * (perpHeight * sinf(polyAngle)));
+    addUniqueVert(perp);
+  }
+
+  printIt();
+}
+
+void Mesh::addUniqueVert(const Vec4f& vert) { // wow this is slow and inaccurate
+  const float threshold = 0.001f; // so horrible
+  for (auto exist : _verts) { // did I mention horrible?
+    if(vert.approxEqual(exist, threshold)) {
+      return;
+    }
+  }
+  _verts.push_back(vert);
+}
+
 void Mesh::Shape::addUniqueTriangle(int a, int b, int c) {
   int64 triCode = makeUniqueTriCode(a, b, c);
   TriHash::iterator iTri = _uniqueTris.find(triCode);
