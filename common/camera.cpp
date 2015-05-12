@@ -7,7 +7,7 @@ using namespace ::fd;
 void Camera::ApplyRotationInput(float radians, Direction target, Direction source) {
   if (_movement == LOOK) {
     Mat4f rot;
-    rot.buildRotation(radians, (int)target, (int)source);
+    rot.storeRotation(radians, (int)target, (int)source);
     _cameraMatrix = rot * _cameraMatrix;
   }
 }
@@ -16,9 +16,9 @@ void Camera::ApplyOrbitInput(float radians, Direction direction)
 {
   Direction coDirection = FORWARD;
   Mat4f rot;
-  rot.buildRotation(radians, (int)direction, (int)coDirection);
+  rot.storeRotation(radians, (int)direction, (int)coDirection);
   Mat4f invRot;
-  invRot.buildRotation(-radians, (int)direction, (int)coDirection);
+  invRot.storeRotation(-radians, (int)direction, (int)coDirection);
 
   Mat4f invCamera = _cameraMatrix.inverse();
   Vec4f lookDir = _cameraPos - _cameraLookAt;
@@ -62,14 +62,14 @@ void Camera::PickBasisFromForward(const Direction changeBasis, Direction& firstO
 
 void Camera::ApplyRollInput(float radians, Direction target, Direction source) {
   Mat4f rot;
-  rot.buildRotation(radians, (int)target, (int)source);
+  rot.storeRotation(radians, (int)target, (int)source);
   _cameraMatrix = rot * _cameraMatrix;
 }
 
 void Camera::ApplyWorldRotation(
     float radians, Direction target, Direction source) {
   Mat4f rot;
-  rot.buildRotation(radians, (int)target, (int)source);
+  rot.storeRotation(radians, (int)target, (int)source);
   _cameraMatrix = _cameraMatrix * rot.transpose();
 }
 

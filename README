@@ -52,6 +52,7 @@ QM/Physics TODOs:
 
 General TODOs:
 * Switch the mat4 class to be column major? Cleanup matrix math?
+* Switch to integer based quaxol sizes for ease of computation with corresponding units.
 ** Why is this really important cleanup so low on the list?
 ** It will only get worse.....
 * Add text window with command entry

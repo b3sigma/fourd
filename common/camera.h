@@ -72,7 +72,7 @@ public:
     _zNear = zNear;
     _zFar = zFar;
     float aspect = static_cast<float>(width) / static_cast<float>(height);
-    _zProjectionMatrix.build3dProjection(_zFov, aspect, _zNear, _zFar);
+    _zProjectionMatrix.store3dProjection(_zFov, aspect, _zNear, _zFar);
   }
 
   void SetWProjection(float wNear, float wFar, float wScreenSizeRatio) {
@@ -99,6 +99,10 @@ public:
   }
   const Vec4f& getCameraPos() const {
     return _cameraPos;
+  }
+  Vec4f getCameraForward() const {
+    // The minus sign here means the author sucks.
+    return -getCameraMatrix()[FORWARD];
   }
 
   MovementMode getMovementMode() const { return _movement; }

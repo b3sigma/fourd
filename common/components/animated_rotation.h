@@ -53,11 +53,12 @@ public:
   void OnStepSignal(float delta) {
     assert(_pOwnerMatrix != NULL);
 
-    float stepAmount = (::std::min)(_duration - _current, delta);
+    float timeDiff = abs(fmod(_duration - _current, _duration + 0.00001f));
+    float stepAmount = (::std::min)(timeDiff, delta);
 
     Mat4f rot;
     float amount = _radians / _duration * stepAmount;
-    rot.buildRotation(amount, _targetDirection, _sourceDirection);
+    rot.storeRotation(amount, _targetDirection, _sourceDirection);
 
     if (_isWorldRotation) {
       *_pOwnerMatrix = (*_pOwnerMatrix) * rot.transpose();
@@ -66,7 +67,7 @@ public:
     }
 
     _current += delta;
-    if(_current >= _duration) {
+    if(_current >= _duration && _duration > 0.0f) {
       SelfDestruct();
     }
   }

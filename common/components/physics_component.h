@@ -40,7 +40,7 @@ namespace fd {
     void OnStepSignal(float delta) {
       m_velocity += m_pPhysics->m_gravity * delta;
       float distance = 0.0f; 
-      if(m_pPhysics->RayCast(m_pOwnerPosition, &m_velocity, &distance)) {
+      if(m_pPhysics->RayCast(*m_pOwnerPosition, m_velocity, &distance)) {
         m_velocity = m_velocity.normalized() * (distance - m_pPhysics->m_cushion);
       }
       *m_pOwnerPosition += m_velocity;

@@ -65,6 +65,14 @@ public:
     set(x * s, y * s, z * s, w * s);
     return *this;
   }
+  Vec& operator *= (const Vec& r) {
+    set(x * r.x, y * r.y, z * r.z, w * r.w);
+    return *this;
+  }
+  Vec& operator /= (const Vec& r) {
+    set(x / r.x, y / r.y, z / r.z, w / r.w);
+    return *this;
+  }
 
 	Vec operator + (const Vec& v) const {
 	  return Vec(x + v.x, y + v.y, z + v.z, w + v.w);
@@ -93,8 +101,9 @@ public:
 	  return sqrt(x * x + y * y + z * z + w * w);
 	}
 
-	void storeZero() {
+	Vec& storeZero() {
 	  set(0, 0, 0, 0);
+    return *this;
 	}
 
 	Vec normalized() {
@@ -211,7 +220,7 @@ public:
     return *this;
   }
 
-  FdMat& buildRotation(T radians, int targetIndex, int sourceIndex) {
+  FdMat& storeRotation(T radians, int targetIndex, int sourceIndex) {
     assert(targetIndex < 4 && targetIndex >= 0);
     assert(sourceIndex < 4 && sourceIndex >= 0);
     storeIdentity();
@@ -225,7 +234,7 @@ public:
   }
 
   // Aspect is width/height of viewport. This is opengl style.
-  FdMat& build3dProjection(T yFov, T aspect, T zNear, T zFar) {
+  FdMat& store3dProjection(T yFov, T aspect, T zNear, T zFar) {
     T yMax = tan(yFov * (T)PI / 360.0f);
     T xMax = yMax * aspect;
 
@@ -239,6 +248,15 @@ public:
     raw()[10] = zScale;
     raw()[11] = (T)-1.0;
     raw()[14] = zOffset;
+    return *this;
+  }
+
+  FdMat& storeScale(T scale) {
+    storeZero();
+    raw()[0] = scale;
+    raw()[5] = scale;
+    raw()[10] = scale;
+    raw()[15] = scale;
     return *this;
   }
 
@@ -258,6 +276,10 @@ public:
     return r;
   }
 
+  void operator *= (const FdMat& r) {
+    *this = *this * r;
+  }
+  
   FdMat operator * (const FdMat& m) const {
     FdMat r;
     FdMat t = m.transpose();

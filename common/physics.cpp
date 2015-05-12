@@ -11,25 +11,21 @@ void Physics::Step(float fDelta) {
 
 // returns true if hit, overwrites distance with amount if so.
 bool Physics::RayCast(
-    const Vec4f* position, const Vec4f* ray, float* outDistance) {
+    const Vec4f& position, const Vec4f& ray, float* outDistance) {
+
+  if(m_chunk) {
+    if(RayCastChunk(*m_chunk, position, ray, outDistance)) {
+      return true;
+    }
+  }
   return RayCastGround(position, ray, outDistance);
 }
 
 bool Physics::RayCastGround(
-    const Vec4f* position, const Vec4f* ray, float* outDistance) {
-  Vec4f endPos(*position);
-  endPos += *ray;
-  float posDotGround = m_groundNormal.dot(endPos);
-  float startDotGround = m_groundNormal.dot(*position);
-  if (posDotGround * startDotGround >= 0.0f) {
-    return false; //both are on same side of ground, no collision
-  } else {
-    // opposite sides, collision
-    if (outDistance) {
-      *outDistance = ray->length() * startDotGround / (abs(posDotGround) + abs(startDotGround));
-    }
-    return true;
-  }
+    const Vec4f& position, const Vec4f& ray, float* outDistance) {
+  return PhysicsHelp::RayToPlane(position, ray,
+      m_groundNormal, m_groundHeight,
+      NULL /* outCollisionPoint */, outDistance);
 }
 
 void Physics::ClampToGround(Vec4f* position) {
@@ -42,22 +38,68 @@ void Physics::ClampToGround(Vec4f* position) {
 // Thinking 4d breseham line thing?
 bool Physics::RayCastChunk(const QuaxolChunk& chunk,
     const Vec4f& position, const Vec4f& ray, float* outDistance) {
+  assert(ray.length() > 0.0f);
 
   Vec4f localPos(position);
   localPos -= chunk.m_position;
-
-  // should cap ray to the possible chunk positions
-  Vec4f boxMax(chunk.m_blockSize);
+  
   Vec4f localRay(ray);
- 
+  
+  // scale down from boxsize to allow integer local coords
+  // actually why are we doing non-integer stuff anyway??
+  // oh right, didn't start with quaxols... probably should change that
+  // or forever suffer.
+  localPos /= chunk.m_blockSize;
+  localRay /= chunk.m_blockSize;
 
-  return PhysicsHelp::WithinBox(Vec4f(), boxMax, localPos);
+  Vec4f chunkMin(0.0f, 0.0f, 0.0f, 0.0f);
+  Vec4f chunkMax((float)chunk.m_blockDims.x, (float)chunk.m_blockDims.y,
+      (float)chunk.m_blockDims.z, (float)chunk.m_blockDims.w);
+  // to avoid array checks on every block step, clip the ray to the possible
+  // array bounds beforehand
+  Vec4f unclippedLocalPos = localPos;
+  Vec4f clippedPos;
+  if(PhysicsHelp::RayToAlignedBox(chunkMin, chunkMax, localPos, localRay,
+      NULL /*dist*/, &clippedPos)) {
+    // if the start isn't within the box, clip that first
+    if(!PhysicsHelp::WithinBox(chunkMin, chunkMax, localPos)) {
+      localPos = clippedPos;
+    }
 
-  float outDist = 9999999.0f;
-  //LineDraw4D(localPos, direction, 
+    // if the end isn't within the box, clip that
+    if(!PhysicsHelp::WithinBox(chunkMin, chunkMax, localPos + localRay)) {
+      Vec4f clippedEnd;
+      // Need to clip ray too so raycast backward. Almost certainly already
+      // calculated and discarded the result.
+      if(!PhysicsHelp::RayToAlignedBox(chunkMin, chunkMax, localPos + localRay, -localRay,
+          NULL /*dist*/, &clippedEnd)) {
+        return false; // ???
+      }
+      localRay = clippedEnd - localPos;
+      localRay *= 0.9999f; // shorten it a bit to avoid going over
+    }
+  } else {
+    // The ray didn't hit the bounding box, so make sure the start is within
+    // or we are done because the whole chunk was missed.
+    if(!PhysicsHelp::WithinBox(chunkMin, chunkMax, localPos)) {
+      return false;
+    }
+  }
 
- 
-  return false;
+  // This does a stepping algorithm checking against quaxols in the ray path.
+  Vec4f localHitPos;
+  if(!LocalRayCastChunk(chunk, localPos, localRay, &localHitPos)) {
+    return false;
+  }
+  //localHitPos *= chunk.m_blockSize;
+  //localHitPos += chunk.m_position;
+
+  if(outDistance) {
+    Vec4f hitDelta = (localHitPos - unclippedLocalPos) * chunk.m_blockSize;
+    *outDistance = abs(hitDelta.length());
+  }
+
+  return true;
 }
 
 inline int GetSign(float val) {
@@ -87,6 +129,86 @@ inline int GetAbsMaxComponent(const float* vec, int numExclusions, int exclude[N
     }
   }
   return maxIndex;
+}
+
+bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
+    const Vec4f& position, const Vec4f& ray, Vec4f* outPos) {
+
+  QuaxolSpec pos(position);
+  QuaxolSpec end(position + ray);
+
+  // extra axis indirection is to make generalization easier.
+  int axis[4]; // 4!=24 ways of ordering this
+  // fastest in code is probably a bunch of if statements
+  // bit clearer but slower way
+  axis[0] = GetAbsMaxComponent<4>(ray.raw(), 0, axis);
+  axis[1] = GetAbsMaxComponent<4>(ray.raw(), 1, axis);
+  axis[2] = GetAbsMaxComponent<4>(ray.raw(), 2, axis);
+  axis[3] = GetAbsMaxComponent<4>(ray.raw(), 3, axis);
+
+  //QuaxolSpec absRay(abs(ray.x), abs(ray.y), abs(ray.z), abs(ray.w));
+  Vec4f absRay(abs(ray.x), abs(ray.y), abs(ray.z), abs(ray.w));
+  float rayDist = ray.length();
+  int countdown[3];
+  // the primary direction absolute difference sets up the count
+  if(absRay[axis[1]] != 0.0f) {
+    // ceil means over-include boxes, which guarantees the line is included
+    countdown[0] = (int)ceil((float)absRay[axis[0]] / (float)absRay[axis[1]]);
+  } else {
+    countdown[0] = (int)ceil(abs(rayDist));
+  }
+  if(absRay[axis[2]] != 0.0f) {
+    countdown[1] = (int)ceil((float)absRay[axis[0]] / (float)absRay[axis[2]]);
+  } else {
+    countdown[1] = 0;
+  }
+  if(absRay[axis[3]] != 0.0f) {
+    countdown[2] = (int)ceil((float)absRay[axis[0]] / (float)absRay[axis[3]]);
+  } else {
+    countdown[2] = 0;
+  }
+
+  int count[3];
+  memcpy(&count, &countdown, sizeof(count));
+
+  int step[4];
+  step[axis[0]] = GetSign(ray[axis[0]]);
+  step[axis[1]] = GetSign(ray[axis[1]]);
+  step[axis[2]] = GetSign(ray[axis[2]]);
+  step[axis[3]] = GetSign(ray[axis[3]]);
+
+  // do the start
+  if(chunk.IsPresent(pos[0], pos[1], pos[2], pos[3])
+      && PhysicsHelp::RayToQuaxol(pos, position, ray, NULL /*outDist*/, outPos)) {
+    return true;
+  }
+
+  // loop until we're at the end
+  int totalSteps = abs(end[axis[0]] - pos[axis[0]]); 
+  //while(pos != end) {
+  for(int mainSteps = 0; mainSteps <= totalSteps; mainSteps++) {
+    for(int counter = 0; counter < 3; counter++) {
+      count[counter]--;
+      if(count[counter] <= 0 && countdown[counter] > 0) {
+        pos[axis[counter + 1]] += step[axis[counter + 1]];
+        count[counter] = countdown[counter];
+        if(chunk.IsPresent(pos[0], pos[1], pos[2], pos[3])
+            && PhysicsHelp::RayToQuaxol(pos, position, ray, NULL /*outDist*/, outPos)) {
+          return true;
+        }
+        if(pos == end) return false;
+      }
+    }
+
+    pos[axis[0]] += step[axis[0]];
+    if(chunk.IsPresent(pos[0], pos[1], pos[2], pos[3])
+        && PhysicsHelp::RayToQuaxol(pos, position, ray, NULL /*outDist*/, outPos)) {
+      return true;
+    }
+    if(pos == end) return false;
+  }
+ 
+  return false;
 }
 
 // normalized direction is converted into n ints for n-dim
@@ -246,15 +368,15 @@ void Physics::TestPhysics() {
   Vec4f posTest(1.0f, 1.0f, 1.0f, 1.0f);
   Vec4f rayDown(0.0f, 0.0f, -10.0f, 0.0f);
   float dist = 0.0f;
-  assert(true == physTest.RayCast(&posTest, &rayDown, &dist));
+  assert(true == physTest.RayCastGround(posTest, rayDown, &dist));
   assert(dist == 1.0f); // may need to do some float threshold compares
 
   posTest.set(20.0f, 0.0f, 11.0f, 0.0f);
-  assert(false == physTest.RayCast(&posTest, &rayDown, &dist));
+  assert(false == physTest.RayCastGround(posTest, rayDown, &dist));
 
   posTest.set(10.0f, 0.0f, 3.0f, 0.0f);
   rayDown.set(8.0f, 0.0f, -6.0f, 0.0f);
-  assert(true == physTest.RayCast(&posTest, &rayDown, &dist));
+  assert(true == physTest.RayCastGround(posTest, rayDown, &dist));
   assert(dist == 5.0f);
 
   /////////////////////
@@ -322,6 +444,46 @@ void Physics::TestPhysics() {
   assert(s_testQuaxols[0] == QuaxolSpec(1,1,1,1));
   assert(s_testQuaxols[5] == QuaxolSpec(-2,1,2,0)); //is this even right?
 
+  Vec4f chunkPos(0.0f, 0.0f, 0.0f, 0.0f);
+  Vec4f chunkBlockSize(10.0f, 10.0f, 10.0f, 10.0f); //dumb to even support
+  QuaxolChunk testChunk(chunkPos, chunkBlockSize);
+  TVecQuaxol quaxols;
+  quaxols.emplace_back(1, 1, 1, 1);
+  assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
+
+  pos.set(25.0f, 25.0f, 25.0f, 25.0f);
+  ray.set(-10.0f, -10.0f, -11.0f, -12.0f);
+  assert(true == physTest.RayCastChunk(testChunk, pos, ray, NULL));
+
+  quaxols.emplace_back(1, 2, 1, 1);
+  quaxols.emplace_back(2, 1, 1, 1);
+  quaxols.emplace_back(2, 2, 1, 1);
+  quaxols.emplace_back(1, 1, 2, 1);
+  quaxols.emplace_back(1, 1, 3, 1);
+  quaxols.emplace_back(1, 1, 4, 1);
+  quaxols.emplace_back(2, 2, 0, 2);
+  assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
+  pos.set(25.0f, 25.0f, 25.0f, 25.0f);
+  ray.set(-10.0f, -10.0f, 11.0f, -12.0f);
+  float hitDist = -1.0f;
+  assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+  assert(hitDist > 0.0f);
+
+  ray.set(-1000.0f, -1000.0f, 1100.0f, -1200.0f);
+  assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+  assert(hitDist > 0.0f);
+
+  ray.set(-1000.0f, 0.01f, 0.01f, 0.01f);
+  assert(false == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+
+  ray.set(0.01f, 0.01f, 0.01f, 0.01f);
+  assert(false == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+
+  ray.set(0.01f, 0.01f, -10000.01f, 0.01f);
+  assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+  assert(hitDist > 0.0f);
+
+  //quaxols.emplace_back(
 }
 
 } // namespace fd

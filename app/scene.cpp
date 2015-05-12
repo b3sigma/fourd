@@ -33,6 +33,7 @@ Scene::Scene()
 
 Scene::~Scene() {
   delete m_pQuaxolBuffer;
+  delete m_pQuaxolChunk;
   delete m_pPhysics;
 }
 
@@ -41,7 +42,7 @@ void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
 
   QuaxolSpec offset(0, 0, 0, 0);
   Vec4f position(0, 0, 0, 0); // need to fill these out with appropriate values
-  Vec4f blockSize(1.0f, 1.0f, 1.0f, 1.0f); // 1 light-second, everything in light-seconds
+  Vec4f blockSize(10.0f, 10.0f, 10.0f, 10.0f);
   m_pQuaxolChunk = new QuaxolChunk(position, blockSize);
   m_pQuaxolChunk->LoadFromList(&m_quaxols, &offset);
   m_pPhysics->AddChunk(m_pQuaxolChunk);

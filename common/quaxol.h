@@ -35,6 +35,13 @@ namespace fd {
     }
     inline bool operator != (const QuaxolSpec& r) { return !(*this == r); }
     inline int& operator[] (int index) { return p[index]; }
+
+    Vec4f ToFloatCoords(const Vec4f& offset, const Vec4f& blockSize) {
+      Vec4f coord((float)x, (float)y, (float)z, (float)w);
+      coord *= blockSize;
+      coord += offset;
+      return coord;
+    }
   };
   typedef std::vector<QuaxolSpec> TVecQuaxol;
 
@@ -45,20 +52,29 @@ namespace fd {
   };
   
   const int c_mxSz = 16; // this means 16^4 blocks, or 32k
-  // should be indexed [x][y][z][w]? or maybe [w][x][y][z]?
-  // would imply cache locality pulls up w first
+  // indexing [x][y][w][z] for the moment
 
   class QuaxolChunk {
   public:
     Block m_blocks[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
     Vec4f m_position;
     Vec4f m_blockSize; // this should probably live higher up?
+    QuaxolSpec m_blockDims;
 
   public:
     QuaxolChunk(Vec4f position, Vec4f blockSize);
     ~QuaxolChunk();
 
     bool LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset);
+    
+    // unchecked, local
+    inline bool IsPresent(int x, int y, int z, int w) const { 
+      return m_blocks[x][y][w][z].present;
+    }
+
+    inline Block& GetBlock(int x, int y, int z, int w) { // unchecked, local
+      return m_blocks[x][y][w][z];
+    }
   };
 
 }; // namespace fd

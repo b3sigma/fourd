@@ -9,7 +9,8 @@ namespace fd {
 
 QuaxolChunk::QuaxolChunk(Vec4f position, Vec4f blockSize)
     : m_position(position)
-    , m_blockSize(blockSize) {
+    , m_blockSize(blockSize)
+    , m_blockDims(c_mxSz, c_mxSz, c_mxSz, c_mxSz) {
 }
 
 QuaxolChunk::~QuaxolChunk() {}
@@ -39,7 +40,7 @@ bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* off
       continue;
     }
 
-    Block& block = m_blocks[local.x][local.y][local.z][local.w];
+    Block& block = GetBlock(local.x, local.y, local.z, local.w);
     block.present = true;
   }
 

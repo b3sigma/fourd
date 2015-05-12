@@ -23,7 +23,7 @@ namespace fd {
 
     // this is the wrong abstraction, should have a wrapper that handles
     // multiple chunks. Will incorporate later.
-    QuaxolChunk* m_chunk;
+    QuaxolChunk* m_chunk; //not owned
 
   public:
     Physics() 
@@ -42,13 +42,15 @@ namespace fd {
     void Step(float fDelta);
 
     // returns true if hit, overwrites distance with amount if so.
-    bool RayCast(const Vec4f* position, const Vec4f* direction, float* outDistance);
+    bool RayCast(const Vec4f& position, const Vec4f& ray, float* outDistance);
 
-    bool RayCastGround(const Vec4f* position, const Vec4f* direction, float* outDistance);
+    bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
     void ClampToGround(Vec4f* position);
 
     bool RayCastChunk(const QuaxolChunk& chunk,
         const Vec4f& position, const Vec4f& ray, float* outDistance);
+    bool LocalRayCastChunk(const QuaxolChunk& chunk,
+        const Vec4f& position, const Vec4f& ray, Vec4f* outPos);
 
     void LineDraw2D(const Vec4f& position, const Vec4f& ray, float* outDist,
         DelegateN<bool, const QuaxolChunk*, int, int, int, int> callback);

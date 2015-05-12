@@ -42,6 +42,7 @@ Mesh tesseract;
 ::fd::Camera g_camera;
 ::fd::Render g_renderer;
 ::fd::Shader* g_shader = NULL;
+::fd::Entity* g_pointerEntity = NULL;
 bool g_captureMouse = false;
 HWND g_windowHandle;
 
@@ -96,8 +97,8 @@ bool LoadLevel(const char* levelName) {
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
-  //tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
-  tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
+  //tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
+  tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
   
   // Set up some reasonable defaults
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
@@ -217,7 +218,7 @@ void PassiveMotion(int x, int y) {
   accumulatedMouseY += deltaY;
 
   if(g_captureMouse) {
-    const int edgeWarp = 30;
+    const int edgeWarp = 50;
     int newX = mouseX;
     int newY = mouseY;
     if(mouseX < edgeWarp || mouseX > (_width - edgeWarp)) {
@@ -295,7 +296,7 @@ bool AddTesseractLineCallback(const QuaxolChunk* chunk, int x, int y, int z, int
 void AddTesseractLine() {
   Vec4f cameraPos = g_camera.getCameraPos();
   cameraPos *= 1.0f / 10.0f;
-  Vec4f ray = -g_camera.getCameraMatrix()[Camera::FORWARD];
+  Vec4f ray = g_camera.getCameraForward();
   ray *= 10.0f;
   float lazyInterfaceClutter;
   DelegateN<bool, const QuaxolChunk*, int, int, int, int> delegate;
@@ -501,6 +502,27 @@ void Update(int key, int x, int y) {
       }
     } break;
     case 'z' : {
+      Vec4f position = g_camera.getCameraPos();
+      Vec4f ray = g_camera.getCameraForward();
+      ray *= 1000.0f;
+      float dist;
+      if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+        Entity* pEntity = g_scene.AddEntity();
+        // ugh need like a mesh manager and better approach to shader handling
+        pEntity->Initialize(&tesseract, g_shader, NULL);
+        pEntity->m_orientation.storeScale(0.1f);
+
+        pEntity->m_position = position + ray.normalized() * dist;
+
+        pEntity->GetComponentBus().AddComponent(
+            new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+            20.0f, true));
+
+        //pEntity->GetComponentBus().AddComponent(
+        //    new TimedDeath(10.0f /* duration */));
+      }
+    } break;
+    case 'X' : {
       AddTesseractLine();
     } break;
     case 'Z' : {
@@ -510,8 +532,8 @@ void Update(int key, int x, int y) {
       pEntity->m_orientation.storeIdentity();
 
       // Also put it in front of the camera.
-      Vec4f forwardDir = g_camera.getCameraMatrix()[Camera::FORWARD];
-      forwardDir *= -50.0f;
+      Vec4f forwardDir = g_camera.getCameraForward();
+      forwardDir *= 50.0f;
       pEntity->m_position = g_camera._cameraPos + forwardDir;
 
       Vec4f tangentDir = g_camera.getCameraMatrix()[Camera::INSIDE];
@@ -562,11 +584,41 @@ void Motion(int x, int y) {
   //printf("Motion x:%d y:%d\n", x, y);
 }
 
+void UpdatePointerEntity() {
+  Vec4f position = g_camera.getCameraPos();
+  Vec4f ray = g_camera.getCameraForward();
+  ray *= 1000.0f;
+  float dist;
+
+  Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
+
+  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+    hitPos = position + ray.normalized() * dist;
+  }
+
+  if(!g_pointerEntity) {
+    g_pointerEntity = g_scene.AddEntity();
+    g_pointerEntity->Initialize(&tesseract, g_shader, NULL);
+    g_pointerEntity->m_orientation.storeScale(0.1f);
+    g_pointerEntity->m_position = hitPos;
+
+    g_pointerEntity->GetComponentBus().AddComponent(
+        new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+        -20.0f, true));
+  } else {
+    g_pointerEntity->m_position = hitPos;
+    g_pointerEntity->m_pShader = g_shader;
+
+  }
+}
+
 void OnIdle() {
   ApplyMouseMove();
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
   
+  UpdatePointerEntity();
+
   glutPostRedisplay();
 }
 
@@ -608,9 +660,9 @@ void RunTests() {
   assert(scale == invScale.inverse());
 
   Mat4f rotXFourth;
-  rotXFourth.buildRotation((float)PI / 2.0, 1, 0);
+  rotXFourth.storeRotation((float)PI / 2.0, 1, 0);
   Mat4f rotXEighth;
-  rotXEighth.buildRotation((float)PI / 4.0, 1, 0);
+  rotXEighth.storeRotation((float)PI / 4.0, 1, 0);
   assert(iden == (rotXFourth * rotXFourth * rotXFourth * rotXFourth * iden));
   assert(rotXEighth * rotXEighth == rotXFourth);
   assert(!(rotXFourth * rotXFourth == rotXFourth));
