@@ -97,6 +97,7 @@
     <ClCompile Include="..\common\chunkloader.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
+    <ClCompile Include="..\common\physics_help.cpp" />
     <ClCompile Include="..\common\quaxol.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
   </ItemGroup>

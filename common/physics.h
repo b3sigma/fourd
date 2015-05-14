@@ -50,16 +50,14 @@ namespace fd {
     bool RayCastChunk(const QuaxolChunk& chunk,
         const Vec4f& position, const Vec4f& ray, float* outDistance);
     bool LocalRayCastChunk(const QuaxolChunk& chunk,
-        const Vec4f& position, const Vec4f& ray, Vec4f* outPos);
+        const Vec4f& start, const Vec4f& ray, Vec4f* outPos);
 
-    void LineDraw2D(const Vec4f& position, const Vec4f& ray, float* outDist,
-        DelegateN<bool, const QuaxolChunk*, int, int, int, int> callback);
-    void LineDraw4D(const Vec4f& position, const Vec4f& ray, float* outDist,
-        DelegateN<bool, const QuaxolChunk*, int, int, int, int> callback);
+    void LineDraw4D(const Vec4f& start, const Vec4f& ray,
+        DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback);
 
     static void TestPhysics();
   protected:
     static TVecQuaxol s_testQuaxols;
-    static bool TestPhysicsCallback(const QuaxolChunk* chunk, int x, int y, int z, int w);
+    static void TestPhysicsCallback(int x, int y, int z, int w, const Vec4f& position, const Vec4f& ray);
   };
 }; //namespace fd

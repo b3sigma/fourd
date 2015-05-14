@@ -35,7 +35,6 @@ void Physics::ClampToGround(Vec4f* position) {
   }
 }
 
-// Thinking 4d breseham line thing?
 bool Physics::RayCastChunk(const QuaxolChunk& chunk,
     const Vec4f& position, const Vec4f& ray, float* outDistance) {
   assert(ray.length() > 0.0f);
@@ -107,257 +106,143 @@ inline int GetSign(float val) {
   else return 1;
 }
 
-// presumes vec has N components
-// Totally wasteful looking way to sort 4 things and get their indices
-template <int N>
-inline int GetAbsMaxComponent(const float* vec, int numExclusions, int exclude[N]) {
-  float max = 0.0f;
-  int maxIndex = 0;
-  for(int c = 0; c < N; c++) {
-    bool skip = false;
-    for(int ex = 0; ex < numExclusions; ex++) {
-      if(c == exclude[ex]) {
-        skip = true;
-        break;
-      }
-    }
-    if (skip)
-      continue;
-    if(abs(vec[c]) >= max) {
-      max = abs(vec[c]);
-      maxIndex = c;
-    }
+inline void ClampToInteger(const Vec4f& position, const int (&signs)[4],
+    Vec4f* outClampDelta, QuaxolSpec* outClampPos) {
+  Vec4f clampPos;
+  for (int c = 0; c < 4; c++) {
+    clampPos[c] = (signs[c] < 0) ? ceil(position[c]) : floor(position[c]);
   }
-  return maxIndex;
+  if(outClampDelta) {
+    *outClampDelta = clampPos - position;
+  }
+  if(outClampPos) {
+    *outClampPos = QuaxolSpec(clampPos);
+  }
 }
 
 bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
-    const Vec4f& position, const Vec4f& ray, Vec4f* outPos) {
+    const Vec4f& start, const Vec4f& ray, Vec4f* outPos) {
 
-  QuaxolSpec pos(position);
-  QuaxolSpec end(position + ray);
-
-  // extra axis indirection is to make generalization easier.
-  int axis[4]; // 4!=24 ways of ordering this
-  // fastest in code is probably a bunch of if statements
-  // bit clearer but slower way
-  axis[0] = GetAbsMaxComponent<4>(ray.raw(), 0, axis);
-  axis[1] = GetAbsMaxComponent<4>(ray.raw(), 1, axis);
-  axis[2] = GetAbsMaxComponent<4>(ray.raw(), 2, axis);
-  axis[3] = GetAbsMaxComponent<4>(ray.raw(), 3, axis);
-
-  //QuaxolSpec absRay(abs(ray.x), abs(ray.y), abs(ray.z), abs(ray.w));
-  Vec4f absRay(abs(ray.x), abs(ray.y), abs(ray.z), abs(ray.w));
-  float rayDist = ray.length();
-  int countdown[3];
-  // the primary direction absolute difference sets up the count
-  if(absRay[axis[1]] != 0.0f) {
-    // ceil means over-include boxes, which guarantees the line is included
-    countdown[0] = (int)ceil((float)absRay[axis[0]] / (float)absRay[axis[1]]);
-  } else {
-    countdown[0] = (int)ceil(abs(rayDist));
-  }
-  if(absRay[axis[2]] != 0.0f) {
-    countdown[1] = (int)ceil((float)absRay[axis[0]] / (float)absRay[axis[2]]);
-  } else {
-    countdown[1] = 0;
-  }
-  if(absRay[axis[3]] != 0.0f) {
-    countdown[2] = (int)ceil((float)absRay[axis[0]] / (float)absRay[axis[3]]);
-  } else {
-    countdown[2] = 0;
+  int sign[4];
+  for(int c = 0; c < 4; c++) {
+    sign[c] = GetSign(ray[c]);
   }
 
-  int count[3];
-  memcpy(&count, &countdown, sizeof(count));
+  Vec4f normal = ray.normalized();
 
-  int step[4];
-  step[axis[0]] = GetSign(ray[axis[0]]);
-  step[axis[1]] = GetSign(ray[axis[1]]);
-  step[axis[2]] = GetSign(ray[axis[2]]);
-  step[axis[3]] = GetSign(ray[axis[3]]);
+  Vec4f clampDir;
+  ClampToInteger(start, sign, &clampDir, NULL /*gridPos*/);
+  Vec4f step;
+  Vec4f stepCounter;
+  for(int c = 0; c < 4; c++) {
+    if (normal[c] != 0.0f) {
+      // we will add this to the counter whenever we take a step
+      step[c] = abs(1.0f / normal[c]);
+       // start out with the right number of "steps" based on start position
+      stepCounter[c] = (1.0f - abs(clampDir[c])) * step[c];
+    } else {
+      step[c] = 0.0f;
+      stepCounter[c] = FLT_MAX;
+    }
+  }
 
+  QuaxolSpec gridPos(start);
+  QuaxolSpec gridEnd(start + ray);
+  
   // do the start
-  if(chunk.IsPresent(pos[0], pos[1], pos[2], pos[3])
-      && PhysicsHelp::RayToQuaxol(pos, position, ray, NULL /*outDist*/, outPos)) {
+  if(chunk.IsPresent(gridPos[0], gridPos[1], gridPos[2], gridPos[3])) {
+    // Actually back up the start by a little bit so if we had beed clipped
+    // to avoid a chunk memory out of bounds error, we still hit correctly.
+    const float shiftAmount = 0.01f;
+    Vec4f shiftedStart = start - (normal * shiftAmount);
+    Vec4f shiftedRay = ray + (normal * (2.0f * shiftAmount));
+    if(!PhysicsHelp::RayToQuaxol(
+        gridPos, shiftedStart, shiftedRay, NULL /*outDist*/, outPos)) {
+      // weird, but we really need to write to outPos
+      assert(false);
+      *outPos = start;
+    }
     return true;
   }
 
-  // loop until we're at the end
-  int totalSteps = abs(end[axis[0]] - pos[axis[0]]); 
-  //while(pos != end) {
-  for(int mainSteps = 0; mainSteps <= totalSteps; mainSteps++) {
-    for(int counter = 0; counter < 3; counter++) {
-      count[counter]--;
-      if(count[counter] <= 0 && countdown[counter] > 0) {
-        pos[axis[counter + 1]] += step[axis[counter + 1]];
-        count[counter] = countdown[counter];
-        if(chunk.IsPresent(pos[0], pos[1], pos[2], pos[3])
-            && PhysicsHelp::RayToQuaxol(pos, position, ray, NULL /*outDist*/, outPos)) {
-          return true;
-        }
-        if(pos == end) return false;
+  while(gridPos != gridEnd) {
+    int nextAxis;
+    float smallestStep = FLT_MAX;
+    for(int c = 0; c < 4; c++) {
+      if(stepCounter[c] < smallestStep) {
+        nextAxis = c;
+        smallestStep = stepCounter[c];
       }
     }
 
-    pos[axis[0]] += step[axis[0]];
-    if(chunk.IsPresent(pos[0], pos[1], pos[2], pos[3])
-        && PhysicsHelp::RayToQuaxol(pos, position, ray, NULL /*outDist*/, outPos)) {
+    gridPos[nextAxis] += sign[nextAxis];
+    stepCounter[nextAxis] += step[nextAxis];
+    if(chunk.IsPresent(gridPos[0], gridPos[1], gridPos[2], gridPos[3])
+        && PhysicsHelp::RayToQuaxol(gridPos, start, ray, NULL /*outDist*/, outPos)) {
       return true;
     }
-    if(pos == end) return false;
   }
- 
+
   return false;
 }
 
-// normalized direction is converted into n ints for n-dim
-// The algorithm is to progress along a specific direction and decrement
-// each counter along the largest direction
-// In 2d this means 4 different cardinal directions, but two different
-// primary axes, each that can step in negative. But there are two different
-// code paths
-// In 3d this means 3*2*1 different code paths, or n! different code paths.
-// This is made tractable with generalized indices.
-// Harder version, draw a line in 4d
-void Physics::LineDraw4D(const Vec4f& position, const Vec4f& ray, float* outDist,
-    DelegateN<bool, const QuaxolChunk*, int, int, int, int> callback) {
-  QuaxolSpec pos(position);
-  QuaxolSpec end(position + ray);
-
-  // extra axis indirection is to make generalization easier.
-  int axis[4]; // 4!=24 ways of ordering this
-  // fastest in code is probably a bunch of if statements
-  // bit clearer but slower way
-  axis[0] = GetAbsMaxComponent<4>(ray.raw(), 0, axis);
-  axis[1] = GetAbsMaxComponent<4>(ray.raw(), 1, axis);
-  axis[2] = GetAbsMaxComponent<4>(ray.raw(), 2, axis);
-  axis[3] = GetAbsMaxComponent<4>(ray.raw(), 3, axis);
-
-  float rayDist = ray.length();
-  int countdown[3];
-  // the primary direction absolute difference sets up the count
-  if(ray[axis[1]] != 0.0f) {
-    // ceil means over-include boxes, which guarantees the line is included
-    countdown[0] = static_cast<int>(ceil(abs(ray[axis[0]] / ray[axis[1]])));
-  } else {
-    countdown[0] = static_cast<int>(ceil(abs(rayDist)));
-  }
-  if(ray[axis[2]] != 0.0f) {
-    countdown[1] = static_cast<int>(ceil(abs(ray[axis[0]] / ray[axis[2]])));
-  } else {
-    countdown[1] = 0;
-  }
-  if(ray[axis[3]] != 0.0f) {
-    countdown[2] = static_cast<int>(ceil(abs(ray[axis[0]] / ray[axis[3]])));
-  } else {
-    countdown[2] = 0;
+void Physics::LineDraw4D(const Vec4f& start, const Vec4f& ray,
+    DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback) {
+  
+  int sign[4];
+  for(int c = 0; c < 4; c++) {
+    sign[c] = GetSign(ray[c]);
   }
 
-  int count[3];
-  memcpy(&count, &countdown, sizeof(count));
+  Vec4f normal = ray.normalized();
 
-  int step[4];
-  step[axis[0]] = GetSign(ray[axis[0]]);
-  step[axis[1]] = GetSign(ray[axis[1]]);
-  step[axis[2]] = GetSign(ray[axis[2]]);
-  step[axis[3]] = GetSign(ray[axis[3]]);
-
-  // do the start
-  callback(NULL, pos[0], pos[1], pos[2], pos[3]);
-  // loop until we're at the end
-  int totalSteps = abs(end[axis[0]] - pos[axis[0]]); 
-  //while(pos != end) {
-  for(int mainSteps = 0; mainSteps <= totalSteps; mainSteps++) {
-    count[0]--;
-    if(count[0] < 0 && countdown[0] > 0) {
-      pos[axis[1]] += step[axis[1]];
-      count[0] = countdown[0];
-      callback(NULL, pos[0], pos[1], pos[2], pos[3]);
-      if(pos == end) break;
-    } 
-    count[1]--;
-    if(count[1] < 0 && countdown[1] > 0) {
-      pos[axis[2]] += step[axis[2]];
-      count[1] = countdown[1];
-      callback(NULL, pos[0], pos[1], pos[2], pos[3]);
-      if(pos == end) break;
-    }
-    count[2]--;
-    if(count[2] < 0 && countdown[2] > 0) {
-      pos[axis[3]] += step[axis[3]];
-      count[2] = countdown[2];
-      callback(NULL, pos[0], pos[1], pos[2], pos[3]);
-      if(pos == end) break;
-    }
-
-    pos[axis[0]] += step[axis[0]];
-    callback(NULL, pos[0], pos[1], pos[2], pos[3]);
-    if(pos == end) break;
-  }
-}
-
-// Easy version, draw a line in 2d
-// dist is out, for when this becomes raycasting
-void Physics::LineDraw2D(const Vec4f& position, const Vec4f& ray, float* outDist,
-    DelegateN<bool, const QuaxolChunk*, int, int, int, int> callback) {
-  int pos[2];
-  pos[0] = static_cast<int>(floor(position.x));
-  pos[1] = static_cast<int>(floor(position.y));
-
-  int end[2];
-  end[0] = static_cast<int>(floor(position.x + ray.x));
-  end[1] = static_cast<int>(floor(position.y + ray.y));
-
-  // extra axis indirection is to make generalization easier.
-  int axis[2];
-  if(abs(ray.x) > abs(ray.y)) {
-    axis[0] = 0;
-    axis[1] = 1;
-  } else {
-    axis[0] = 1;
-    axis[1] = 0;
-  }
-
-  float rayDist = ray.length();
-  int countdown[2];
-  if(ray[axis[1]] == 0) {
-    countdown[0] = static_cast<int>(abs(ceil(rayDist)));
-    countdown[1] = 0;
-  } else {
-    // Ceil here seems right, as you want to over-include quaxols instead of under.
-    countdown[0] = static_cast<int>(abs(ceil(ray[axis[0]] / ray[axis[1]])));
-    countdown[1] = abs(pos[axis[1]] - end[axis[1]]);
-  }
-
-  int count[2];
-  memcpy(&count, &countdown, sizeof(count));
-
-  int step[2];
-  step[axis[0]] = GetSign(ray[axis[0]]);
-  step[axis[1]] = GetSign(ray[axis[1]]);
-              //.
-              //...
-  while(pos[axis[0]] != end[axis[0]] || pos[axis[1]] != end[axis[1]]) {
-    callback(NULL, pos[0], pos[1], 0, 0);
-    count[0]--;
-    if(count[0] < 0) {
-      pos[axis[1]] += step[axis[1]];
-      count[0] = countdown[0];
-      count[1]--;
+  Vec4f clampDir;
+  ClampToInteger(start, sign, &clampDir, NULL /*gridPos*/);
+  Vec4f step;
+  Vec4f stepCounter;
+  for(int c = 0; c < 4; c++) {
+    if (normal[c] != 0.0f) {
+      // we will add this to the counter whenever we take a step
+      step[c] = abs(1.0f / normal[c]);
+       // start out with the right number of "steps" based on start position
+      stepCounter[c] = (1.0f - abs(clampDir[c])) * step[c];
     } else {
-      // don't ever step in two directions in the samer iteration
-      // keep faces between quaxols instead of corner connections
-      pos[axis[0]] += step[axis[0]];
+      step[c] = 0.0f;
+      stepCounter[c] = FLT_MAX;
     }
   }
-  callback(NULL, end[0], end[1], 0, 0);
+
+  QuaxolSpec gridPos(start);
+  QuaxolSpec gridEnd(start + ray);
+  callback(gridPos[0], gridPos[1], gridPos[2], gridPos[3], start, ray);
+
+  while(gridPos != gridEnd) {
+    int nextAxis;
+    float smallestStep = FLT_MAX;
+    for(int c = 0; c < 4; c++) {
+      if(stepCounter[c] < smallestStep) {
+        nextAxis = c;
+        smallestStep = stepCounter[c];
+      }
+    }
+
+    gridPos[nextAxis] += sign[nextAxis];
+    stepCounter[nextAxis] += step[nextAxis];
+    callback(gridPos[0], gridPos[1], gridPos[2], gridPos[3], start, ray);
+  }
 }
 
 TVecQuaxol Physics::s_testQuaxols;
-bool Physics::TestPhysicsCallback(const QuaxolChunk* chunk, int x, int y, int z, int w) {
+void Physics::TestPhysicsCallback(
+    int x, int y, int z, int w, const Vec4f& position, const Vec4f& ray) {
   s_testQuaxols.emplace_back(x, y, z, w);
-  return true;
+  assert(true == PhysicsHelp::RayToQuaxol(
+      QuaxolSpec(x, y, z, w), position, ray, NULL /*dist*/, NULL /*outPoint*/));
+  const int infiniteCheck = 100;
+  assert(x >= -infiniteCheck && x < infiniteCheck);
+  assert(y >= -infiniteCheck && y < infiniteCheck);
+  assert(z >= -infiniteCheck && z < infiniteCheck);
+  assert(w >= -infiniteCheck && w < infiniteCheck);
 }
 
 void Physics::TestPhysics() {
@@ -381,19 +266,21 @@ void Physics::TestPhysics() {
 
   /////////////////////
   // callback sanity
-  DelegateN<bool, const QuaxolChunk*, int, int, int, int> stepCallback;
+  DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> stepCallback;
   stepCallback.Bind(Physics::TestPhysicsCallback);
-  stepCallback(NULL, 1, 2, 0, 0);
+  Vec4f pos(1.5f, 2.5f, 0.0f, 0.0f);
+  Vec4f ray(2.0f, 0.0f, 0.0f, 0.0f);
+  stepCallback(1, 2, 0, 0, pos, ray);
   assert(s_testQuaxols.size() == 1);
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 2);
 
   ////////////////////
-  // LineDraw2D, which was supposed to be extended to 4d
+  // LineDraw2D, which was along the way to 4d
   // as it's a nice algorithm
   s_testQuaxols.resize(0);
-  Vec4f pos(1.5f, 1.5f, 0.0f, 0.0f);
-  Vec4f ray(2.0f, 0.0f, 0.0f, 0.0f);
-  physTest.LineDraw2D(pos, ray, &dist, stepCallback); 
+  pos.set(1.5f, 1.5f, 0.0f, 0.0f);
+  ray.set(2.0f, 0.0f, 0.0f, 0.0f);
+  physTest.LineDraw4D(pos, ray, stepCallback); 
   assert(s_testQuaxols.size() == 3);
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 1);
   assert(s_testQuaxols[1].x == 2 && s_testQuaxols[1].y == 1);
@@ -402,7 +289,7 @@ void Physics::TestPhysics() {
   s_testQuaxols.resize(0);
   pos.set(1.5f, 1.5f, 0.0f, 0.0f);
   ray.set(-2.0f, 1.0f, 0.0f, 0.0f); // draw from (1.5,1.5) to (-0.5,2.5)
-  physTest.LineDraw2D(pos, ray, &dist, stepCallback); 
+  physTest.LineDraw4D(pos, ray, stepCallback); 
   assert(s_testQuaxols.size() == 4); //(1,1), (0,1), (-1,1), (-1,2)
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 1);
   //assert(s_testQuaxols[1].x == 2 && s_testQuaxols[1].y == 1);
@@ -411,7 +298,7 @@ void Physics::TestPhysics() {
   s_testQuaxols.resize(0);
   pos.set(1.5f, 1.5f, 0.0f, 0.0f);
   ray.set(-1.0f, -2.0f, 0.0f, 0.0f); // draw from (1.5,1.5) to (0.5,-0.5)
-  physTest.LineDraw2D(pos, ray, &dist, stepCallback); 
+  physTest.LineDraw4D(pos, ray, stepCallback); 
   assert(s_testQuaxols.size() == 4); //(1,1), (1,0), (1,-1)
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 1);
   //assert(s_testQuaxols[1].x == 2 && s_testQuaxols[1].y == 1);
@@ -422,7 +309,7 @@ void Physics::TestPhysics() {
   pos.set(1.5f, 1.5f, 1.5f, 1.5f);
   ray.set(0.0f, 0.0f, 0.0f, 2.0f);
   s_testQuaxols.resize(0);
-  physTest.LineDraw4D(pos, ray, &dist, stepCallback);
+  physTest.LineDraw4D(pos, ray, stepCallback);
   assert(s_testQuaxols.size() == 3);
   assert(s_testQuaxols[0].w == 1 && s_testQuaxols[0].y == 1);
   assert(s_testQuaxols[1].w == 2 && s_testQuaxols[1].y == 1);
@@ -431,7 +318,7 @@ void Physics::TestPhysics() {
   pos.set(1.5f, 1.5f, 1.5f, 1.5f);
   ray.set(0.0f, 1.0f, 0.0f, -2.0f);
   s_testQuaxols.resize(0);
-  physTest.LineDraw4D(pos, ray, &dist, stepCallback);
+  physTest.LineDraw4D(pos, ray, stepCallback);
   assert(s_testQuaxols.size() == 4); //(1,1,1,1), (1,1,1,0), (1,1,1,-1), (1,2,1,-1)
   assert(s_testQuaxols[0] == QuaxolSpec(1,1,1,1));
   assert(s_testQuaxols[3] == QuaxolSpec(1,2,1,-1));
@@ -439,10 +326,16 @@ void Physics::TestPhysics() {
   pos.set(1.5f, 1.5f, 1.5f, 1.5f);
   ray.set(-2.5f, 1.0f, 1.7f, -2.0f);
   s_testQuaxols.resize(0);
-  physTest.LineDraw4D(pos, ray, &dist, stepCallback);
-  assert(s_testQuaxols.size() == 6);
+  physTest.LineDraw4D(pos, ray, stepCallback);
+  assert(s_testQuaxols.size() == 8);
   assert(s_testQuaxols[0] == QuaxolSpec(1,1,1,1));
-  assert(s_testQuaxols[5] == QuaxolSpec(-2,1,2,0)); //is this even right?
+  assert(s_testQuaxols[7] == QuaxolSpec(-1,2,3,-1));
+
+  pos.set(0.0500000007f, 0.0500000007f, 1.54999995f, 0.449999988f);
+  ray.set(0.319010586f, 15.9484043f, 7.15184228e-007f, 0.000000000f);
+  s_testQuaxols.resize(0);
+  physTest.LineDraw4D(pos, ray, stepCallback);
+  // just need to make sure it terminates
 
   Vec4f chunkPos(0.0f, 0.0f, 0.0f, 0.0f);
   Vec4f chunkBlockSize(10.0f, 10.0f, 10.0f, 10.0f); //dumb to even support
@@ -482,6 +375,18 @@ void Physics::TestPhysics() {
   ray.set(0.01f, 0.01f, -10000.01f, 0.01f);
   assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
   assert(hitDist > 0.0f);
+
+  pos.set(0.500000007f, 0.500000007f, 15.4999995f, 4.49999988f);
+  ray.set(3.19010586f, 159.484043f, 7.15184228e-006f, 0.000000000f);
+  assert(false == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+
+  quaxols.emplace_back(2, 0, 3, 0);
+  assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
+  pos.set(25.7389202f, 9.39026356f, 36.6651955f, 4.50000000f);
+  ray.set(-432.569427f, -739.241638f, -516.141785f, -0.000000000f);
+  assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+
+
 
   //quaxols.emplace_back(
 }

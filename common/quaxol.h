@@ -51,11 +51,12 @@ namespace fd {
     bool present;
   };
   
-  const int c_mxSz = 16; // this means 16^4 blocks, or 32k
-  // indexing [x][y][w][z] for the moment
 
   class QuaxolChunk {
   public:
+    static const int c_mxSz = 16; // this means 16^4 blocks, or 32k
+    // indexing [x][y][w][z] for the moment
+    
     Block m_blocks[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
     Vec4f m_position;
     Vec4f m_blockSize; // this should probably live higher up?

@@ -273,7 +273,7 @@ void ToggleMouseCapture() {
   }
 }
 
-bool AddTesseractLineCallback(const QuaxolChunk* chunk, int x, int y, int z, int w) {
+void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, const Vec4f& ray) {
   g_scene.m_quaxols.emplace_back(x, y, z, w);
   ////printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
   //Entity* pEntity = g_scene.AddEntity();
@@ -290,7 +290,6 @@ bool AddTesseractLineCallback(const QuaxolChunk* chunk, int x, int y, int z, int
   ////    20.0f, true));
   //pEntity->GetComponentBus().AddComponent(
   //    new TimedDeath(21.0f /* duration */));
-  return true;
 }
 
 void AddTesseractLine() {
@@ -298,10 +297,9 @@ void AddTesseractLine() {
   cameraPos *= 1.0f / 10.0f;
   Vec4f ray = g_camera.getCameraForward();
   ray *= 10.0f;
-  float lazyInterfaceClutter;
-  DelegateN<bool, const QuaxolChunk*, int, int, int, int> delegate;
+  DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> delegate;
   delegate.Bind(AddTesseractLineCallback);
-  g_scene.m_pPhysics->LineDraw4D(cameraPos, ray, &lazyInterfaceClutter, delegate);
+  g_scene.m_pPhysics->LineDraw4D(cameraPos, ray, delegate);
 }
 
 void Update(int key, int x, int y) {

@@ -106,7 +106,7 @@ public:
     return *this;
 	}
 
-	Vec normalized() {
+	Vec normalized() const {
 	  Vec result(*this);
 	  result.storeNormalized();
 	  return result;
