@@ -67,7 +67,7 @@ namespace fd {
     // TODO: Check if img format that includes mips, like dxt
     bool generateMipmaps = true; 
     if (generateMipmaps) {
-      if(!CheckGLUErr(gluBuild2DMipmaps(GL_TEXTURE_2D, channels, 
+      if(!WasGLUErr(gluBuild2DMipmaps(GL_TEXTURE_2D, channels, 
           m_width, m_height, m_format, GL_UNSIGNED_BYTE, data))) {
         stbi_image_free(data);
         glDeleteTextures(1, &m_texture_id);

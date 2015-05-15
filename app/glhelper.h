@@ -17,7 +17,7 @@ inline bool WasGLErrorPlusPrint() {
   }
 }
 
-inline bool CheckGLUErr(int gluErr) {
+inline bool WasGLUErr(int gluErr) {
   if(gluErr != 0) {
     printf("build mips error:%s\n", gluErrorString(gluErr));
     return false;
@@ -27,4 +27,5 @@ inline bool CheckGLUErr(int gluErr) {
 }
 #else //_DEBUG
 inline bool WasGLErrorPlusPrint() { return false; }
+inline bool WasGLUErr(int gluErr) { return (gluErr != 0); }
 #endif //_DEBUG

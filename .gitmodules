@@ -7,3 +7,6 @@
 [submodule "FreeGLUT"]
 	path = FreeGLUT
 	url = https://github.com/dcnieho/FreeGLUT
+[submodule "OculusSDK"]
+	path = OculusSDK
+	url = https://github.com/b3sigma/OculusSDK
