@@ -1,6 +1,6 @@
 #include "glhelper.h"
 #include "texture.h"
-
+#include "../common/fourmath.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stb/stb_image.h"
@@ -94,9 +94,55 @@ namespace fd {
     return true;
   }
 
+  bool Texture::CreateRenderTarget(int sizeX, int sizeY) {
+    glGenTextures(1, &m_texture_id);
+    glBindTexture(GL_TEXTURE_2D, m_texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    m_width = sizeX;
+    m_height = sizeY;
+    m_format = GL_RGBA;
+    m_internal_format = GL_SRGB_ALPHA;
+
+    glTexImage2D(GL_TEXTURE_2D, 0 /* level */,
+          m_internal_format, m_width, m_height, 0 /* border */,
+          m_format, GL_UNSIGNED_BYTE, NULL /*data*/);
+    glGenFramebuffers(1, &m_framebuffer_id);
+
+    return !WasGLErrorPlusPrint();
+  }
+
+  bool Texture::CreateDepthTarget(int sizeX, int sizeY) {
+    glGenTextures(1, &m_texture_id);
+    glBindTexture(GL_TEXTURE_2D, m_texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    m_width = sizeX;
+    m_height = sizeY;
+    m_format = GL_DEPTH_COMPONENT;
+    m_internal_format = GL_DEPTH_COMPONENT24;
+   
+    glTexImage2D(GL_TEXTURE_2D, 0 /* level */,
+          m_internal_format, m_width, m_height, 0 /* border */,
+          m_format, GL_UNSIGNED_BYTE, NULL /*data*/);
+    glGenFramebuffers(1, &m_framebuffer_id);
+
+    return !WasGLErrorPlusPrint();
+  }
+
+
   void Texture::Release() {
     if (m_texture_id >= 0) {
       glDeleteTextures(1, &m_texture_id);
+    }
+    if (m_framebuffer_id >= 0) {
+      glDeleteFramebuffers(1, &m_framebuffer_id);
     }
   }
 

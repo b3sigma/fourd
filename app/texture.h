@@ -14,6 +14,7 @@ namespace fd {
   class Texture {
   protected:
     GLuint m_texture_id;
+    GLuint m_framebuffer_id;
     GLsizei m_width;
     GLsizei m_height;
     GLenum m_format;
@@ -23,10 +24,12 @@ namespace fd {
     static TTextureSet s_textureCache; //ugh;
 
   public:
-    Texture() : m_texture_id(0) {}
+    Texture() : m_texture_id(-1), m_framebuffer_id(-1) {}
     ~Texture();
 
     bool LoadFromFile(const char* filename);
+    bool CreateRenderTarget(int sizeX, int sizeY);
+    bool CreateDepthTarget(int sizeX, int sizeY);
     void Release();
 
     GLuint GetTextureID() const { return m_texture_id; }
