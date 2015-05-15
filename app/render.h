@@ -17,6 +17,9 @@
 
 namespace fd {
 
+class Texture;
+class Camera;
+
 // Render should contain all the GL code
 // View will contain a specific render target and a camera
 
@@ -30,16 +33,8 @@ class Input {
   Many of the fields could plausibly go in either structure.
   */
 class View {
-  class Viewport {
-    int _left;
-    int _right;
-    int _top;
-    int _bottom;
-  };
-  float _near;
-  float _far;
-  float _fov;
-  Camera _camera;
+  Camera* m_camera;
+  Texture* m_renderTarget; // may be null to indicate backbuffer
 };
 
 
@@ -54,7 +49,7 @@ class Render {
   double _lastTotalTime;
   double _frameTime;
 
-
+  
 public:
   Render() : _frameTime(0.0), _lastTotalTime(0.0) {}
 

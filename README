@@ -7,6 +7,7 @@ Getting:
 ** cd fourd
 ** git submodule init
 ** git submodule update
+* If you don't need a submodule because you already have something installed, you can do them manually. You may avoid the submodulepocalype this way.
 
 Running on Windows:
 * open up the .sln in under ./project/, build

@@ -1,4 +1,6 @@
 #include "render.h"
+#include "..\common\camera.h"
+#include "texture.h"
 
 namespace fd {
 
