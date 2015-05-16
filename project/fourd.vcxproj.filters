@@ -63,6 +63,12 @@
     <ClCompile Include="..\common\physics_help.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\app\vr_wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\app\win32_platform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -129,6 +135,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\components\physics_component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\platform_interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\vr_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\win32_platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

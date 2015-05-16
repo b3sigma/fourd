@@ -28,6 +28,15 @@
 #include "texture.h"
 #include "glhelper.h"
 
+#define USE_VR
+#ifdef USE_VR
+#include "vr_wrapper.h"
+#endif // USE_VR
+#include "platform_interface.h"
+#ifdef WIN32
+#include "win32_platform.h"
+#endif //WIN32
+
 using namespace ::fd;
 
 // Setup a render target approach
@@ -45,6 +54,8 @@ Mesh tesseract;
 ::fd::Entity* g_pointerEntity = NULL;
 bool g_captureMouse = false;
 HWND g_windowHandle;
+
+::fd::VRWrapper* g_vr = NULL;
 
 bool LoadShader(const char* shaderName) {
   std::string shaderDir = "data\\";
@@ -182,6 +193,7 @@ void SetSimpleProjectiveMode() {
 void Deinitialize(void) {
   ::fd::Texture::DeinitializeTextureCache();
   ::fd::Shader::ClearShaderHash();
+  PlatformShutdown();
 }
 
 void ReshapeGL(int width, int height) {
@@ -698,8 +710,9 @@ int main(int argc, char *argv[]) {
   glutCreateWindow(argv[0]);
   
   char windowTitle[] = "fourd";
-  glutSetWindowTitle(windowTitle);
-  g_windowHandle = FindWindow(NULL, windowTitle);
+  fd::PlatformWindow* window = ::fd::PlatformInit(windowTitle);
+  
+  g_vr = VRWrapper::CreateVR(window);
 
   glewExperimental=TRUE;
   GLenum err;
