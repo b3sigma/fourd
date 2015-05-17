@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <gl/glew.h>
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 inline bool WasGLErrorPlusPrint() {
   GLenum errCode;
   const GLubyte *errString;
@@ -25,7 +25,7 @@ inline bool WasGLUErr(int gluErr) {
     return true;
   }
 }
-#else //_DEBUG
-inline bool WasGLErrorPlusPrint() { return false; }
-inline bool WasGLUErr(int gluErr) { return (gluErr != 0); }
-#endif //_DEBUG
+//#else //_DEBUG
+//inline bool WasGLErrorPlusPrint() { return false; }
+//inline bool WasGLUErr(int gluErr) { return (gluErr == 0); }
+//#endif //_DEBUG

@@ -60,6 +60,9 @@ void Scene::AddTexture(Texture* pTex) {
 void Scene::SetTexture(int index, GLint hTex) {
   assert(index >= 0 && index < (int)m_texList.size());
 
+  if(m_texList.empty())
+    return;
+
   Texture* pTex = m_texList[index];
   glActiveTexture(GL_TEXTURE0);
   WasGLErrorPlusPrint();
@@ -173,8 +176,10 @@ void Scene::RenderEntitiesStupidly() {
       m_pQuaxolShader->SetPosition(&shift);
       WasGLErrorPlusPrint();
 
-      int layerTexIndex = abs(q.w) % m_texList.size();
-      SetTexture(layerTexIndex, hTex0);
+      if (m_texList.size() > 0) {
+        int layerTexIndex = abs(q.w) % m_texList.size();
+        SetTexture(layerTexIndex, hTex0);
+      }
 
       int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
       int startTriangle = 0;
