@@ -12,7 +12,7 @@ namespace fd {
   typedef std::set<Texture*> TTextureSet;
 
   class Texture {
-  protected:
+  public:
     GLuint m_texture_id;
     GLuint m_framebuffer_id;
     GLsizei m_width;

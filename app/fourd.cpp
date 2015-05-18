@@ -566,14 +566,16 @@ void Draw(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
-  // fix the rotation to be smoother
-  // figure out the clipping issues (negative w?)
-  // normalize the input amounts
-  // refactor the input system
-  // switch the mat4 class to be column major?
-  // multi-view rendering
-
-  g_scene.RenderEntitiesStupidly();
+  if(VRWrapper::IsUsingVR() && g_vr) {
+    g_vr->StartFrame();
+    g_vr->StartLeftEye();
+    g_scene.RenderEntitiesStupidly();
+    g_vr->StartRightEye();
+    g_scene.RenderEntitiesStupidly();
+    g_vr->FinishFrame();
+  } else {
+    g_scene.RenderEntitiesStupidly();
+  }
 
   glFlush();
   glutSwapBuffers();

@@ -11,6 +11,13 @@ class VRWrapper {
 public:
 
   static VRWrapper* CreateVR(PlatformWindow* pWindow);
+  static bool IsUsingVR() { return s_UsingVR; }
+  
+  virtual void StartFrame() {}
+  virtual void StartLeftEye() {}
+  virtual void StartRightEye() {}
+  virtual void FinishFrame() {}
+  virtual void SetIsUsingVR(bool usingVR) {}
 
   virtual ~VRWrapper() {}
 
@@ -18,6 +25,7 @@ protected:
   static bool s_Initialized;
   static bool s_UsingVR;
 
+  VRWrapper() {} // prevent direct construction
   virtual bool Initialize(PlatformWindow* pWindow) = 0;
 };
 
