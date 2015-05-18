@@ -17,7 +17,9 @@ public:
   virtual void StartLeftEye() {}
   virtual void StartRightEye() {}
   virtual void FinishFrame() {}
+
   virtual void SetIsUsingVR(bool usingVR) {}
+  virtual void ToggleFullscreen() {}
 
   virtual ~VRWrapper() {}
 

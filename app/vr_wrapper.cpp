@@ -8,8 +8,11 @@
 #define OVR_OS_WIN32
 #include "OVR_CAPI_GL.h"
 
+#include <GL/freeglut.h>
+
 #include "glhelper.h"
 #include "win32_platform.h"
+#include "../common/fourmath.h"
 
 namespace fd {
 
@@ -19,6 +22,7 @@ bool VRWrapper::s_UsingVR = false;
 // TODO: move this to like ovr_vr_wrapper.cpp or something
 class OVRWrapper : public VRWrapper {
 public:
+  PlatformWindow* m_pWindow;
   ovrHmd m_HMD; // actually a pointer...
 
   Texture* m_eyeRenderTex[2];
@@ -47,6 +51,8 @@ public:
       return false;
     }
 
+    m_pWindow = pWindow;
+    
     int ovrIndex = ovrHmd_Detect();
 
     if (ovrIndex == 0 || (NULL == (m_HMD = ovrHmd_Create(0)))) {
@@ -163,12 +169,23 @@ public:
 
     if(s_UsingVR) {
       s_UsingVR = false;
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      int restoreWidth;
+      int restoreHeight;
+      m_pWindow->GetWidthHeight(&restoreWidth, &restoreHeight);
+      glViewport(0, 0, restoreWidth, restoreHeight);
+
     } else {
       s_UsingVR = true;
     }
   }
 
+  virtual void ToggleFullscreen() {
+    if(!m_HMD) return;
+    if(!(m_HMD->HmdCaps & ovrHmdCap_ExtendDesktop)) return;
 
+    m_pWindow->ToggleFullscreenByMonitorName(m_HMD->DisplayDeviceName);
+  }
 };
 
 VRWrapper* VRWrapper::CreateVR(PlatformWindow* pWindow) {

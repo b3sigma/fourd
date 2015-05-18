@@ -555,6 +555,16 @@ void Update(int key, int x, int y) {
       pEntity->GetComponentBus().AddComponent(
           new TimedDeath(13.0f /* duration */));
     } break;
+    case 'V' : {
+      if (g_vr) {
+        g_vr->SetIsUsingVR(!g_vr->IsUsingVR());
+      }
+    } break;
+    case 'F' : {
+      if (g_vr) {
+        g_vr->ToggleFullscreen();
+      }
+    } break;
   }
   glutPostRedisplay();
 }
@@ -700,7 +710,9 @@ int main(int argc, char *argv[]) {
 
   glutInit(&argc, argv);
   glutInitWindowPosition(0, 0);
-  glutInitWindowSize(640, 580);
+  int startWidth = 640;
+  int startHeight = 580;
+  glutInitWindowSize(startWidth, startHeight);
   glutInitDisplayMode(GLUT_RGBA | GLUT_ALPHA | GLUT_DEPTH | GLUT_DOUBLE);
   //glutInitContextVersion(4, 3);
   GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
@@ -714,7 +726,7 @@ int main(int argc, char *argv[]) {
   glutCreateWindow(argv[0]);
   
   char windowTitle[] = "fourd";
-  fd::PlatformWindow* window = ::fd::PlatformInit(windowTitle);
+  fd::PlatformWindow* window = ::fd::PlatformInit(windowTitle, startWidth, startHeight);
   
   glewExperimental=TRUE;
   GLenum err;

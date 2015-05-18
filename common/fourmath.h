@@ -150,7 +150,7 @@ public:
 
 typedef Vector4<float> Vec4f;
 
-//typedef Eigen::Vector4i Vec4i; // dunno bout eigen, I have to do x()? bleh
+typedef Eigen::Vector4i Vec4i; // dunno bout eigen, I have to do x()? bleh
 typedef Eigen::Vector2f Vec2f;
 typedef Eigen::Vector2i Vec2i;
 
