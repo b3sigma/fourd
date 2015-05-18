@@ -699,27 +699,29 @@ int main(int argc, char *argv[]) {
   glutInit(&argc, argv);
   glutInitWindowPosition(0, 0);
   glutInitWindowSize(640, 580);
-  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-  //glutInitContextVersion(3, 2);
+  glutInitDisplayMode(GLUT_RGBA | GLUT_ALPHA | GLUT_DEPTH | GLUT_DOUBLE);
+  //glutInitContextVersion(4, 3);
   GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
 //#ifdef _DEBUG
 //  contextFlags |= GLUT_DEBUG;
 //#endif // _DEBUG
   glutInitContextFlags(contextFlags);
+  GLint contextProfile = 0; // GLUT_CORE_PROFILE;
+  glutInitContextProfile(contextProfile);
     
   glutCreateWindow(argv[0]);
   
   char windowTitle[] = "fourd";
   fd::PlatformWindow* window = ::fd::PlatformInit(windowTitle);
   
-  g_vr = VRWrapper::CreateVR(window);
-
   glewExperimental=TRUE;
   GLenum err;
   if((err = glewInit()) != GLEW_OK) {
     printf("Glew init fail: Error: %s\n", glewGetErrorString(err));
     return false;
   }
+  
+  g_vr = VRWrapper::CreateVR(window);
 
   glutReshapeFunc(ReshapeGL);
   glutKeyboardFunc(Key);

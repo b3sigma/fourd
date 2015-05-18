@@ -101,7 +101,7 @@ namespace fd {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    
     m_width = sizeX;
     m_height = sizeY;
     m_format = GL_RGBA;
@@ -111,7 +111,7 @@ namespace fd {
           m_internal_format, m_width, m_height, 0 /* border */,
           m_format, GL_UNSIGNED_BYTE, NULL /*data*/);
     glGenFramebuffers(1, &m_framebuffer_id);
-
+    
     return !WasGLErrorPlusPrint();
   }
 

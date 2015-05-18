@@ -1,9 +1,12 @@
 #include "vr_wrapper.h"
+#include "texture.h"
 
 #include <memory>
 
 #include <Windows.h>
 #include "OVR_CAPI_GL.h"
+
+#include "glhelper.h"
 
 namespace fd {
 
@@ -15,8 +18,20 @@ class OVRWrapper : public VRWrapper {
 public:
   ovrHmd m_HMD; // actually a pointer...
 
-  OVRWrapper() : m_HMD(NULL) {}
+  Texture* m_eyeRenderTex[2];
+  Texture* m_eyeDepthTex[2];
+
+  OVRWrapper() : m_HMD(NULL) {
+    for(int e = 0; e < 2; e++) {
+      m_eyeRenderTex[e] = NULL;
+      m_eyeDepthTex[e] = NULL;
+    }
+  }
   ~OVRWrapper() {
+    for(int e = 0; e < 2; e++) {
+      delete m_eyeRenderTex[e];
+      delete m_eyeDepthTex[e];
+    }
     ovr_Shutdown();
   }
   
@@ -39,7 +54,26 @@ public:
       printf("Oculus device not created:\n");
       return false;
     }
-    
+    WasGLErrorPlusPrint();
+
+    bool createSuccess = true;
+    for (int e = 0; e < 2; e++) {
+      ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(
+          m_HMD, (ovrEyeType)e, m_HMD->DefaultEyeFov[e],
+          1.0f /*pixelsPerDisplayPixel*/);  
+      WasGLErrorPlusPrint();
+      m_eyeRenderTex[e] = new Texture();
+      createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(
+          recommendedFovTexSize.w, recommendedFovTexSize.h); 
+      m_eyeDepthTex[e] = new Texture();
+      createSuccess &= m_eyeDepthTex[e]->CreateDepthTarget(
+          recommendedFovTexSize.w, recommendedFovTexSize.h); 
+    }
+    if(!createSuccess) {
+      printf("VR Render/depth target creation failed\n");
+      return false;
+    }
+
     return true;
   }
 };
