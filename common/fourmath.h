@@ -369,4 +369,79 @@ public:
 
 typedef Matrix4<float> Mat4f;
 
+// So the premise is that you take sqrt(-1) = i, interpreted as rotation,
+// and generalize the concept to 3d so you have 3 independent axis of rotation.
+// So you have i,j,k, where
+// i*j*k = -1, i*i = -1, j*j = -1, k*k = -1.
+// To make this work, you give up commutivity so i*j != j*i.
+// Actually i*j=k and j*i=-k so you can convert between different values
+// You also need a real part, which gives 4 independent values.
+// The nice thing is if these are "normalized", you can get a 3d rotation.
+// The weird thing about that is you get two sets of r,i,j,k that equal the
+// same rotation.
+// If some of this doesn't make sense, refine your understanding of i as
+// a rotation. At least, that helped me. Why all the exposition? Haven't actually
+// written a quat class before. Reinventing the wheel is a good idea, once, for
+// sufficiently complex wheels.
+template <typename T>
+class Quaternion {
+public:
+  union {
+    T d[4];
+    struct {
+      T i, j, k, r;
+    };
+    struct {
+      T x, y, z, w;
+    };
+  };
+
+  Quaternion() : r((T)1.0), i(0), j(0), k(0) {}
+  Quaternion(T rIn, T iIn, T jIn, T kIn) : r(rIn), i(iIn), j(jIn), k(kIn) {}
+
+  Quaternion& storeIdentity() {
+    r = (T)1.0;
+    i = 0;
+    j = 0;
+    k = 0;
+    return *this;
+  }
+
+  Quaternion operator *(const Quaternion& q) const {
+    Quaternion out;
+    const Quaternion& p = *this; // lezy
+    out.r = (p.r*q.r) - (p.i*q.i) - (p.j*q.j) - (p.k*q.k);
+    out.i = (p.r*q.i) + (p.i*q.r) + (p.j*q.k) - (p.k*q.j);
+    out.j = (p.r*q.j) - (p.i*q.k) + (p.j*q.r) + (p.k*q.i);
+    out.k = (p.r*q.k) + (p.i*q.j) - (p.j*q.i) + (p.k*q.r);
+    return out;
+  }
+
+  T length() const {
+    return sqrt((r*r) + (i*i) + (j*j) + (k*k));
+  }
+
+  Quaternion& storeNormalized() {
+    T len = length();
+    if (len != 0) {
+      T invLen = (T)1.0 / len;
+      r *= invLen;
+      i *= invLen;
+      j *= invLen;
+      k *= invLen;
+    }
+    return *this;
+  }
+
+  // TODO: doesn't handle double coverage, should it?
+  bool approxEqual(const Quaternion& p, float threshold) const {
+    return abs(r - p.r) < threshold
+        && abs(i - p.i) < threshold
+        && abs(j - p.j) < threshold
+        && abs(k - p.k) < threshold;
+  }
+};
+
+typedef Quaternion<float> Quatf;
+
 } // namespace fd

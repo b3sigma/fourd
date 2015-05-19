@@ -689,6 +689,10 @@ void RunTests() {
   assert(rotXEighth * rotXEighth == rotXFourth);
   assert(!(rotXFourth * rotXFourth == rotXFourth));
 
+  Quatf rotPiDiv4(sqrt(2.0f) / 2.0f, sqrt(2.0f) / 2.0f, 0.0f, 0.0f);
+  Quatf rotPiDiv2(0.0f, 1.0f, 0.0f, 0.0f);
+  assert(rotPiDiv2.approxEqual(rotPiDiv4 * rotPiDiv4, 0.00001f));
+
   //Mat4f threeMat;
   //threeMat.eigen().
 

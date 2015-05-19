@@ -10,6 +10,9 @@ public:
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
 
+  Mat4f _renderMatrix; // camera matrix plus any extra like eye shift
+  Vec4f _renderPos;    // camera pos plus any extra like eye offset
+
   Vec2i _screenBounds;
   Mat4f _zProjectionMatrix;
   Mat4f _fourToThree; // yeah went individual code instead of this so far
@@ -48,6 +51,8 @@ public:
       , _wProjectionEnabled(true) {
     _cameraMatrix.storeIdentity();
     _cameraPos.storeZero();
+    _renderMatrix.storeIdentity();
+    _renderPos.storeZero();
     _fourToThree.storeIdentity();
 
     bool success = _componentBus.RegisterOwnerData(
