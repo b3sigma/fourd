@@ -137,9 +137,31 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
           otherMonitorRect.left, otherMonitorRect.top, m_width, m_height,
           SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
-  }
+  } 
+}
 
-    
+void PlatformWindow::CaptureCursor(bool capture) {
+  if (capture) {
+    RECT windowRect; // will include border
+    GetWindowRect(m_hWnd, &windowRect);
+    RECT clientRect; // local window space
+    GetClientRect(m_hWnd, &clientRect);
+
+    RECT interiorRect = clientRect;
+    interiorRect.left += windowRect.left;
+    interiorRect.right += windowRect.left;
+    interiorRect.top += windowRect.top;
+    interiorRect.bottom += windowRect.top;
+
+    // This is actually wrong, we aren't handling the border correctly,
+    // but it doesn't matter as the mouse move wrap handles it.
+    BOOL result = ClipCursor(&interiorRect);
+
+    glutSetCursor(GLUT_CURSOR_NONE);
+  } else {
+    ClipCursor(NULL);
+    glutSetCursor(GLUT_CURSOR_INHERIT);
+  }
 }
 
 } // namespace fd

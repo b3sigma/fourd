@@ -1,9 +1,45 @@
 #include "render.h"
 #include "..\common\camera.h"
+#include "scene.h"
 #include "texture.h"
 
 namespace fd {
+  
+  void Render::Step() {
+    double totalTime = GetTotalTime();
+    _frameTime = totalTime - _lastTotalTime;
+    _lastTotalTime = totalTime;
 
+    for(auto pCamera : m_cameras) {
+      pCamera->Step(_frameTime);
+    }
+  }
+
+  double Render::GetFrameTime() {
+    return _frameTime;
+  }
+
+  double Render::GetTotalTime() {
+    return timer_.GetElapsed();
+  }
+  
+  void Render::AddCamera(Camera* pCamera) {
+    m_cameras.push_back(pCamera);
+    //pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
+  }
+
+  void Render::AddScene(Scene* pScene) {
+    m_scenes.push_back(pScene);
+  }
+
+  void Render::RenderAllScenesPerCamera() {
+    for(const auto pCamera : m_cameras) {
+      for(auto pScene : m_scenes) {
+        pScene->RenderEntitiesStupidly(pCamera);
+      }
+    }
+  }
+  
   void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
     if(mode == EToggleModes) {
       mode = (EAlphaDepthModes)(((int)m_alphaDepthMode + 1) % ((int)ENumAlphaDepthModes));

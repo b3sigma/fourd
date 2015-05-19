@@ -6,6 +6,7 @@
 #include <Windows.h>
 // uh, weird this is manual
 #define OVR_OS_WIN32
+#include "OVR_CAPI.h"
 #include "OVR_CAPI_GL.h"
 
 #include <GL/freeglut.h>
@@ -13,6 +14,7 @@
 #include "glhelper.h"
 #include "win32_platform.h"
 #include "../common/fourmath.h"
+#include "../common/camera.h"
 
 namespace fd {
 
@@ -68,11 +70,12 @@ public:
     }
     WasGLErrorPlusPrint();
 
+    const float pixelsPerDisplayPixel = 0.25f; // 1.0f;
     bool createSuccess = true;
     for (int e = 0; e < 2; e++) {
       ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(
           m_HMD, (ovrEyeType)e, m_HMD->DefaultEyeFov[e],
-          1.0f /*pixelsPerDisplayPixel*/);
+          pixelsPerDisplayPixel);
       WasGLErrorPlusPrint();
       m_eyeRenderTex[e] = new Texture();
       createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(
@@ -140,12 +143,29 @@ public:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  virtual void StartLeftEye() {
-    StartEye(0);
+  void UpdateCameraRenderMatrix(int eye, Camera* pCamera) {
+
+    const ovrVector3f& localOffset = m_eyeRenderPose[eye].Position;
+
+    Vec4f eyeOffset(localOffset.x, localOffset.z, localOffset.y, 0.0f);
+    eyeOffset *= 50.0f;
+    Vec4f offset = pCamera->_cameraMatrix.transform(eyeOffset);
+    pCamera->_renderPos = pCamera->_cameraPos + offset;
+    pCamera->_renderMatrix = pCamera->_cameraMatrix;
   }
-  virtual void StartRightEye() {
-    StartEye(1);
+
+  virtual void StartLeftEye(Camera* pCamera) {
+    const int eye = 0;
+    StartEye(eye);
+    UpdateCameraRenderMatrix(eye, pCamera);
   }
+
+  virtual void StartRightEye(Camera* pCamera) {
+    const int eye = 1;
+    StartEye(eye);
+    UpdateCameraRenderMatrix(eye, pCamera);
+  }
+
   virtual void FinishFrame() {
     ovrGLTexture eyeTex[2];
     for(int e = 0; e < 2; e++) {
@@ -182,7 +202,7 @@ public:
 
   virtual void ToggleFullscreen() {
     if(!m_HMD) return;
-    if(!(m_HMD->HmdCaps & ovrHmdCap_ExtendDesktop)) return;
+    //if(!(m_HMD->HmdCaps & ovrHmdCap_ExtendDesktop)) return;
 
     m_pWindow->ToggleFullscreenByMonitorName(m_HMD->DisplayDeviceName);
   }

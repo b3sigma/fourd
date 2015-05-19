@@ -92,9 +92,9 @@ void Shader::SetCameraParams(const Camera* pCamera) const {
   // This global state with using is error prone
   //StartUsing();
   glUniform4fv(m_handles[UCameraPosition], 1, 
-      pCamera->getCameraPos().raw());
+      pCamera->getRenderPos().raw());
   glUniformMatrix4fv(m_handles[UCameraMatrix], 1, GL_TRUE, 
-      pCamera->getCameraMatrix().raw());
+      pCamera->getRenderMatrix().raw());
   // Sure is weird that this one isn't transposed...
   // Thinking we are doing inconsistent row/col in the projection creation
   glUniformMatrix4fv(m_handles[UProjectionMatrix], 1, GL_FALSE, 
