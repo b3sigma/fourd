@@ -88,7 +88,7 @@ bool LoadShader(const char* shaderName) {
 }
 
 bool LoadLevel(const char* levelName) {
-  std::string levelPath = "data\\";
+  std::string levelPath = "data\\levels\\";
   std::string nameBase(levelName);
   std::string nameExt = ".txt"; // heh, I guess ext based format? hate you
   std::string fullName = levelPath + nameBase + nameExt;
@@ -150,7 +150,7 @@ bool Initialize() {
     exit(-1);
   }
   
-  LoadLevel("level_4d_base");
+  LoadLevel("level_4d_double_base");
   g_scene.AddCamera(&g_camera);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
@@ -353,7 +353,7 @@ void Update(int key, int x, int y) {
       //LoadLevel("level_single");
     } break;
     case '*' : {
-      LoadLevel("level_4d_base");
+      LoadLevel("level_4d_double_base");
     } break;
     case '(' : {
       static bool fill = false;

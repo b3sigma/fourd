@@ -54,6 +54,9 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
   Vec4f chunkMin(0.0f, 0.0f, 0.0f, 0.0f);
   Vec4f chunkMax((float)chunk.m_blockDims.x, (float)chunk.m_blockDims.y,
       (float)chunk.m_blockDims.z, (float)chunk.m_blockDims.w);
+  const float edgeThreshold = 0.000001f; // ok these are getting silly...
+  Vec4f floatThresholdMax(edgeThreshold, edgeThreshold, edgeThreshold, edgeThreshold);
+  chunkMax -= floatThresholdMax;
   // to avoid array checks on every block step, clip the ray to the possible
   // array bounds beforehand
   Vec4f unclippedLocalPos = localPos;
@@ -62,7 +65,8 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
       NULL /*dist*/, &clippedPos)) {
     // if the start isn't within the box, clip that first
     if(!PhysicsHelp::WithinBox(chunkMin, chunkMax, localPos)) {
-      localPos = clippedPos;
+      Vec4f normalLocalRay = localRay.normalized();
+      localPos = clippedPos + (normalLocalRay * edgeThreshold);
     }
 
     // if the end isn't within the box, clip that
@@ -74,8 +78,12 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
           NULL /*dist*/, &clippedEnd)) {
         return false; // ???
       }
+      Vec4f normalUnclippedRay = localRay.normalized();
       localRay = clippedEnd - localPos;
       localRay *= 0.9999f; // shorten it a bit to avoid going over
+
+      Vec4f normalLocalRay = localRay.normalized();
+      //assert(normalUnclippedRay.approxEqual(normalLocalRay, 0.000001f));
     }
   } else {
     // The ray didn't hit the bounding box, so make sure the start is within
@@ -380,15 +388,29 @@ void Physics::TestPhysics() {
   ray.set(3.19010586f, 159.484043f, 7.15184228e-006f, 0.000000000f);
   assert(false == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
 
+  // where do all these come frome? these are steps along the apparently long
+  // road of writing a 4d raycaster that doesn't fuck up.
   quaxols.emplace_back(2, 0, 3, 0);
   assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
   pos.set(25.7389202f, 9.39026356f, 36.6651955f, 4.50000000f);
   ray.set(-432.569427f, -739.241638f, -516.141785f, -0.000000000f);
   assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+  
+  pos.set(0.500032365f, 82.7353592f, 142.041000f, 167.218506f);
+  ray.set(-0.000243353134f, 426.009521f, -328.929626f, -842.804993f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+  // just that it didn't crash
 
+  pos.set(-0.774945676f, 34.8522301f, 39.2764893f, 108.281807f);
+  ray.set(780.614685f, -79.4120407f, -619.972534f, 0.000123921200f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+  // just that it didn't crash
 
-
-  //quaxols.emplace_back(
+  //quaxols.emplace_back(12, 10, 13, 10);
+  //assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
+  //pos.set(140.621994f, 129.451874f, 131.667252f, 152.824280f);
+  //ray.set(-846.823059f, 495.832581f, 192.447861f, 0.00135995192f);
+  //assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
 }
 
 } // namespace fd

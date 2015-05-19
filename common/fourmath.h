@@ -114,8 +114,8 @@ public:
 
 	Vec& storeNormalized() {
 	  T len = length();
-	  if (len != 0) {
-	    len = 1 / len;
+	  if (len != (T)0) {
+	    len = (T)1 / len;
 	    set(x * len, y * len, z *len, w * len);
 	  }
 	  return *this;

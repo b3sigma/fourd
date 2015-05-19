@@ -70,6 +70,7 @@ namespace fd {
     
     // unchecked, local
     inline bool IsPresent(int x, int y, int z, int w) const { 
+      assert(x >= 0 && x < c_mxSz && y >= 0 && y < c_mxSz && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);
       return m_blocks[x][y][w][z].present;
     }
 
