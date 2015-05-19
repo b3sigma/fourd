@@ -10,6 +10,9 @@ public:
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
 
+  Mat4f _renderMatrix; // camera matrix plus any extra like eye shift
+  Vec4f _renderPos;    // camera pos plus any extra like eye offset
+
   Vec2i _screenBounds;
   Mat4f _zProjectionMatrix;
   Mat4f _fourToThree; // yeah went individual code instead of this so far
@@ -48,6 +51,8 @@ public:
       , _wProjectionEnabled(true) {
     _cameraMatrix.storeIdentity();
     _cameraPos.storeZero();
+    _renderMatrix.storeIdentity();
+    _renderPos.storeZero();
     _fourToThree.storeIdentity();
 
     bool success = _componentBus.RegisterOwnerData(
@@ -61,6 +66,11 @@ public:
       : _movement(mode) {
     _cameraMatrix.storeIdentity();
     _cameraPos.storeZero();
+  }
+
+  void NoOffsetUpdate() {
+    _renderMatrix = _cameraMatrix;
+    _renderPos = _cameraPos;
   }
 
   void SetZProjection(int width, int height, 
@@ -103,6 +113,12 @@ public:
   Vec4f getCameraForward() const {
     // The minus sign here means the author sucks.
     return -getCameraMatrix()[FORWARD];
+  }
+  const Mat4f& getRenderMatrix() const {
+    return _renderMatrix;
+  }
+  const Vec4f& getRenderPos() const {
+    return _renderPos;
   }
 
   MovementMode getMovementMode() const { return _movement; }

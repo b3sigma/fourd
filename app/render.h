@@ -17,8 +17,9 @@
 
 namespace fd {
 
-class Texture;
 class Camera;
+class Scene;
+class Texture;
 
 // Render should contain all the GL code
 // View will contain a specific render target and a camera
@@ -27,45 +28,44 @@ class Input {
   // Wow this is so useful. Good thing it's here.
 };
 
-/*
-  The view is abstracted from the camera as it may be useful
-  to render the same camera and scene onto multiple render targets.
-  Many of the fields could plausibly go in either structure.
-  */
+
+//The view is abstracted from the camera as it may be useful
+//to render the same camera and scene onto multiple render targets.
+//Many of the fields could plausibly go in either structure.
 class View {
   Camera* m_camera;
+  Scene* m_scene;
   Texture* m_renderTarget; // may be null to indicate backbuffer
 };
 
-
 class Render {
-  //TODO: This stuff is in the scene currently... move here?
+  //TODO: Actually convert to a view system
   //typedef std::vector<View*> TViewList;
   //TViewList _views;
 
+  typedef std::vector<Camera*> TCameraList;
+  TCameraList m_cameras; //not owned
+
+  typedef std::vector<Scene*> TSceneList;
+  TSceneList m_scenes; // not owned
+
   // shouldn't be here..
-  // should be in a scene or something
+  // should be in a scene or something?
   ::fd::Timer timer_;
   double _lastTotalTime;
   double _frameTime;
-
   
 public:
   Render() : _frameTime(0.0), _lastTotalTime(0.0) {}
 
-  void Step() {
-    double totalTime = GetTotalTime();
-    _frameTime = totalTime - _lastTotalTime;
-    _lastTotalTime = totalTime;
-  }
+  void Step();
+  double GetFrameTime();
+  double GetTotalTime();
 
-  double GetFrameTime() {
-    return _frameTime;
-  }
+  void AddCamera(Camera* pCamera);
+  void AddScene(Scene* pScene);
 
-  double GetTotalTime() {
-    return timer_.GetElapsed();
-  }
+  void RenderAllScenesPerCamera();
 
   // Right now this is convenient, but separate calls are fine too.
   enum EAlphaDepthModes {

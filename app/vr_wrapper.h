@@ -3,6 +3,8 @@
 #include "platform_interface.h"
 
 namespace fd {
+
+class Camera;
   
 // Interface class for actual vr.
 // Probably silly as ovr is only game in town currently, which means the 2nd
@@ -14,8 +16,8 @@ public:
   static bool IsUsingVR() { return s_UsingVR; }
   
   virtual void StartFrame() {}
-  virtual void StartLeftEye() {}
-  virtual void StartRightEye() {}
+  virtual void StartLeftEye(Camera* pCamera) {}
+  virtual void StartRightEye(Camera* pCamera) {}
   virtual void FinishFrame() {}
 
   virtual void SetIsUsingVR(bool usingVR) {}

@@ -48,11 +48,6 @@ void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
   m_pPhysics->AddChunk(m_pQuaxolChunk);
 }
 
-void Scene::AddCamera(Camera* pCamera) {
-  m_cameras.push_back(pCamera);
-  //pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
-}
-
 void Scene::AddTexture(Texture* pTex) {
   m_texList.push_back(pTex);
 }
@@ -93,9 +88,6 @@ void Scene::OnDeleteEntity(Entity* pEntity) {
 
 void Scene::Step(float fDelta) {
   m_componentBus.Step(fDelta);
-  for(auto pCamera : m_cameras) {
-    pCamera->Step(fDelta);
-  }
 
   for(auto pEntity : m_toBeDeleted) {
     delete pEntity;
@@ -106,115 +98,111 @@ void Scene::Step(float fDelta) {
 // ugh this is all wrong, not going to be shader sorted, etc
 // but let's just do the stupid thing first
 // Also, shouldn't this be in a render class instead of scene?
-void Scene::RenderEntitiesStupidly() {
+void Scene::RenderEntitiesStupidly(Camera* pCamera) {
+  for(const auto pEntity : m_dynamicEntities) {
+    //TODO: cache shader transitions? or does opengl kind of handle it
+    // as long as they are sorted?
+    Shader* pShader = pEntity->m_pShader;
+    if(pShader == NULL) continue; // should go away when we sort
+    Mesh* pMesh = pEntity->m_pMesh;
+    if(pMesh == NULL) continue; // should go away when we sort
 
-  for(const auto pCamera : m_cameras) {
-    for(const auto pEntity : m_dynamicEntities) {
-      //TODO: cache shader transitions? or does opengl kind of handle it
-      // as long as they are sorted?
-      Shader* pShader = pEntity->m_pShader;
-      if(pShader == NULL) continue; // should go away when we sort
-      Mesh* pMesh = pEntity->m_pMesh;
-      if(pMesh == NULL) continue; // should go away when we sort
+    pShader->StartUsing();
+    pShader->SetPosition(&(pEntity->m_position));
+    pShader->SetOrientation(&(pEntity->m_orientation));
+    pShader->SetCameraParams(pCamera);
 
-      pShader->StartUsing();
-      pShader->SetPosition(&(pEntity->m_position));
-      pShader->SetOrientation(&(pEntity->m_orientation));
-      pShader->SetCameraParams(pCamera);
-
-      // this is getting ugly to look at in a hurry
-      // need to do buffers soon
-      int numTris = pMesh->getNumberTriangles();
-      int startTriangle = 0;
-      int endTriangle = numTris;
-      glBegin(GL_TRIANGLES);
-      Vec4f a, b, c;
-      //int colorIndex = 0;
-      for (int t = startTriangle; t < endTriangle && t < numTris; t++) {
-        //glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
-        pMesh->getTriangle(t, a, b, c);
-        glVertex4fv(a.raw());
-        glVertex4fv(b.raw());
-        glVertex4fv(c.raw());
-        //if ((t+1) % 2 == 0) {
-        //  colorIndex = (colorIndex + 1) % colorArray.size();
-        //}
-      }
-      glEnd();
-      pShader->StopUsing();
+    // this is getting ugly to look at in a hurry
+    // need to do buffers soon
+    int numTris = pMesh->getNumberTriangles();
+    int startTriangle = 0;
+    int endTriangle = numTris;
+    glBegin(GL_TRIANGLES);
+    Vec4f a, b, c;
+    //int colorIndex = 0;
+    for (int t = startTriangle; t < endTriangle && t < numTris; t++) {
+      //glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
+      pMesh->getTriangle(t, a, b, c);
+      glVertex4fv(a.raw());
+      glVertex4fv(b.raw());
+      glVertex4fv(c.raw());
+      //if ((t+1) % 2 == 0) {
+      //  colorIndex = (colorIndex + 1) % colorArray.size();
+      //}
     }
-
-    if(!m_pQuaxolShader || !m_pQuaxolMesh)
-      continue;
-
-    // if you thought the above was ugly and wasteful, just wait!
-    WasGLErrorPlusPrint();
-    m_pQuaxolShader->StartUsing();
-    m_pQuaxolShader->SetCameraParams(pCamera);
-    WasGLErrorPlusPrint();
-    Mat4f worldMatrix;
-    worldMatrix.storeIdentity();
-    m_pQuaxolShader->SetOrientation(&worldMatrix);
-    WasGLErrorPlusPrint();
-
-    GLint hTex0 = m_pQuaxolShader->getUniform("texDiffuse0");
-    WasGLErrorPlusPrint();
-    if (hTex0 != -1) {
-      SetTexture(0, hTex0);
-    }
-
-    for (auto quaxol : m_quaxols) {
-    
-      const QuaxolSpec& q = quaxol;
-
-      float shift_amount = 10.0f;
-      Vec4f shift;
-      shift.x = shift_amount * q.x;
-      shift.y = shift_amount * q.y;
-      shift.z = shift_amount * q.z;
-      shift.w = shift_amount * q.w;
-      m_pQuaxolShader->SetPosition(&shift);
-      WasGLErrorPlusPrint();
-
-      if (m_texList.size() > 0) {
-        int layerTexIndex = abs(q.w) % m_texList.size();
-        SetTexture(layerTexIndex, hTex0);
-      }
-
-      int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
-      int startTriangle = 0;
-      int endTriangle = tesseractTris;
-      WasGLErrorPlusPrint();
-
-      GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
-      glBegin(GL_TRIANGLES);
-      //WasGLErrorPlusPrint();
-      Vec4f a, b, c;
-      int colorIndex = abs(q.w) % m_colorArray.size();
-      for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
-        if(colorHandle != -1) {
-          glVertexAttrib4fv(colorHandle,
-              m_colorArray[colorIndex].raw());
-        }
-        //WasGLErrorPlusPrint();
-        m_pQuaxolMesh->getTriangle(t, a, b, c);
-        glVertex4fv(a.raw());
-        glVertex4fv(b.raw());
-        glVertex4fv(c.raw());
-        //WasGLErrorPlusPrint();
-        //if ((t+1) % 2 == 0) {
-        //  colorIndex = (colorIndex + 1) % m_colorArray.size();
-        //}
-      }
-      //WasGLErrorPlusPrint();
-      glEnd();
-      WasGLErrorPlusPrint();
-    }
-
-    m_pQuaxolShader->StopUsing();
-    WasGLErrorPlusPrint();
-    
+    glEnd();
+    pShader->StopUsing();
   }
+
+  if(!m_pQuaxolShader || !m_pQuaxolMesh)
+    return;
+
+  // if you thought the above was ugly and wasteful, just wait!
+  WasGLErrorPlusPrint();
+  m_pQuaxolShader->StartUsing();
+  m_pQuaxolShader->SetCameraParams(pCamera);
+  WasGLErrorPlusPrint();
+  Mat4f worldMatrix;
+  worldMatrix.storeIdentity();
+  m_pQuaxolShader->SetOrientation(&worldMatrix);
+  WasGLErrorPlusPrint();
+
+  GLint hTex0 = m_pQuaxolShader->getUniform("texDiffuse0");
+  WasGLErrorPlusPrint();
+  if (hTex0 != -1) {
+    SetTexture(0, hTex0);
+  }
+
+  for (auto quaxol : m_quaxols) {
+    
+    const QuaxolSpec& q = quaxol;
+
+    float shift_amount = 10.0f;
+    Vec4f shift;
+    shift.x = shift_amount * q.x;
+    shift.y = shift_amount * q.y;
+    shift.z = shift_amount * q.z;
+    shift.w = shift_amount * q.w;
+    m_pQuaxolShader->SetPosition(&shift);
+    WasGLErrorPlusPrint();
+
+    if (m_texList.size() > 0) {
+      int layerTexIndex = abs(q.w) % m_texList.size();
+      SetTexture(layerTexIndex, hTex0);
+    }
+
+    int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
+    int startTriangle = 0;
+    int endTriangle = tesseractTris;
+    WasGLErrorPlusPrint();
+
+    GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
+    glBegin(GL_TRIANGLES);
+    //WasGLErrorPlusPrint();
+    Vec4f a, b, c;
+    int colorIndex = abs(q.w) % m_colorArray.size();
+    for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
+      if(colorHandle != -1) {
+        glVertexAttrib4fv(colorHandle,
+            m_colorArray[colorIndex].raw());
+      }
+      //WasGLErrorPlusPrint();
+      m_pQuaxolMesh->getTriangle(t, a, b, c);
+      glVertex4fv(a.raw());
+      glVertex4fv(b.raw());
+      glVertex4fv(c.raw());
+      //WasGLErrorPlusPrint();
+      //if ((t+1) % 2 == 0) {
+      //  colorIndex = (colorIndex + 1) % m_colorArray.size();
+      //}
+    }
+    //WasGLErrorPlusPrint();
+    glEnd();
+    WasGLErrorPlusPrint();
+  }
+
+  m_pQuaxolShader->StopUsing();
+  WasGLErrorPlusPrint();
 }
 
 void Scene::BuildColorArray() {

@@ -4,7 +4,6 @@
 
 namespace fd {
 
-
 class PlatformWindow {
 private:
 public:
@@ -16,6 +15,7 @@ public:
   int GetNumDisplays();
   void ToggleFullscreenByMonitorName(const char* name);
   void GetWidthHeight(int* outWidth, int* outHeight);
+  void CaptureCursor(bool capture);
 };
 
 } // namespace fd

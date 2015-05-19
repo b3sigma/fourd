@@ -23,14 +23,10 @@ protected:
   TEntityList m_dynamicEntities;
   TEntityList m_toBeDeleted;
 
-  typedef std::vector<Camera*> TCameraList;
-  TCameraList m_cameras; //not owned
-
   typedef std::vector<Vec4f> ColorList;
   ColorList m_colorArray;
 
   ComponentBus m_componentBus;
-
 
 public:
   // leaving some vars public to avoid getter/setter as an experiment
@@ -53,10 +49,6 @@ public:
 
   void AddLoadedChunk(const ChunkLoader* pChunk);
 
-  // should only be one or two of these any style is fine
-  // but this is inconsistent with the entity thing...
-  void AddCamera(Camera* pCamera);
-
   void AddTexture(Texture* pTex);
 
   // Let the scene do the allocation to allow for mem opt
@@ -71,7 +63,7 @@ public:
 
   // ugh this is all wrong, not going to be shader sorted, etc
   // but let's just do the stupid thing first
-  void RenderEntitiesStupidly();
+  void RenderEntitiesStupidly(Camera* pCamera);
 
   // Hacky garbage, should be on the mesh/quaxol
   void BuildColorArray();

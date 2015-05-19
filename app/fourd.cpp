@@ -53,7 +53,7 @@ Mesh tesseract;
 ::fd::Shader* g_shader = NULL;
 ::fd::Entity* g_pointerEntity = NULL;
 bool g_captureMouse = false;
-HWND g_windowHandle;
+::fd::PlatformWindow* g_platformWindow;
 
 ::fd::VRWrapper* g_vr = NULL;
 
@@ -151,7 +151,8 @@ bool Initialize() {
   }
   
   LoadLevel("level_4d_double_base");
-  g_scene.AddCamera(&g_camera);
+  g_renderer.AddCamera(&g_camera);
+  g_renderer.AddScene(&g_scene);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
 
@@ -262,27 +263,7 @@ void ApplyMouseMove() {
 
 void ToggleMouseCapture() {
   g_captureMouse = !g_captureMouse;
-  if (g_captureMouse) {
-    RECT windowRect; // will include border
-    GetWindowRect(g_windowHandle, &windowRect);
-    RECT clientRect; // local window space
-    GetClientRect(g_windowHandle, &clientRect);
-
-    RECT interiorRect = clientRect;
-    interiorRect.left += windowRect.left;
-    interiorRect.right += windowRect.left;
-    interiorRect.top += windowRect.top;
-    interiorRect.bottom += windowRect.top;
-
-    // This is actually wrong, we aren't handling the border correctly,
-    // but it doesn't matter as the mouse move wrap handles it.
-    BOOL result = ClipCursor(&interiorRect);
-
-    glutSetCursor(GLUT_CURSOR_NONE);
-  } else {
-    ClipCursor(NULL);
-    glutSetCursor(GLUT_CURSOR_INHERIT);
-  }
+  g_platformWindow->CaptureCursor(g_captureMouse);
 }
 
 void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, const Vec4f& ray) {
@@ -578,13 +559,14 @@ void Draw(void) {
 
   if(VRWrapper::IsUsingVR() && g_vr) {
     g_vr->StartFrame();
-    g_vr->StartLeftEye();
-    g_scene.RenderEntitiesStupidly();
-    g_vr->StartRightEye();
-    g_scene.RenderEntitiesStupidly();
+    g_vr->StartLeftEye(&g_camera);
+    g_renderer.RenderAllScenesPerCamera();
+    g_vr->StartRightEye(&g_camera);
+    g_renderer.RenderAllScenesPerCamera();
     g_vr->FinishFrame();
   } else {
-    g_scene.RenderEntitiesStupidly();
+    g_camera.NoOffsetUpdate();
+    g_renderer.RenderAllScenesPerCamera();
   }
 
   glFlush();
@@ -689,6 +671,10 @@ void RunTests() {
   assert(rotXEighth * rotXEighth == rotXFourth);
   assert(!(rotXFourth * rotXFourth == rotXFourth));
 
+  Quatf rotPiDiv4(sqrt(2.0f) / 2.0f, sqrt(2.0f) / 2.0f, 0.0f, 0.0f);
+  Quatf rotPiDiv2(0.0f, 1.0f, 0.0f, 0.0f);
+  assert(rotPiDiv2.approxEqual(rotPiDiv4 * rotPiDiv4, 0.00001f));
+
   //Mat4f threeMat;
   //threeMat.eigen().
 
@@ -726,7 +712,7 @@ int main(int argc, char *argv[]) {
   glutCreateWindow(argv[0]);
   
   char windowTitle[] = "fourd";
-  fd::PlatformWindow* window = ::fd::PlatformInit(windowTitle, startWidth, startHeight);
+  g_platformWindow = ::fd::PlatformInit(windowTitle, startWidth, startHeight);
   
   glewExperimental=TRUE;
   GLenum err;
@@ -735,7 +721,7 @@ int main(int argc, char *argv[]) {
     return false;
   }
   
-  g_vr = VRWrapper::CreateVR(window);
+  g_vr = VRWrapper::CreateVR(g_platformWindow);
 
   glutReshapeFunc(ReshapeGL);
   glutKeyboardFunc(Key);
