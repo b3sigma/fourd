@@ -178,7 +178,7 @@ public:
   Matrix4(Vec x, Vec y, Vec z, Vec w) {
     d(0) = x; d(1) = y; d(2) = z; d(3) = w;
   }
-  //Matrix4(const T* vals) : e(vals) {}
+  Matrix4(const T* vals) : e(vals) {}
 
   // this ugly is from when using gcc there was a union between Vec d[4] and EigMat e
   Vec& d(int index) { return (((Vec*)e.data())[index]); }
@@ -270,6 +270,16 @@ public:
     EigMat inverse = inv.eigen().inverse().eval();
     inv.eigen() = inverse;
     return inv.transpose();
+  }
+
+  void storeFromTransposedArray(const T* raw) {
+    FdMat temp(raw);
+    *this = temp.transpose();
+    //T* d = raw();
+    //d[0] = raw[0];
+    //d[1] = raw[4];
+    //d[2] = raw[8];
+    //d[3] = raw
   }
 
   FdMat transpose() const {
@@ -456,7 +466,8 @@ typedef Quaternion<float> Quatf;
 // If you take q*q_i*q_conj as the first row,
 // q*q_j*q_conj as second row, q*q_k*q_conj as third row
 // (and really, q*q_identity*q as fourth row, where q_identity=(1,0,0,0))
-// you get a 4x4 matrix where the top right 3x3 is actually the rotation
+// you get a 4x4 matrix where the top right 3x3 is actually the rotation.
+// This ended up being openGL col/row convention.
 template <typename T>
 Matrix4<T>& Matrix4<T>::storeQuat3dRotation(Quaternion<T> q) {
   T rr = q.r * q.r;

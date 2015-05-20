@@ -70,7 +70,7 @@ public:
     }
     WasGLErrorPlusPrint();
 
-    const float pixelsPerDisplayPixel = 0.25f; // 1.0f;
+    const float pixelsPerDisplayPixel = 1.0f; //0.25f; // 1.0f;
     bool createSuccess = true;
     for (int e = 0; e < 2; e++) {
       ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(
@@ -161,6 +161,10 @@ public:
 
     pCamera->_renderMatrix = localEye * pCamera->_cameraMatrix;
     //pCamera->_renderMatrix = pCamera->_cameraMatrix;
+
+    ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
+      0.2f /*zNear*/, 1000.0f /*zFar*/, true /*rightHanded*/);
+    pCamera->_zProjectionMatrix.storeFromTransposedArray(&ovrProj.M[0][0]);
   }
 
   virtual void StartLeftEye(Camera* pCamera) {
