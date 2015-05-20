@@ -37,16 +37,16 @@ public:
 	Vector4(const Vec& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
   Vector4(Eigen::Vector4f& v) : x(v.x()), y(v.y()), z(v.z()), w(v.w()) {}
 
-	T* raw() { return (T*)this; }
-	const T* raw() const { return (T*)this; }
-	T& operator()(int index) { return d[index]; }
-	T& operator[](int index) { return d[index]; }
-	const T& operator[](int index) const { return d[index]; }
-	void set(int index, T val) { d[index] = val; }
-	void set(const Vec& rVal) {
+	inline T* raw() { return (T*)this; }
+	inline const T* raw() const { return (T*)this; }
+	inline T& operator()(int index) { return d[index]; }
+	inline T& operator[](int index) { return d[index]; }
+	inline const T& operator[](int index) const { return d[index]; }
+	inline void set(int index, T val) { d[index] = val; }
+	inline void set(const Vec& rVal) {
 	  x = rVal.x; y = rVal.y; z = rVal.z; w = rVal.w;
 	}
-  void set(T inX, T inY, T inZ, T inI) {
+  inline void set(T inX, T inY, T inZ, T inI) {
     x = inX; y = inY; z = inZ; w = inI;
   }
 	Vec& operator = (const Vec& rVal) {
@@ -155,6 +155,9 @@ typedef Eigen::Vector2f Vec2f;
 typedef Eigen::Vector2i Vec2i;
 
 template <typename T>
+class Quaternion;
+
+template <typename T>
 class Matrix4 {
 protected:
   typedef Vector4<T> Vec;
@@ -232,6 +235,8 @@ public:
     d(sourceIndex) = newSource;
     return *this;
   }
+
+  FdMat& storeQuat3dRotation(Quaternion<T> quat);
 
   // Aspect is width/height of viewport. This is opengl style.
   FdMat& store3dProjection(T yFov, T aspect, T zNear, T zFar) {
@@ -443,5 +448,51 @@ public:
 };
 
 typedef Quaternion<float> Quatf;
+ 
+// This comes from setting three "unit quaternions" like
+// q_i = (0,1,0,0), q_j = (0,0,1,0), q_k = (0,0,0,1)
+// and then multiplying through q * q_i * q_conj where
+// q = (r, a*i, b*j, c*k) and q_conj = (r, -a*i, -b*j, -c*k).
+// If you take q*q_i*q_conj as the first row,
+// q*q_j*q_conj as second row, q*q_k*q_conj as third row
+// (and really, q*q_identity*q as fourth row, where q_identity=(1,0,0,0))
+// you get a 4x4 matrix where the top right 3x3 is actually the rotation
+template <typename T>
+Matrix4<T>& Matrix4<T>::storeQuat3dRotation(Quaternion<T> q) {
+  T rr = q.r * q.r;
+  T ii = q.i * q.i;
+  T jj = q.j * q.j;
+  T kk = q.k * q.k;
+  T ri = q.r * q.i;
+  T rj = q.r * q.j;
+  T rk = q.r * q.k;
+  T ij = q.i * q.j;
+  T ik = q.i * q.k;
+  T jk = q.j * q.k;
+
+  // Ugh my row/col conventions all over the fucking place.
+  T* d = raw();
+  d[0] = rr + ii - jj - kk;
+  d[1] = (ij + rk) * (T)(2.0);
+  d[2] = (ik - rj) * (T)(2.0);
+  d[3] = (T)0;
+
+  d[4] = (ij - rk) * (T)(2.0);
+  d[5] = rr - ii + jj - kk;
+  d[6] = (jk + ri) * (T)(2.0);
+  d[7] = (T)0;
+
+  d[8] = (ik + rj) * (T)(2.0);
+  d[9] = (jk - ri) * (T)(2.0);
+  d[10] = rr - ii - jj + kk;
+  d[11] = (T)0;
+
+  d[12] = (T)0;
+  d[13] = (T)0;
+  d[14] = (T)0;
+  d[15] = (T)1.0;
+
+  return *this;
+}
 
 } // namespace fd

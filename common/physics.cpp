@@ -54,7 +54,7 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
   Vec4f chunkMin(0.0f, 0.0f, 0.0f, 0.0f);
   Vec4f chunkMax((float)chunk.m_blockDims.x, (float)chunk.m_blockDims.y,
       (float)chunk.m_blockDims.z, (float)chunk.m_blockDims.w);
-  const float edgeThreshold = 0.000001f; // ok these are getting silly...
+  const float edgeThreshold = 0.001f; // ok these are getting silly...
   Vec4f floatThresholdMax(edgeThreshold, edgeThreshold, edgeThreshold, edgeThreshold);
   chunkMax -= floatThresholdMax;
   // to avoid array checks on every block step, clip the ray to the possible
@@ -78,9 +78,9 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
           NULL /*dist*/, &clippedEnd)) {
         return false; // ???
       }
-      Vec4f normalUnclippedRay = localRay.normalized();
+      //Vec4f normalUnclippedRay = localRay.normalized();
       localRay = clippedEnd - localPos;
-      localRay *= 0.9999f; // shorten it a bit to avoid going over
+      localRay *= 1.0f - edgeThreshold; // shorten it a bit to avoid going over
 
       Vec4f normalLocalRay = localRay.normalized();
       //assert(normalUnclippedRay.approxEqual(normalLocalRay, 0.000001f));
@@ -405,6 +405,14 @@ void Physics::TestPhysics() {
   ray.set(780.614685f, -79.4120407f, -619.972534f, 0.000123921200f);
   physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
   // just that it didn't crash
+
+  pos.set(-0.0543091893f, -0.0551338196f, 16.1201344f, 4.50000000f);
+  ray.set(554.309204f, 555.133789f, -620.133728f, -0.000000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
+  pos.set(0.500000000f, 0.500000000f, 15.5000000f, 4.50000000f);
+  ray.set(-701.758179f, -701.228516f, -125.758827f, -0.000000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
 
   //quaxols.emplace_back(12, 10, 13, 10);
   //assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));

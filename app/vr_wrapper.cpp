@@ -145,13 +145,22 @@ public:
 
   void UpdateCameraRenderMatrix(int eye, Camera* pCamera) {
 
-    const ovrVector3f& localOffset = m_eyeRenderPose[eye].Position;
+    const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
 
-    Vec4f eyeOffset(localOffset.x, localOffset.z, localOffset.y, 0.0f);
-    eyeOffset *= 50.0f;
-    Vec4f offset = pCamera->_cameraMatrix.transform(eyeOffset);
+    const float worldScale = 20.0f;
+    Vec4f localOffset(localPosOvr.x, localPosOvr.z, localPosOvr.y, 0.0f);
+    localOffset *= worldScale;
+
+    Vec4f offset = pCamera->_cameraMatrix.transpose().transform(localOffset);
     pCamera->_renderPos = pCamera->_cameraPos + offset;
-    pCamera->_renderMatrix = pCamera->_cameraMatrix;
+    
+    const ovrQuatf& localQuatOvr = m_eyeRenderPose[eye].Orientation;
+    Quatf localEyeQuat(localQuatOvr.w, localQuatOvr.x, localQuatOvr.y, localQuatOvr.z);
+    Mat4f localEye;
+    localEye.storeQuat3dRotation(localEyeQuat);
+
+    pCamera->_renderMatrix = localEye * pCamera->_cameraMatrix;
+    //pCamera->_renderMatrix = pCamera->_cameraMatrix;
   }
 
   virtual void StartLeftEye(Camera* pCamera) {
