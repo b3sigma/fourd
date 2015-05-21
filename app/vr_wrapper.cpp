@@ -96,6 +96,7 @@ public:
     config.OGL.Window = pWindow->m_hWnd;
 
     int ovrDistortionCaps = ovrDistortionCap_Vignette
+        | ovrDistortionCap_Chromatic
         | ovrDistortionCap_TimeWarp
         | ovrDistortionCap_Overdrive;
     ovrHmd_ConfigureRendering(m_HMD, &config.Config, ovrDistortionCaps,
@@ -148,11 +149,6 @@ public:
     const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
 
     const float worldScale = 20.0f;
-    Vec4f localOffset(localPosOvr.x, localPosOvr.z, localPosOvr.y, 0.0f);
-    localOffset *= worldScale;
-
-    Vec4f offset = pCamera->_cameraMatrix.transpose().transform(localOffset);
-    pCamera->_renderPos = pCamera->_cameraPos + offset;
     
     const ovrQuatf& localQuatOvr = m_eyeRenderPose[eye].Orientation;
     Quatf localEyeQuat(localQuatOvr.w, localQuatOvr.x, localQuatOvr.y, localQuatOvr.z);
@@ -161,6 +157,47 @@ public:
 
     pCamera->_renderMatrix = localEye * pCamera->_cameraMatrix;
     //pCamera->_renderMatrix = pCamera->_cameraMatrix;
+
+    Vec4f localOffset(localPosOvr.x, localPosOvr.z, localPosOvr.y, 0.0f);
+    //Vec4f localOffset(localPosOvr.x, localPosOvr.y, -localPosOvr.z, 0.0f);
+    localOffset *= worldScale;
+
+    Vec4f eyeSpaceOffset = localEye.transform(localOffset);
+    Vec4f worldSpaceOffset = pCamera->_cameraMatrix.transpose().transform(eyeSpaceOffset);
+    
+    Vec4f offset = pCamera->_cameraMatrix.transpose().transform(localOffset);
+    //Vec4f offset = pCamera->_cameraMatrix.transpose().transform(localOffset);
+    //offset = localEye.transform(offset);
+    //Vec4f offset = pCamera->_renderMatrix.transform(localOffset);
+    pCamera->_renderPos = pCamera->_cameraPos + offset;
+    
+    static int framecount = 0;
+    if(eye == 0) {
+      framecount++;
+    }
+    if(framecount > 100) {
+      printf("Eye %d\n", eye);
+      printf("Localoffset: \t");
+      localOffset.printIt();
+      printf("\neyespace: \t");
+      eyeSpaceOffset.printIt();
+      printf("\neyeworld: \t");
+      worldSpaceOffset.printIt();
+      printf("\nlocalworld: \t");
+      offset.printIt();
+      printf("\ncamerapos: \t");
+      pCamera->_cameraPos.printIt();
+      printf("\nlocalEyeMat: \n");
+      localEye.printIt();
+      printf("\ncamera: \n");
+      pCamera->_cameraMatrix.printIt();
+      printf("\nrender: \n");
+      pCamera->_renderMatrix.printIt();
+      printf("\n");
+      if(eye != 0) {
+        framecount = 0;
+      }
+    }
 
     ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
       0.2f /*zNear*/, 1000.0f /*zFar*/, true /*rightHanded*/);
@@ -218,6 +255,11 @@ public:
     //if(!(m_HMD->HmdCaps & ovrHmdCap_ExtendDesktop)) return;
 
     m_pWindow->ToggleFullscreenByMonitorName(m_HMD->DisplayDeviceName);
+  }
+
+  virtual void Recenter() {
+    if(!m_HMD) return;
+    ovrHmd_RecenterPose(m_HMD);
   }
 };
 

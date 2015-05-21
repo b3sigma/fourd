@@ -536,6 +536,11 @@ void Update(int key, int x, int y) {
       pEntity->GetComponentBus().AddComponent(
           new TimedDeath(13.0f /* duration */));
     } break;
+    case 'C' : {
+      if (g_vr) {
+        g_vr->Recenter();
+      }
+    } break;
     case 'V' : {
       if (g_vr) {
         g_vr->SetIsUsingVR(!g_vr->IsUsingVR());
@@ -620,7 +625,13 @@ void OnIdle() {
   ApplyMouseMove();
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
-  
+
+  static int framecount = 0;
+  if(framecount++ > 200) {
+    printf("frametime:%f\n", g_renderer.GetFrameTime());
+    framecount = 0;
+  }
+
   UpdatePointerEntity();
 
   glutPostRedisplay();

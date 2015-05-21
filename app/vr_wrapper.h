@@ -22,6 +22,7 @@ public:
 
   virtual void SetIsUsingVR(bool usingVR) {}
   virtual void ToggleFullscreen() {}
+  virtual void Recenter() {}
 
   virtual ~VRWrapper() {}
 
