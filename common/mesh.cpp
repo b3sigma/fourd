@@ -646,10 +646,315 @@ void Mesh::addPolyVerts(float radius, Vec4f center, Vec4f normalRight, Vec4f nor
   }
 }
 
+int64 Mesh::Polygon::GetHash() {
+  if(!_hashIsDirty)
+    return _hash;
+  
+  // Intentionally ignoring the normal and other stuff as they wouldn't
+  // produce a different set of rendered triangles (gave up on windings).
+  IndexList sortedIndices(_verts);
+  std::sort(sortedIndices.begin(), sortedIndices.end());
+  _hash = 0;
+  for(auto index : sortedIndices) {
+    // horrible
+    _hash = (int64)std::hash_value<size_t>((size_t)index + (size_t)_hash);
+  }
+  _hashIsDirty = false;
+  return _hash;
+}
+
+int64 Mesh::Cell::GetHash() {
+  if(!_hashIsDirty)
+    return _hash;
+
+  struct {
+    bool operator()(Polygon* l, Polygon* r) {
+      return l->GetHash() < r->GetHash();
+    }
+  } customPolyComp;
+  
+  // Intentionally ignoring the normal and other stuff as they wouldn't
+  // produce a different set of rendered triangles (gave up on windings).
+  Polygons sortedPolys(_polys);
+  std::sort(sortedPolys.begin(), sortedPolys.end(), customPolyComp);
+  _hash = 0;
+  for(auto poly : sortedPolys) {
+    // horrible
+    _hash = (int64)std::hash_value<int64>(poly->GetHash() + (int64)_hash);
+  }
+  _hashIsDirty = false;
+  return _hash;
+}
+
+//{V,F,C}
+//
+//make a poly, (startVert, planeX, planeY, #verts)
+//  for each vert, make a node
+//  for each node pair, make edge
+//  all edges to poly
+//  make normal from edges
+Mesh::Polygon* Mesh::addPolygon(float baseLen, const Vec4f& baseVert,
+    const Vec4f& planeX, const Vec4f& planeY, const Vec4f& normal, 
+    int vertsPerPoly) {
+  Polygon* poly = new Polygon(*this);
+  float interiorAngle = 2.0f * (float)PI / vertsPerPoly;
+
+  float radius = baseLen * 0.5f / sinf(interiorAngle * 0.5f);
+  float dropLen = radius * cosf(interiorAngle * 0.5f);
+  Vec4f center = baseVert + (planeY * (baseLen * 0.5f)) + (planeX * dropLen); 
+
+  // gross because this obviously already exists.
+  poly->_verts.push_back(addUniqueVert(baseVert));
+
+  for (int v = 1; v < vertsPerPoly; ++v) {
+    // negative cos because been envisioning clockwise and only shot at getting
+    // windings right on the first try (hahaha) is to stick with it.
+    float rotation = ((float)v / (float)vertsPerPoly * 2.0f * (float)PI) - (interiorAngle * 0.5f);
+    float xAmount = -cos(rotation) * radius;
+    float yAmount = sin(rotation) * radius;
+    Vec4f newVert(center + (planeY * yAmount) + (planeX * xAmount));
+    poly->_verts.push_back(addUniqueVert(newVert));
+  }
+  poly->_normal = normal;
+
+  if(_polys.find(poly->GetHash()) == _polys.end()) {
+    _polys.insert(std::make_pair(poly->GetHash(), poly));
+    return poly;
+  } else {
+    delete poly;
+    return NULL;
+  }
+}
+
+//make cell, (poly, planeZ, #facesPerVert)
+//  add poly to unFinishedPoly
+//  for each vert in unFinishedPoly
+//    for F-1 faces
+//      make new nVert from angles
+//      //make a poly, (vert, nVert-v, p-v, #verts)
+//      make a poly, (vert, n-v, nVert-v, #verts)
+//      check if poly has already been created
+//        sort vert indices, create hash, check hash
+//      if new, add poly to unFinishedPoly
+Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
+    const Vec4f& normal, int vertsPerPoly, int polysPerCellVert) {
+  Cell* cell = new Cell(*this);
+  cell->_polys.push_back(startPoly);
+
+  Polygons unfinishedPolys;
+  unfinishedPolys.push_back(startPoly);
+
+  // so gross
+  // since we are essentially assuming polysPerCellVert==3
+  // this shouldn't happen, but still
+  const int safetyMax = 10000;
+  int safeyCounter = 0;
+
+  while(!unfinishedPolys.empty()) {
+    Polygon* poly = unfinishedPolys.back();
+    unfinishedPolys.pop_back();
+
+    int polyVerts = (int)poly->_verts.size();
+    for(int v = 0; v < polyVerts; ++v) {
+      // do something wrong for the moment.
+      int nextIndex = (v + 1) % polyVerts;
+      int prevIndex = (v - 1 + polyVerts) % polyVerts;
+
+      const Vec4f& pos = _verts[poly->_verts[v]];
+      const Vec4f& prev = _verts[poly->_verts[prevIndex]];
+      const Vec4f& next = _verts[poly->_verts[nextIndex]];
+
+      Vec4f newVert(pos + (normal * baseLen));
+
+      int newVertIndex = addUniqueVert(newVert);
+       
+      Vec4f planeOld = (prev - pos).normalized();
+      Vec4f planeX = (newVert - pos).normalized();
+      Vec4f planeY = (next - pos).normalized();
+      Vec4f polyNormal = normal.cross(planeY, planeOld).normalized(); 
+
+      Polygon* newPoly = addPolygon(baseLen, pos, 
+          planeX, planeY, polyNormal, polyVerts);
+      if(newPoly == NULL) continue;
+
+      // hmm.. the last cell will be empty? hash problem?
+      cell->_polys.push_back(newPoly);
+
+      unfinishedPolys.push_back(newPoly);
+    }
+
+    if(safeyCounter++ > safetyMax) break;
+  }
+  
+  if(_cells.find(cell->GetHash()) == _cells.end()) {
+    _cells.insert(std::make_pair(cell->GetHash(), cell));
+    return cell;
+  } else {
+    // So *in theory* this souldn't leak polys because if the cell hashed the
+    // same as something already around, all the polys should already be
+    // around also. Anyway, any actually leaked would get cleaned up eventually
+    // anyway, anyway. Any other way... whatever anyway.
+    delete cell;
+    return NULL;
+  }
+}
+
+
+//make tope (cell, #cellsPerEdge)
+//  add all polys to unFinishedPolys
+//  for poly in unFinishedPolys
+//    make cell, (poly, poly.normal, #facesPerVert)
+//    check if cell has already been created
+//      per poly in cell, sort poly vert indices
+//      sort poly vert lists
+//      hash these, check hash
+//    if new, add all cell polys to unFinishedPolys
+//      hash these also
+//  for all polys in all cells
+//    add indexed tris
+void Mesh::buildPolytope(float baseLen, Vec4f start,
+    int vertsPerPoly, int polysPerCellVert, int cellsPerEdge) {
+  clearCurrent();
+  cleanupPolysAndCells(); // safety!
+  
+  Vec4f arbitraryPlaneX(1.0f, 0.0f, 0.0f, 0.0f);
+  Vec4f arbitraryPlaneY(0.0f, 1.0f, 0.0f, 0.0f);
+  Vec4f arbitraryPlaneZ(0.0f, 0.0f, 1.0f, 0.0f);
+  Vec4f arbitraryPlaneW(0.0f, 0.0f, 0.0f, 1.0f);
+
+  Polygon* basePoly = addPolygon(baseLen, start, arbitraryPlaneX, arbitraryPlaneY, arbitraryPlaneZ, vertsPerPoly);
+  Cell* baseCell = addCell(baseLen, basePoly, basePoly->_normal, vertsPerPoly, 
+      polysPerCellVert);
+  Cells cells;
+  cells.push_back(baseCell);
+
+  Polygons unfinishedPolys;
+  for(auto poly : baseCell->_polys) {
+    unfinishedPolys.push_back(poly);
+  }
+
+  // so gross... 
+  // I think the massive downside of this approach is I'm not even sure if
+  // a shape is closed and thus will complete for some sets of params...
+  // (even theoretically).
+  // Gonna have to do the graph theory approach?
+  const int safetyMax = 10000;
+  int safeyCounter = 0;
+
+  while(!unfinishedPolys.empty()) {
+    Polygon* poly = unfinishedPolys.back();
+    unfinishedPolys.pop_back();
+
+    Vec4f& vStart = _verts[poly->_verts[0]];
+    Vec4f& vNext = _verts[poly->_verts[1]];
+    Vec4f& vPrev = _verts[poly->_verts[poly->_verts.size() - 1]];
+    Vec4f nextDir = (vNext - vStart).normalized();
+    Vec4f prevDir = (vPrev - vStart).normalized();
+    Vec4f newNormal = nextDir.cross(-(poly->_normal), prevDir); // wrong sign?
+
+    Cell* newCell = addCell(baseLen, poly, newNormal,
+        vertsPerPoly, polysPerCellVert);
+    if(!newCell) // dupe
+      continue;
+    cells.push_back(newCell);
+    for(auto poly : newCell->_polys) {
+      if(_polys.find(poly->GetHash()) == _polys.end()) {
+        unfinishedPolys.push_back(poly);
+      }
+    }
+
+    if(safeyCounter++ > safetyMax) break;
+  }
+
+  cleanupUniqueTriangles(); // safety
+  //for(auto cell : _cells) {
+    for(auto polyPair : _polys) {
+      polyPair.second->AddUniqueTriangles();
+    }
+  //}
+  
+  cleanupPolysAndCells();
+  cleanupUniqueTriangles();
+}
+
+void Mesh::Polygon::AddUniqueTriangles() {
+  assert(_verts.size() >= 3);
+
+  // to make this extra idempotent, first find the smallest index
+  // then, decide the overall poly winding by finding the next smallest index
+  // we will make that the root of the fan and set the iteration direction
+  // thus, even with a different ordering of starting indices, we always get
+  // the same triangles, which means the trihash works, which means we should
+  // never get doubled interior faces.
+  // It would probably be more efficient to just make sure this function
+  // is only called for polys from their hash, which handles this stuff
+  // but what the hell. Once you get to a point of ugly, you figure, fuck it
+  // just make it work and then we will see how fast it is.
+
+  int polyVerts = (int)_verts.size();
+  // note that we are actually dealing with an array of indices into the vertex
+  // array, and we need an index into that array of indices. Thus:
+  int minIndexsValue = INT_MAX; // a case for apostrophes in var names?
+  int minIndexsIndex;
+  for (int v = 0; v < polyVerts; ++v) {
+    if(_verts[v] < minIndexsValue) {
+      minIndexsIndex = v;
+      minIndexsValue = _verts[v];
+    }
+  }
+
+  int root = _verts[minIndexsIndex];
+  int nextRoot = _verts[(minIndexsIndex + 1) % polyVerts];
+  int prevRoot = _verts[(minIndexsIndex - 1 + polyVerts) % polyVerts];
+  int stepDir = (nextRoot < prevRoot) ? 1 : -1;
+
+  int end = minIndexsIndex;
+  int prev = (minIndexsIndex + stepDir + polyVerts) % polyVerts;
+  int current = (prev + stepDir + polyVerts) % polyVerts;
+  
+  do {
+    int64 triHash = makeUniqueTriCode(root, _verts[prev], _verts[current]);
+    if(_mesh._uniqueTris.find(triHash) == _mesh._uniqueTris.end()) {
+      _mesh._uniqueTris.insert(std::make_pair(triHash, 1)); // why is this a map? 
+      _mesh.addTri(root, _verts[prev], _verts[current]);
+    }
+    prev = current;
+    current = (current + stepDir + polyVerts) % polyVerts;
+  } while(current != end);
+
+  // The number of comments this function ended up with is an indication that
+  // the author sucks.
+}
+
+void Mesh::cleanupPolysAndCells() {
+  for(auto polyPair : _polys) {
+    delete polyPair.second;
+  }
+  _polys.clear();
+  
+  for(auto cellPair : _cells) {
+    delete cellPair.second;
+  }
+  _cells.clear();
+}
+
+void Mesh::cleanupUniqueTriangles() {
+  _uniqueTris.clear();
+}
+
+void Mesh::buildGeneralizedTesseract(float size, const Vec4f& start) {
+  buildPolytope(size, start, 4 /*vertsPerPoly*/, 3 /*polysPerCellVert*/,
+      3 /*cellsPerEdge*/);
+}
+
+void Mesh::clearCurrent() {
+  _verts.resize(0);
+  _indices.resize(0);
+}
+
 // This was going to be the same 16 cell but in a more generalized way.
-// So far not panning out in a way that will actually be general.
-// Maybe that's a bad plan anyway?
 void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
+
   const int polyVerts = 3;
   float polyAngle = (float)PI * (float)(polyVerts - 2) / (float)polyVerts;
   float betweenVertAngle = (float)PI - polyAngle;
@@ -659,14 +964,20 @@ void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
   Vec4f up(0.0f, 0.0f, 1.0f, 0.0f);
   Vec4f inward(0.0f, 0.0f, 0.0f, 1.0f);
    // first build the face
-  _verts.resize(0);
-  _indices.resize(0);
-  addPolyVerts(radius, offset, right, forward, polyVerts); 
- 
+  clearCurrent();
+  addPolyVerts(radius, offset, right, forward, polyVerts);
+
+  // for a cell only
+  const int facesPerVert = 3; 
+
   for(int vert = 0; vert < polyVerts; vert++) {
+    int nextIndex = (vert + 1) % polyVerts;
+    int prevIndex = (vert - 1 + polyVerts) % polyVerts;
+
+    
     const Vec4f& pos = _verts[vert];
-    const Vec4f& prev = _verts[(vert - 1 + polyVerts) % polyVerts];
-    const Vec4f& next = _verts[(vert + 1) % polyVerts];
+    const Vec4f& prev = _verts[prevIndex];
+    const Vec4f& next = _verts[nextIndex];
 
     Vec4f prevRay = prev - pos;
     Vec4f nextRay = next - pos;
@@ -682,14 +993,21 @@ void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
   printIt();
 }
 
-void Mesh::addUniqueVert(const Vec4f& vert) { // wow this is slow and inaccurate
+void Mesh::build120cell(float radius, Vec4f offset) {
+  const int polyVerts = 5;
+  // ^ wow already did the hard line! great progress!
+}
+
+int Mesh::addUniqueVert(const Vec4f& vert) { // wow this is slow and inaccurate
   const float threshold = 0.001f; // so horrible
-  for (auto exist : _verts) { // did I mention horrible?
+  for (int v = 0; v < (int)_verts.size(); ++v) {
+    const Vec4f& exist = _verts[v];
     if(vert.approxEqual(exist, threshold)) {
-      return;
+      return v;
     }
   }
   _verts.push_back(vert);
+  return (int)_verts.size() - 1;
 }
 
 void Mesh::Shape::addUniqueTriangle(int a, int b, int c) {
@@ -734,3 +1052,131 @@ void Mesh::Shape::cleanupShapes(Shapes& shapes) {
   }
   shapes.resize(0);
 }
+
+
+#if 0 // currently abandoned approach to generic polytope creation
+  {3,3,4} {4,3,3}, {5,3,3}
+  {P,F,C} 
+  make a poly
+  for each vert, make a node
+  for each node pair, make an edge
+  for each edge pair, connect to a polygon
+
+  now for each node that isn't full
+    fill vert by creating to (F+1) verts 
+    create new vert according to angle math
+    for new vert
+      start new node, hook to prev via edge
+      for each prev's edge,
+        start new polygon or connect to unfinished coplanar
+        maybe finish polygon
+    
+  difficulty with all of this is windings seem like they can go in different \
+    directions easily and then connections will be disconnected
+
+      class Polygon;
+  typedef std::vector<Polygon*> Polygons;
+
+  class Node;
+  typedef std::vector<Node*> Nodes;
+  typedef std::pair<Node*, bool> DirectedNode;
+  typedef std::vector<DirectedNode> DNodes;
+  // 1d thing, information about poly connectivity
+  class Node {
+  public:
+    Mesh& _mesh;
+  
+    // polys this node is part of
+    Polygons _shapes; // not owned
+    // connected nodes
+    DNodes _nodes; // not owned
+
+    int _vert;
+
+  public:
+    Node(Mesh& mesh) : _mesh(mesh) {}
+
+    // connect us to other with direction
+    // connect other to us with !direction
+    void ConnectNode(Node* other, bool direction);
+    bool IsFull(int expectedConnections);
+  };
+
+  // 2d thing, with
+  class Polygon {
+  public:
+    Mesh& _mesh;
+    DNodes _nodes;
+    Vec4f _normal;
+    int _targetVerts;
+
+  public:
+    Polygon(Mesh& mesh, int targetVerts) : _mesh(mesh), _targetVerts(targetVerts) {}
+    void AddEdge(Node* prev, Node* next);
+
+  };
+
+    const int polyVerts = 3;
+  float polyAngle = (float)PI * (float)(polyVerts - 2) / (float)polyVerts;
+  float betweenVertAngle = (float)PI - polyAngle;
+  float sideLength = 2.0f * radius * sinf(betweenVertAngle * 0.5f);
+  Vec4f right(1.0f, 0.0f, 0.0f, 0.0f);
+  Vec4f forward(0.0f, 1.0f, 0.0f, 0.0f);
+  Vec4f up(0.0f, 0.0f, 1.0f, 0.0f);
+  Vec4f inward(0.0f, 0.0f, 0.0f, 1.0f);
+   // first build the face
+  clearCurrent();
+  addPolyVerts(radius, offset, right, forward, polyVerts);
+
+  // for a cell only
+  const int facesPerVert = 3; 
+
+  Nodes nodeStorage;
+  //nodeStorage.reserve(polyVerts); // yeah I dunno
+  Polygons polyStorage;
+  Polygon* polygon = new Polygon(*this, polyVerts);
+
+  for(int vert = 0; vert < polyVerts; vert++) {
+    int nextIndex = (vert + 1) % polyVerts;
+    int prevIndex = (vert - 1 + polyVerts) % polyVerts;
+
+     Node* node = new Node(*this);
+     nodeStorage.push_back(node);
+     Node* prevNode = nodeStorage[prevIndex];
+     prevNode->ConnectNode(node, true);
+     
+     polygon->AddEdge(prevNode, node);
+  }
+
+  while(true) {
+    Node* node = NULL;
+    for(auto n : nodeStorage) {
+      if(n->IsFull()) continue;
+      node = n;
+      break;
+    }
+
+
+  
+    const Vec4f& pos = _verts[vert];
+    const Vec4f& prev = _verts[prevIndex];
+    const Vec4f& next = _verts[nextIndex];
+
+    Vec4f prevRay = prev - pos;
+    Vec4f nextRay = next - pos;
+    Vec4f centerRay = (prevRay + nextRay) * 0.5f;
+
+    Vec4f perpRay = prevRay.cross(nextRay, inward);
+    perpRay.storeNormalized();
+    float perpHeight = sqrt((sideLength * sideLength) - (radius * radius));
+    Vec4f perp = offset + (perpRay * (perpHeight * sinf(polyAngle)));
+    addUniqueVert(perp);
+  }
+
+void Mesh::Node::ConnectNode(Node* other, bool direction) {
+  _nodes.push_back(std::make_pair(other, direction));
+  other->_nodes.push_back(std::make_pair(this, !direction));
+}
+
+
+#endif // 0

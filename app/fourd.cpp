@@ -149,8 +149,10 @@ bool Initialize() {
     printf("Shader loading failed\n");
     exit(-1);
   }
+
   
-  LoadLevel("level_4d_double_base");
+  //LoadLevel("level_4d_double_base");
+  LoadLevel("level_single");
   g_renderer.AddCamera(&g_camera);
   g_renderer.AddScene(&g_scene);
   g_scene.m_pQuaxolMesh = &tesseract;
@@ -358,7 +360,8 @@ void Update(int key, int x, int y) {
       tesseract.buildFourTetrad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5));
     } break;
     case '5' : {
-      tesseract.buildReferenceTesseract(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
+      tesseract.buildGeneralizedTesseract(10.0f, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
+      //tesseract.buildReferenceTesseract(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
     case '6' : {
       tesseract.buildCircle(10.0f, Vec4f(10.5, 0.5, 0.5, 0.5), Vec4f(1, 0, 0, 0), Vec4f(0, 1, 0, 0), 6);
@@ -626,11 +629,12 @@ void OnIdle() {
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
-  static int framecount = 0;
-  if(framecount++ > 200) {
-    printf("frametime:%f\n", g_renderer.GetFrameTime());
-    framecount = 0;
-  }
+  // TODO: do some damn font code
+  //static int framecount = 0;
+  //if(framecount++ > 200) {
+  //  printf("frametime:%f\n", g_renderer.GetFrameTime());
+  //  framecount = 0;
+  //}
 
   UpdatePointerEntity();
 

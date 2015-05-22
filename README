@@ -29,7 +29,8 @@ o/l = animated pi/2 rotation between inside up
 
 Rendering UI:
 0-9 load different base shapes and different levels. (Default is quaxols in 4d.)
-!-% load different shaders and alpha/depth options
+!-^ load different shaders and alpha/depth options
+% loads settings for a nearly flat sliced w-projection
 x/c Decrease/increase near w-plane
 v/b Decrease/increase far w-plane
 n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
@@ -38,7 +39,6 @@ n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
 Action UI (vague due to being in flux):
 z adds some quaxols
 Z adds some dynamic entites
-
 
 Game TODOs:
 * Setup real quaxol rendering

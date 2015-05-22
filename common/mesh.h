@@ -48,9 +48,12 @@ public:
   void buildFourCylinder(float radius, float length, float inside, int faceCount);
   void build16cell(float radius, Vec4f offset); // {3,3,4}
   void buildGeneralized16cell(float radius, Vec4f offset);
+  void build120cell(float radius, Vec4f offset); // {5,3,3}
+  void buildGeneralizedTesseract(float size, const Vec4f& start);
 
   //void carveSolids(
 
+  void clearCurrent();
   void projectIntoFour(float insideDist, Vec4f step);
   void merge(const Mesh& other);
   
@@ -62,15 +65,72 @@ private:
   void addTri(int a, int b, int c, IndexList& indices);
   void addQuad(int a, int b, int c, int d, IndexList& indices);
   void addCube(int a, int b, int c, int d, int e, int f, int g, int h);
-  void addUniqueVert(const Vec4f& vert); // wow this is slow and inaccurate
+  int addUniqueVert(const Vec4f& vert); // wow this is slow and inaccurate
   void addPolyVerts(float radius, Vec4f center, Vec4f right, Vec4f up, int faceCount);
 
   typedef std::pair<int, int> Edge;
   typedef std::vector<Edge> Edges;
-  class Shape;
-  typedef std::vector<Shape*> Shapes;
   typedef std::map<int64, int> TriHash;
 
+  // 2d thing, with
+  class Polygon {
+  public:
+    Mesh& _mesh;
+    Vec4f _normal; // in 3d bi-unique, planar in 4d, but pick one
+    Vec4f _center;
+
+    IndexList _verts;
+    Edges _edges; // redudant with _vert[i],_vert[i+1%l] ?
+
+    int64 _hash;
+    bool _hashIsDirty;
+  public:
+    Polygon(Mesh& mesh) : _mesh(mesh), _hashIsDirty(true) {}
+    void MarkDirty() { _hashIsDirty = true; }
+    int64 GetHash();
+    void AddUniqueTriangles();
+  };
+  typedef std::vector<Polygon*> Polygons;
+  typedef std::map<int64, Polygon*> PolyHash;
+
+  // 3d thing, for polytopes
+  class Cell {
+  public:
+    Mesh& _mesh;
+
+    Vec4f _normal; // the one 4d dir this doesn't go
+    Vec4f _center;
+    Polygons _polys;
+
+    int64 _hash;
+    bool _hashIsDirty;
+
+  public:
+    Cell(Mesh& mesh) : _mesh(mesh), _hashIsDirty(true) {}
+    void MarkDirty() { _hashIsDirty = true; }
+    int64 GetHash();
+  };
+  typedef std::vector<Cell*> Cells;
+  typedef std::map<int64, Cell*> CellHash;
+
+  PolyHash _polys; // temp storage
+  CellHash _cells; // temp storage
+  TriHash _uniqueTris;
+
+  Polygon* addPolygon(float baseLen, const Vec4f& baseVert,
+      const Vec4f& planeX, const Vec4f& planeY, const Vec4f& normal,
+      int vertsPerPoly);
+  Cell* addCell(float baseLen, Polygon* poly, const Vec4f& normal,
+      int vertsPerPoly, int polysPerCellVert);
+  void buildPolytope(float baseLen, Vec4f start,
+      int vertsPerPoly, int polysPerCellVert, int cellsPerEdge);
+  void cleanupPolysAndCells();
+  void cleanupUniqueTriangles();
+
+  class Shape;
+  typedef std::vector<Shape*> Shapes;
+
+  // 3d thing, arbitrary tri collections supported
   class Shape {
    private:
     // vertex storage elsewhere
@@ -155,8 +215,6 @@ private:
     typedef std::multimap<int, Triangle*> TriangleIndexHash; // by each individual index list
     typedef std::pair<TriangleIndexHash::iterator, TriangleIndexHash::iterator> IndexHashRange;
     TriangleIndexHash _triIndexHash;
-
-
   };
 
   static int64 makeUniqueTriCode(int a, int b, int c);
