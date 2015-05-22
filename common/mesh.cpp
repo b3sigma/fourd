@@ -652,12 +652,13 @@ int64 Mesh::Polygon::GetHash() {
   
   // Intentionally ignoring the normal and other stuff as they wouldn't
   // produce a different set of rendered triangles (gave up on windings).
-  IndexList sortedIndices(_verts);
+  IndexList sortedIndices(_indVerts);
   std::sort(sortedIndices.begin(), sortedIndices.end());
-  _hash = 0;
+  _hash = 0xdeaff001;
   for(auto index : sortedIndices) {
     // horrible
-    _hash = (int64)std::hash_value<size_t>((size_t)index + (size_t)_hash);
+    static std::hash<int64> hasher;
+    _hash = (int64)hasher(((int64)index << 33) + _hash);
   }
   _hashIsDirty = false;
   return _hash;
@@ -677,10 +678,11 @@ int64 Mesh::Cell::GetHash() {
   // produce a different set of rendered triangles (gave up on windings).
   Polygons sortedPolys(_polys);
   std::sort(sortedPolys.begin(), sortedPolys.end(), customPolyComp);
-  _hash = 0;
+  _hash = 0xaddb00b5;
   for(auto poly : sortedPolys) {
     // horrible
-    _hash = (int64)std::hash_value<int64>(poly->GetHash() + (int64)_hash);
+    static std::hash<int64> hasher;
+    _hash = (int64)hasher(poly->GetHash() + _hash);
   }
   _hashIsDirty = false;
   return _hash;
@@ -701,10 +703,10 @@ Mesh::Polygon* Mesh::addPolygon(float baseLen, const Vec4f& baseVert,
 
   float radius = baseLen * 0.5f / sinf(interiorAngle * 0.5f);
   float dropLen = radius * cosf(interiorAngle * 0.5f);
-  Vec4f center = baseVert + (planeY * (baseLen * 0.5f)) + (planeX * dropLen); 
+  poly->_center = baseVert + (planeY * (baseLen * 0.5f)) + (planeX * dropLen); 
 
   // gross because this obviously already exists.
-  poly->_verts.push_back(addUniqueVert(baseVert));
+  poly->_indVerts.push_back(addUniqueVert(baseVert));
 
   for (int v = 1; v < vertsPerPoly; ++v) {
     // negative cos because been envisioning clockwise and only shot at getting
@@ -712,10 +714,21 @@ Mesh::Polygon* Mesh::addPolygon(float baseLen, const Vec4f& baseVert,
     float rotation = ((float)v / (float)vertsPerPoly * 2.0f * (float)PI) - (interiorAngle * 0.5f);
     float xAmount = -cos(rotation) * radius;
     float yAmount = sin(rotation) * radius;
-    Vec4f newVert(center + (planeY * yAmount) + (planeX * xAmount));
-    poly->_verts.push_back(addUniqueVert(newVert));
+    Vec4f newVert(poly->_center + (planeY * yAmount) + (planeX * xAmount));
+    poly->_indVerts.push_back(addUniqueVert(newVert));
   }
   poly->_normal = normal;
+
+#ifdef _DEBUG
+  static bool dupCheck = false;
+  if(dupCheck) { //asserty code
+    for(int v = 0; v < vertsPerPoly; ++v) {
+      for(int u = v + 1; u < vertsPerPoly; ++u) {
+        assert(poly->_indVerts[v] != poly->_indVerts[u]);
+      }
+    }
+  }
+#endif
 
   if(_polys.find(poly->GetHash()) == _polys.end()) {
     _polys.insert(std::make_pair(poly->GetHash(), poly));
@@ -737,9 +750,11 @@ Mesh::Polygon* Mesh::addPolygon(float baseLen, const Vec4f& baseVert,
 //        sort vert indices, create hash, check hash
 //      if new, add poly to unFinishedPoly
 Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
-    const Vec4f& normal, int vertsPerPoly, int polysPerCellVert) {
+    const Vec4f& cellNormal, int vertsPerPoly, int polysPerCellVert) {
   Cell* cell = new Cell(*this);
   cell->_polys.push_back(startPoly);
+  // wrong wrong wrong, but ok for a moment
+  cell->_center = startPoly->_center + (cellNormal * (baseLen * 0.5f));
 
   Polygons unfinishedPolys;
   unfinishedPolys.push_back(startPoly);
@@ -747,34 +762,38 @@ Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
   // so gross
   // since we are essentially assuming polysPerCellVert==3
   // this shouldn't happen, but still
-  const int safetyMax = 10000;
+  const int safetyMax = 100;
   int safeyCounter = 0;
 
   while(!unfinishedPolys.empty()) {
     Polygon* poly = unfinishedPolys.back();
     unfinishedPolys.pop_back();
 
-    int polyVerts = (int)poly->_verts.size();
+    int polyVerts = (int)poly->_indVerts.size();
     for(int v = 0; v < polyVerts; ++v) {
       // do something wrong for the moment.
       int nextIndex = (v + 1) % polyVerts;
       int prevIndex = (v - 1 + polyVerts) % polyVerts;
 
-      const Vec4f& pos = _verts[poly->_verts[v]];
-      const Vec4f& prev = _verts[poly->_verts[prevIndex]];
-      const Vec4f& next = _verts[poly->_verts[nextIndex]];
+      const Vec4f& pos = _verts[poly->_indVerts[v]];
+      const Vec4f& prev = _verts[poly->_indVerts[prevIndex]];
+      const Vec4f& next = _verts[poly->_indVerts[nextIndex]];
 
-      Vec4f newVert(pos + (normal * baseLen));
+      Vec4f oldPrev = (prev - pos).normalized();
+      Vec4f oldNext = (next - pos).normalized();
+      Vec4f oldPolyNormal = cellNormal.cross(oldPrev, oldNext).normalized();
+      if(oldPolyNormal.dot(pos + oldPolyNormal - cell->_center) > 0.001f) {
+        oldPolyNormal = -oldPolyNormal;
+      }
 
+      Vec4f newVert(pos + (oldPolyNormal * baseLen));
       int newVertIndex = addUniqueVert(newVert);
-       
-      Vec4f planeOld = (prev - pos).normalized();
-      Vec4f planeX = (newVert - pos).normalized();
-      Vec4f planeY = (next - pos).normalized();
-      Vec4f polyNormal = normal.cross(planeY, planeOld).normalized(); 
+      Vec4f newNext = (newVert - pos).normalized();
+      Vec4f newPrev = oldNext;
+      Vec4f newPolyNormal = oldPrev;
 
       Polygon* newPoly = addPolygon(baseLen, pos, 
-          planeX, planeY, polyNormal, polyVerts);
+          newNext, newPrev, newPolyNormal, polyVerts);
       if(newPoly == NULL) continue;
 
       // hmm.. the last cell will be empty? hash problem?
@@ -799,7 +818,6 @@ Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
   }
 }
 
-
 //make tope (cell, #cellsPerEdge)
 //  add all polys to unFinishedPolys
 //  for poly in unFinishedPolys
@@ -823,7 +841,7 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
   Vec4f arbitraryPlaneW(0.0f, 0.0f, 0.0f, 1.0f);
 
   Polygon* basePoly = addPolygon(baseLen, start, arbitraryPlaneX, arbitraryPlaneY, arbitraryPlaneZ, vertsPerPoly);
-  Cell* baseCell = addCell(baseLen, basePoly, basePoly->_normal, vertsPerPoly, 
+  Cell* baseCell = addCell(baseLen, basePoly, arbitraryPlaneW, vertsPerPoly, 
       polysPerCellVert);
   Cells cells;
   cells.push_back(baseCell);
@@ -838,16 +856,16 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
   // a shape is closed and thus will complete for some sets of params...
   // (even theoretically).
   // Gonna have to do the graph theory approach?
-  const int safetyMax = 10000;
+  const int safetyMax = 1000;
   int safeyCounter = 0;
 
   while(!unfinishedPolys.empty()) {
     Polygon* poly = unfinishedPolys.back();
     unfinishedPolys.pop_back();
 
-    Vec4f& vStart = _verts[poly->_verts[0]];
-    Vec4f& vNext = _verts[poly->_verts[1]];
-    Vec4f& vPrev = _verts[poly->_verts[poly->_verts.size() - 1]];
+    Vec4f& vStart = _verts[poly->_indVerts[0]];
+    Vec4f& vNext = _verts[poly->_indVerts[1]];
+    Vec4f& vPrev = _verts[poly->_indVerts[poly->_indVerts.size() - 1]];
     Vec4f nextDir = (vNext - vStart).normalized();
     Vec4f prevDir = (vPrev - vStart).normalized();
     Vec4f newNormal = nextDir.cross(-(poly->_normal), prevDir); // wrong sign?
@@ -878,7 +896,7 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
 }
 
 void Mesh::Polygon::AddUniqueTriangles() {
-  assert(_verts.size() >= 3);
+  assert(_indVerts.size() >= 3);
 
   // to make this extra idempotent, first find the smallest index
   // then, decide the overall poly winding by finding the next smallest index
@@ -891,21 +909,21 @@ void Mesh::Polygon::AddUniqueTriangles() {
   // but what the hell. Once you get to a point of ugly, you figure, fuck it
   // just make it work and then we will see how fast it is.
 
-  int polyVerts = (int)_verts.size();
+  int polyVerts = (int)_indVerts.size();
   // note that we are actually dealing with an array of indices into the vertex
   // array, and we need an index into that array of indices. Thus:
   int minIndexsValue = INT_MAX; // a case for apostrophes in var names?
   int minIndexsIndex;
   for (int v = 0; v < polyVerts; ++v) {
-    if(_verts[v] < minIndexsValue) {
+    if(_indVerts[v] < minIndexsValue) {
       minIndexsIndex = v;
-      minIndexsValue = _verts[v];
+      minIndexsValue = _indVerts[v];
     }
   }
 
-  int root = _verts[minIndexsIndex];
-  int nextRoot = _verts[(minIndexsIndex + 1) % polyVerts];
-  int prevRoot = _verts[(minIndexsIndex - 1 + polyVerts) % polyVerts];
+  int root = _indVerts[minIndexsIndex];
+  int nextRoot = _indVerts[(minIndexsIndex + 1) % polyVerts];
+  int prevRoot = _indVerts[(minIndexsIndex - 1 + polyVerts) % polyVerts];
   int stepDir = (nextRoot < prevRoot) ? 1 : -1;
 
   int end = minIndexsIndex;
@@ -913,10 +931,10 @@ void Mesh::Polygon::AddUniqueTriangles() {
   int current = (prev + stepDir + polyVerts) % polyVerts;
   
   do {
-    int64 triHash = makeUniqueTriCode(root, _verts[prev], _verts[current]);
+    int64 triHash = makeUniqueTriCode(root, _indVerts[prev], _indVerts[current]);
     if(_mesh._uniqueTris.find(triHash) == _mesh._uniqueTris.end()) {
       _mesh._uniqueTris.insert(std::make_pair(triHash, 1)); // why is this a map? 
-      _mesh.addTri(root, _verts[prev], _verts[current]);
+      _mesh.addTri(root, _indVerts[prev], _indVerts[current]);
     }
     prev = current;
     current = (current + stepDir + polyVerts) % polyVerts;

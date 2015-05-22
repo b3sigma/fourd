@@ -79,7 +79,7 @@ private:
     Vec4f _normal; // in 3d bi-unique, planar in 4d, but pick one
     Vec4f _center;
 
-    IndexList _verts;
+    IndexList _indVerts;
     Edges _edges; // redudant with _vert[i],_vert[i+1%l] ?
 
     int64 _hash;
@@ -120,7 +120,7 @@ private:
   Polygon* addPolygon(float baseLen, const Vec4f& baseVert,
       const Vec4f& planeX, const Vec4f& planeY, const Vec4f& normal,
       int vertsPerPoly);
-  Cell* addCell(float baseLen, Polygon* poly, const Vec4f& normal,
+  Cell* addCell(float baseLen, Polygon* poly, const Vec4f& cellNormal,
       int vertsPerPoly, int polysPerCellVert);
   void buildPolytope(float baseLen, Vec4f start,
       int vertsPerPoly, int polysPerCellVert, int cellsPerEdge);
