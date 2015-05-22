@@ -753,8 +753,24 @@ Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
     const Vec4f& cellNormal, int vertsPerPoly, int polysPerCellVert) {
   Cell* cell = new Cell(*this);
   cell->_polys.push_back(startPoly);
+  
+#ifdef _DEBUG
+  int startupVerts = (int)_verts.size();
+  printf("Adding new cell\nnormal:");
+  cellNormal.printIt(); 
+  printf("\npoly0:");
+  _verts[startPoly->_indVerts[0]].printIt();
+  printf("\npoly1:");
+  _verts[startPoly->_indVerts[1]].printIt();
+  printf("\npoly2:");
+  _verts[startPoly->_indVerts[2]].printIt();
+  printf("\npoly3:");
+  _verts[startPoly->_indVerts[3]].printIt();
+  printf("\n");
+#endif // _DEBUG
+
   // wrong wrong wrong, but ok for a moment
-  cell->_center = startPoly->_center + (cellNormal * (baseLen * 0.5f));
+  cell->_center = startPoly->_center + (startPoly->_normal* (baseLen * 0.5f));
 
   Polygons unfinishedPolys;
   unfinishedPolys.push_back(startPoly);
@@ -804,7 +820,18 @@ Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
 
     if(safeyCounter++ > safetyMax) break;
   }
-  
+
+#ifdef _DEBUG
+  int endupVerts = (int)_verts.size();
+  printf("\nAdded %d verts\n", endupVerts - startupVerts);
+  for(int v = startupVerts; v < endupVerts; ++v) {
+    printf("New vert(%d)\t", v);
+    _verts[v].printIt();
+    printf("\n");
+  }
+#endif // _DEBUG
+
+
   if(_cells.find(cell->GetHash()) == _cells.end()) {
     _cells.insert(std::make_pair(cell->GetHash(), cell));
     return cell;
@@ -846,9 +873,10 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
   Cells cells;
   cells.push_back(baseCell);
 
-  Polygons unfinishedPolys;
+  typedef std::map<Polygon*, Vec4f> CellTargets;
+  CellTargets unfinishedPolys;
   for(auto poly : baseCell->_polys) {
-    unfinishedPolys.push_back(poly);
+    unfinishedPolys.insert(std::make_pair(poly, baseCell->_center));
   }
 
   // so gross... 
@@ -860,24 +888,28 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
   int safeyCounter = 0;
 
   while(!unfinishedPolys.empty()) {
-    Polygon* poly = unfinishedPolys.back();
-    unfinishedPolys.pop_back();
+    auto cellTargetIt = unfinishedPolys.begin();
+    Polygon* poly = cellTargetIt->first;
+    Vec4f cellCenter = cellTargetIt->second;
+    unfinishedPolys.erase(cellTargetIt);
 
     Vec4f& vStart = _verts[poly->_indVerts[0]];
     Vec4f& vNext = _verts[poly->_indVerts[1]];
     Vec4f& vPrev = _verts[poly->_indVerts[poly->_indVerts.size() - 1]];
     Vec4f nextDir = (vNext - vStart).normalized();
     Vec4f prevDir = (vPrev - vStart).normalized();
-    Vec4f newNormal = nextDir.cross(-(poly->_normal), prevDir); // wrong sign?
+    Vec4f prevNormal = (cellCenter - poly->_center).normalized();
+    Vec4f prevWindingNormal = nextDir.cross(prevNormal, prevDir).normalized();
+    Vec4f newCellNormal = prevNormal;
 
-    Cell* newCell = addCell(baseLen, poly, newNormal,
+    Cell* newCell = addCell(baseLen, poly, newCellNormal,
         vertsPerPoly, polysPerCellVert);
     if(!newCell) // dupe
       continue;
     cells.push_back(newCell);
     for(auto poly : newCell->_polys) {
       if(_polys.find(poly->GetHash()) == _polys.end()) {
-        unfinishedPolys.push_back(poly);
+        unfinishedPolys.insert(std::make_pair(poly, newCell->_center));
       }
     }
 
