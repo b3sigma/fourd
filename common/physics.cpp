@@ -156,7 +156,7 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
 
   QuaxolSpec gridPos(start);
   QuaxolSpec gridEnd(start + ray);
-  
+
   // do the start
   if(chunk.IsPresent(gridPos[0], gridPos[1], gridPos[2], gridPos[3])) {
     // Actually back up the start by a little bit so if we had beed clipped
@@ -166,8 +166,7 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
     Vec4f shiftedRay = ray + (normal * (2.0f * shiftAmount));
     if(!PhysicsHelp::RayToQuaxol(
         gridPos, shiftedStart, shiftedRay, NULL /*outDist*/, outPos)) {
-      // weird, but we really need to write to outPos
-      assert(false);
+      // probably started within a block and a tiny ray
       *outPos = start;
     }
     return true;

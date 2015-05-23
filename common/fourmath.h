@@ -97,8 +97,12 @@ public:
     return x * v.x + y * v.y + z * v.z + w * v.w;
 	}
 
+  inline T lengthSq() const {
+    return (x*x + y*y + z*z + w*w);
+  }
+
 	T length() const {
-	  return sqrt(x * x + y * y + z * z + w * w);
+	  return sqrt(lengthSq());
 	}
 
 	Vec& storeZero() {

@@ -29,7 +29,7 @@ namespace fd {
     Physics() 
       : m_groundNormal(0.0f, 0.0f, 1.0f, 0.0f) // default to z up, cuz fashion
       , m_groundHeight(0.0f)
-      , m_gravity(0.0f, 0.0f, -10.0f, 0.0f) // default gravity down
+      , m_gravity(0.0f, 0.0f, -50.0f, 0.0f) // default gravity down
       , m_cushion(0.0001f)
       , m_chunk(NULL)
     {
@@ -43,6 +43,7 @@ namespace fd {
 
     // returns true if hit, overwrites distance with amount if so.
     bool RayCast(const Vec4f& position, const Vec4f& ray, float* outDistance);
+    bool RayCastQuaxol(const Vec4f& position, const Vec4f& ray, QuaxolSpec* outOpenBlock);
 
     bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
     void ClampToGround(Vec4f* position);

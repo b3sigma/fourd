@@ -18,8 +18,10 @@
 #include "../common/camera.h"
 #include "../common/chunkloader.h"
 #include "../common/physics.h"
+#include "../common/physics_help.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/periodic_motion.h"
+#include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
 #include "entity.h"
 #include "render.h"
@@ -281,6 +283,7 @@ void ToggleMouseCapture() {
 
 void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, const Vec4f& ray) {
   g_scene.m_quaxols.emplace_back(x, y, z, w);
+
   ////printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
   //Entity* pEntity = g_scene.AddEntity();
   //// ugh need like a mesh manager and better approach to shader handling
@@ -306,6 +309,9 @@ void AddTesseractLine() {
   DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> delegate;
   delegate.Bind(AddTesseractLineCallback);
   g_scene.m_pPhysics->LineDraw4D(cameraPos, ray, delegate);
+  
+  QuaxolSpec offset(0,0,0,0);
+  g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);  
 }
 
 void Update(int key, int x, int y) {
@@ -389,6 +395,10 @@ void Update(int key, int x, int y) {
     case 27: {
       Deinitialize();
       exit(0);
+    } break;
+    case ' ' : {
+      Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 2.0f;
+      g_camera.GetComponentBus().SendSignal("AddImpulse", SignalN<Vec4f>(), jumpAmount);
     } break;
     case 'a' : {
       g_camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);
@@ -489,7 +499,10 @@ void Update(int key, int x, int y) {
     } break;
     case '[' : {
       if (g_camera.getMovementMode() == Camera::LOOK) {
-        g_camera.setMovementMode(Camera::ORBIT);
+        //g_camera.setMovementMode(Camera::ORBIT);
+        g_camera.setMovementMode(Camera::WALK);
+        g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
+        g_camera.GetComponentBus().AddComponent(new PhysicsComponent(g_scene.m_pPhysics));
       } else {
         g_camera.setMovementMode(Camera::LOOK);
       }
@@ -620,30 +633,32 @@ void Motion(int x, int y) {
 }
 
 void UpdatePointerEntity() {
-  Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getCameraForward();
-  ray *= 1000.0f;
-  float dist;
+  if(g_camera.getMovementMode() == Camera::LOOK) {
 
-  Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
+    Vec4f position = g_camera.getCameraPos();
+    Vec4f ray = g_camera.getCameraForward();
+    ray *= 1000.0f;
+    float dist;
 
-  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
-    hitPos = position + ray.normalized() * dist;
-  }
+    Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
 
-  if(!g_pointerEntity) {
-    g_pointerEntity = g_scene.AddEntity();
-    g_pointerEntity->Initialize(&tesseract, g_shader, NULL);
-    g_pointerEntity->m_orientation.storeScale(0.1f);
-    g_pointerEntity->m_position = hitPos;
+    if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+      hitPos = position + ray.normalized() * dist;
+    }
+  
+    if(!g_pointerEntity) {
+      g_pointerEntity = g_scene.AddEntity();
+      g_pointerEntity->Initialize(&tesseract, g_shader, NULL);
+      g_pointerEntity->m_orientation.storeScale(0.1f);
+      g_pointerEntity->m_position = hitPos;
 
-    g_pointerEntity->GetComponentBus().AddComponent(
-        new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
-        -20.0f, true));
-  } else {
-    g_pointerEntity->m_position = hitPos;
-    g_pointerEntity->m_pShader = g_shader;
-
+      g_pointerEntity->GetComponentBus().AddComponent(
+          new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+          -20.0f, true));
+    } else {
+      g_pointerEntity->m_position = hitPos;
+      g_pointerEntity->m_pShader = g_shader;
+    }
   }
 }
 

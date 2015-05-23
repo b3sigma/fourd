@@ -32,7 +32,7 @@ public:
   };
 
   enum MovementMode {
-    LOOK = 1, ORBIT = 2,
+    LOOK = 1, ORBIT = 2, WALK = 3,
   };
 
   MovementMode _movement;
@@ -122,9 +122,7 @@ public:
   }
 
   MovementMode getMovementMode() const { return _movement; }
-  void setMovementMode(MovementMode mode) {
-    _movement = mode;
-  }
+  void setMovementMode(MovementMode mode);
 
   void* operator new(size_t size) { return _aligned_malloc(size, 16); }
   void operator delete(void* p) { _aligned_free(p); }

@@ -4,8 +4,12 @@
 
 using namespace ::fd;
 
+void Camera::setMovementMode(MovementMode mode) {
+  _movement = mode;
+}
+
 void Camera::ApplyRotationInput(float radians, Direction target, Direction source) {
-  if (_movement == LOOK) {
+  if (_movement == LOOK || _movement == WALK) {
     Mat4f rot;
     rot.storeRotation(radians, (int)target, (int)source);
     _cameraMatrix = rot * _cameraMatrix;

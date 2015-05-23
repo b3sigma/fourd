@@ -79,4 +79,14 @@ namespace fd {
     }
   };
 
+  class QuaxolScene {
+  public:
+
+  public:
+    QuaxolScene() {}
+
+  };
+
+
+
 }; // namespace fd

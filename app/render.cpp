@@ -25,7 +25,6 @@ namespace fd {
   
   void Render::AddCamera(Camera* pCamera) {
     m_cameras.push_back(pCamera);
-    //pCamera->GetComponentBus().AddComponent(new PhysicsComponent(m_pPhysics));
   }
 
   void Render::AddScene(Scene* pScene) {
