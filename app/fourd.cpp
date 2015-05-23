@@ -56,6 +56,7 @@ bool g_captureMouse = false;
 ::fd::PlatformWindow* g_platformWindow;
 
 ::fd::VRWrapper* g_vr = NULL;
+Mat4f g_debugHeadPose;
 
 bool LoadShader(const char* shaderName) {
   std::string shaderDir = "data\\";
@@ -120,6 +121,7 @@ bool Initialize() {
   g_camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 15.5f, 4.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
+  g_debugHeadPose.storeIdentity();
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   //glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
@@ -260,6 +262,15 @@ void ApplyMouseMove() {
   if (accumulatedMouseY) {
     g_camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, Camera::UP);
     accumulatedMouseY = 0;
+  }
+}
+
+void DebugRotateVR(float amount, Camera::Direction target, Camera::Direction source) {
+  if (g_vr) {
+    Mat4f rot;
+    rot.storeRotation(amount, target, source);
+    g_debugHeadPose = rot * g_debugHeadPose;
+    g_vr->SetDebugHeadOrientation(&g_debugHeadPose);
   }
 }
 
@@ -553,6 +564,18 @@ void Update(int key, int x, int y) {
       if (g_vr) {
         g_vr->ToggleFullscreen();
       }
+    } break;
+    case 'I' : {
+      DebugRotateVR((float)PI / 32.0f, Camera::UP, Camera::FORWARD);
+    } break;
+    case 'K' : {
+      DebugRotateVR(-(float)PI / 32.0f, Camera::UP, Camera::FORWARD);
+    } break;
+    case 'J' : {
+      DebugRotateVR((float)PI / 32.0f, Camera::RIGHT, Camera::FORWARD);
+    } break;
+    case 'L' : {
+      DebugRotateVR(-(float)PI / 32.0f, Camera::RIGHT, Camera::FORWARD);
     } break;
   }
   glutPostRedisplay();

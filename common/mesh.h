@@ -121,7 +121,7 @@ private:
       const Vec4f& planeX, const Vec4f& planeY, const Vec4f& normal,
       int vertsPerPoly);
   Cell* addCell(float baseLen, Polygon* poly, const Vec4f& cellNormal,
-      int vertsPerPoly, int polysPerCellVert);
+      int vertsPerPoly, int polysPerCellVert, float windingSignFlip);
   void buildPolytope(float baseLen, Vec4f start,
       int vertsPerPoly, int polysPerCellVert, int cellsPerEdge);
   void cleanupPolysAndCells();

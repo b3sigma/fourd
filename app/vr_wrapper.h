@@ -1,6 +1,7 @@
 #pragma once
 
 #include "platform_interface.h"
+#include "..\common\fourmath.h"
 
 namespace fd {
 
@@ -23,6 +24,8 @@ public:
   virtual void SetIsUsingVR(bool usingVR) {}
   virtual void ToggleFullscreen() {}
   virtual void Recenter() {}
+
+  virtual void SetDebugHeadOrientation(const Mat4f* matrix) {}
 
   virtual ~VRWrapper() {}
 

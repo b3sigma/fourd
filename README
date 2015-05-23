@@ -41,6 +41,9 @@ z adds some quaxols
 Z adds some dynamic entites
 
 Game TODOs:
+* cleanup rift
+* finish auto shape gen
+* add simple creation tool 
 * Setup real quaxol rendering
 * Add collision
 * Add 120 cell

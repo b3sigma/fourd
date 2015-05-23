@@ -33,7 +33,9 @@ public:
   ovrEyeRenderDesc m_eyeDesc[2];
   ovrPosef m_eyeRenderPose[2];
 
-  OVRWrapper() : m_HMD(NULL) {
+  const Mat4f* m_debugHeadPose;
+
+  OVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL) {
     for(int e = 0; e < 2; e++) {
       m_eyeRenderTex[e] = NULL;
       m_eyeDepthTex[e] = NULL;
@@ -144,6 +146,11 @@ public:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
+  
+  virtual void SetDebugHeadOrientation(const Mat4f* matrix) {
+    m_debugHeadPose = matrix;
+  }
+
   void UpdateCameraRenderMatrix(int eye, Camera* pCamera) {
 
     const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
@@ -154,6 +161,10 @@ public:
     Quatf localEyeQuat(localQuatOvr.w, localQuatOvr.x, localQuatOvr.y, localQuatOvr.z);
     Mat4f localEye;
     localEye.storeQuat3dRotation(localEyeQuat);
+
+    if(m_debugHeadPose) {
+      localEye = *m_debugHeadPose;
+    }
 
     pCamera->_renderMatrix = localEye * pCamera->_cameraMatrix;
     //pCamera->_renderMatrix = pCamera->_cameraMatrix;
