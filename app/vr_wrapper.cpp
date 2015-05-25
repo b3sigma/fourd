@@ -153,10 +153,6 @@ public:
 
   void UpdateCameraRenderMatrix(int eye, Camera* pCamera) {
 
-    const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
-
-    const float worldScale = 20.0f;
-    
     const ovrQuatf& localQuatOvr = m_eyeRenderPose[eye].Orientation;
     Quatf localEyeQuat(localQuatOvr.w, localQuatOvr.x, localQuatOvr.y, localQuatOvr.z);
     Mat4f localEye;
@@ -165,51 +161,95 @@ public:
     if(m_debugHeadPose) {
       localEye = *m_debugHeadPose;
     }
-
     pCamera->_renderMatrix = localEye * pCamera->_cameraMatrix;
-    //pCamera->_renderMatrix = pCamera->_cameraMatrix;
 
-    Vec4f localOffset(localPosOvr.x, localPosOvr.z, localPosOvr.y, 0.0f);
-    //Vec4f localOffset(localPosOvr.x, localPosOvr.y, -localPosOvr.z, 0.0f);
-    localOffset *= worldScale;
+    const float worldScale = 20.0f;
+    static bool simpleEyeOffset = true;
+    if(simpleEyeOffset) {
+      const ovrVector3f& localPosOvr = m_eyeDesc[eye].HmdToEyeViewOffset;
+      Vec4f ovrEyePos(-localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
+      ovrEyePos *= worldScale;
+      ovrEyePos = pCamera->_renderMatrix.transpose().transform(ovrEyePos);
+      pCamera->_renderPos = pCamera->_cameraPos + ovrEyePos;
+    } else {
+      const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
+      static int transposer[3] = {0, 1, 2};
+      static Vec4f sign(1.0f, 1.0f, 1.0f, 1.0f);
+      Vec4f ovrEyePos(localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
+      ovrEyePos *= worldScale;
+      Vec4f localOffset(
+          ovrEyePos[transposer[0]] * sign.x, 
+          ovrEyePos[transposer[1]] * sign.y, 
+          ovrEyePos[transposer[2]] * sign.z, 
+          0.0f);
 
-    Vec4f eyeSpaceOffset = localEye.transform(localOffset);
-    Vec4f worldSpaceOffset = pCamera->_cameraMatrix.transpose().transform(eyeSpaceOffset);
+      static int doLocalTrans = 1; // 0
+      Vec4f eyeSpaceOffset = localOffset;
+      if(doLocalTrans > 0) {
+        eyeSpaceOffset = localEye.transform(eyeSpaceOffset);
+      } else if(doLocalTrans < 0) {
+        eyeSpaceOffset = localEye.transpose().transform(eyeSpaceOffset);
+      } else {
+        // do nothing
+      }
+
+      static int doCameraTrans = -1;
+      Vec4f worldSpaceOffset = eyeSpaceOffset;
+      if(doCameraTrans > 0) {
+        worldSpaceOffset = pCamera->_cameraMatrix.transform(worldSpaceOffset);
+      } else if(doCameraTrans < 0) {
+        worldSpaceOffset = pCamera->_cameraMatrix.transpose().transform(worldSpaceOffset);
+      } else {
+        // do nothing
+      }
+
+      static int doRenderTrans = 0; // -1;
+      Vec4f renderOffset = worldSpaceOffset;
+      if(doRenderTrans > 0) {
+        renderOffset = pCamera->_renderMatrix.transform(renderOffset);
+      } else if(doRenderTrans < 0) {
+        renderOffset = pCamera->_renderMatrix.transpose().transform(renderOffset);
+      } else {
+        // do nothing
+      }
+
+      static int finalTransposer[4] = {0, 1, 2, 3};
+      static Vec4f finalSign(1.0f, 1.0f, 1.0f, 1.0f);
     
-    Vec4f offset = pCamera->_cameraMatrix.transpose().transform(localOffset);
-    //Vec4f offset = pCamera->_cameraMatrix.transpose().transform(localOffset);
-    //offset = localEye.transform(offset);
-    //Vec4f offset = pCamera->_renderMatrix.transform(localOffset);
-    pCamera->_renderPos = pCamera->_cameraPos + offset;
+      Vec4f finalOffset(
+          renderOffset[finalTransposer[0]] * finalSign.x, 
+          renderOffset[finalTransposer[1]] * finalSign.y, 
+          renderOffset[finalTransposer[2]] * finalSign.z, 
+          renderOffset[finalTransposer[3]] * finalSign.w); 
+
+      const float derpEyes[2] = { -0.6f, 0.6f };
+      Vec4f derpEye = (pCamera->_renderMatrix[Camera::RIGHT] * (derpEyes[eye]));
+
+      pCamera->_renderPos = pCamera->_cameraPos + finalOffset;
     
-    static int framecount = 0;
-    if(eye == 0) {
-      framecount++;
-    }
-    if(framecount > 100) {
-      printf("Eye %d\n", eye);
-      printf("Localoffset: \t");
-      localOffset.printIt();
-      printf("\neyespace: \t");
-      eyeSpaceOffset.printIt();
-      printf("\neyeworld: \t");
-      worldSpaceOffset.printIt();
-      printf("\nlocalworld: \t");
-      offset.printIt();
-      printf("\ncamerapos: \t");
-      pCamera->_cameraPos.printIt();
-      printf("\nlocalEyeMat: \n");
-      localEye.printIt();
-      printf("\ncamera: \n");
-      pCamera->_cameraMatrix.printIt();
-      printf("\nrender: \n");
-      pCamera->_renderMatrix.printIt();
-      printf("\n");
-      if(eye != 0) {
-        framecount = 0;
+      static int framecount = 0;
+      if(eye == 0) {
+        framecount++;
+      }
+      if(framecount > 100) {
+        printf("Eye %d\n", eye);
+        printf("pristine ovr: \t");   ovrEyePos.printIt();
+        printf("\neyespace: \t"); eyeSpaceOffset.printIt();
+        printf("\neyecamera: \t"); worldSpaceOffset.printIt();
+        printf("\neyerender: \t"); renderOffset.printIt();
+        printf("\nfinal: \t"); finalOffset.printIt();
+        printf("\nderp: \t"); derpEye.printIt();
+        printf("\ncamerapos: \t"); pCamera->_cameraPos.printIt();
+        printf("\nlocalEyeMat: \n"); localEye.printIt();
+        printf("\ncamera: \n"); pCamera->_cameraMatrix.printIt();
+        printf("\nrender: \n"); pCamera->_renderMatrix.printIt();
+        printf("\n");
+        if(eye != 0) {
+          framecount = 0;
+        }
       }
     }
-
+    
     ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
       0.2f /*zNear*/, 1000.0f /*zFar*/, true /*rightHanded*/);
     pCamera->_zProjectionMatrix.storeFromTransposedArray(&ovrProj.M[0][0]);
