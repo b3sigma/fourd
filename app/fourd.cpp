@@ -92,10 +92,25 @@ bool LoadShader(const char* shaderName) {
 }
 
 bool LoadLevel(const char* levelName) {
+  static std::string g_currentLevel;
+
   std::string levelPath = "data\\levels\\";
-  std::string nameBase(levelName);
-  std::string nameExt = ".txt"; // heh, I guess ext based format? hate you
-  std::string fullName = levelPath + nameBase + nameExt;
+  std::string nameExt = ".txt"; // This is going to get old soon
+
+  std::string baseNameWithExt;
+  if(levelName == NULL) {
+    std::string search = levelPath + "*" + nameExt;
+    const char* currentLevel = (g_currentLevel.empty()) ? NULL : g_currentLevel.c_str();
+    std::string nextName;
+    if(!::fd::Platform::GetNextFileName(search.c_str(), currentLevel, baseNameWithExt)) {
+      return false;
+    }
+  } else {
+    std::string nameBase(levelName);
+    baseNameWithExt = nameBase + nameExt;
+  }
+  std::string fullName = levelPath + baseNameWithExt;
+
   ChunkLoader chunks;
   if (chunks.LoadFromFile(fullName.c_str())) {
     g_scene.AddLoadedChunk(&chunks);
@@ -103,10 +118,12 @@ bool LoadLevel(const char* levelName) {
         fullName.c_str(), (int)g_scene.m_quaxols.size());
     printf("Had %d verts and %d tris\n", g_scene.m_pQuaxolChunk->m_verts.size(),
         g_scene.m_pQuaxolChunk->m_indices.size() / 3);
+
+    g_currentLevel = baseNameWithExt;
     return true;
   }
   else {
-    printf("Couldn't load the level!\n");
+    printf("Couldn't load the level! name:%s\n", fullName.c_str());
     return false;
   }
 }
@@ -158,9 +175,9 @@ bool Initialize() {
   }
 
   
-  LoadLevel("level_4d_double_base");
-  //LoadLevel("level_plus_minus_centered");
-  //LoadLevel("level_pillar");
+  LoadLevel("4d_double_base");
+  //LoadLevel("plus_minus_centered");
+  //LoadLevel("pillar");
   g_renderer.AddCamera(&g_camera);
   g_renderer.AddScene(&g_scene);
   g_scene.m_pQuaxolMesh = &tesseract;
@@ -204,7 +221,7 @@ void SetSimpleProjectiveMode() {
 void Deinitialize(void) {
   ::fd::Texture::DeinitializeTextureCache();
   ::fd::Shader::ClearShaderHash();
-  PlatformShutdown();
+  ::fd::Platform::Shutdown();
 }
 
 void ReshapeGL(int width, int height) {
@@ -353,12 +370,12 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '&' : {
-      LoadLevel("level_line");
-      //LoadLevel("level_sparse");
-      //LoadLevel("level_single");
+      LoadLevel(NULL);
     } break;
     case '*' : {
-      LoadLevel("level_4d_double_base");
+      LoadLevel("4d_double_base");
+      //LoadLevel("sparse");
+      //LoadLevel("single");
     } break;
     case '(' : {
       static bool fill = false;
@@ -781,7 +798,7 @@ int main(int argc, char *argv[]) {
   glutCreateWindow(argv[0]);
   
   char windowTitle[] = "fourd";
-  g_platformWindow = ::fd::PlatformInit(windowTitle, startWidth, startHeight);
+  g_platformWindow = ::fd::Platform::Init(windowTitle, startWidth, startHeight);
   
   glewExperimental=TRUE;
   GLenum err;

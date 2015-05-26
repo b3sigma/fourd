@@ -78,13 +78,11 @@ namespace fd {
     unsigned char connectFlags;
   };
 
-  // stb actually abandons indices
+
   // using 8 byte verts, 2 byte indices
   // tesseract: 16 verts * 8 bytes = 128 vert bytes
   // tri indices: 8 cubes * 6 faces * 2 tris * 3 indices * 2 bytes = 576 index bytes
-  // just quads: 8 cubes * 6 faces * 1 quad * 8 bytes = 384 bytes
   // so tri indices + verts = 704 bytes
-  // but tri quad verts = 384 bytes
   struct QuaxolVert {
     int _position; // 8 bits per x,y,z,w
     int _uv_color_ao; // 8 bits u,v, 8 bit color, 8 bit ao

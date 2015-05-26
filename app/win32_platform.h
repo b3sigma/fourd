@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include "platform_interface.h"
+#include <string>
 
 namespace fd {
 

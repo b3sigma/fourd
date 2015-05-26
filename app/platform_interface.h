@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 namespace fd {
 
@@ -8,7 +9,17 @@ namespace fd {
 
 class PlatformWindow;
 
-PlatformWindow* PlatformInit(const char* windowName, int width, int height);
-void PlatformShutdown();
+class Platform {
+public:
+
+  static PlatformWindow* Init(const char* windowName, int width, int height);
+  static void Shutdown();
+
+  // nextFile will be fileMatch relative
+  static bool GetNextFileName(const char* fileMatch,
+      const char* currentFile, std::string& nextFile);
+};
+
+
 
 } // namespace fd

@@ -7,7 +7,7 @@
 
 namespace fd {
 
-  class Win32Platform {
+  class Win32Platform : public Platform {
   public:
     static Win32Platform* s_Platform; // your mom hates singletons
 
@@ -20,7 +20,8 @@ namespace fd {
   };
   Win32Platform* Win32Platform::s_Platform = NULL;
 
-PlatformWindow* PlatformInit(const char* windowName, int width, int height) {
+PlatformWindow* Platform::Init(
+    const char* windowName, int width, int height) {
   assert(Win32Platform::s_Platform == NULL);
  
   Win32Platform::s_Platform = new Win32Platform();
@@ -37,9 +38,44 @@ PlatformWindow* PlatformInit(const char* windowName, int width, int height) {
   return pWindow;
 }
 
-void PlatformShutdown() {
+void Platform::Shutdown() {
   delete Win32Platform::s_Platform;
   Win32Platform::s_Platform = NULL;
+}
+
+bool Platform::GetNextFileName(const char* fileMatch, 
+    const char* currentFile, std::string& foundFile) {
+  if(!fileMatch) return false;
+
+  WIN32_FIND_DATA findData;
+  HANDLE hFind = FindFirstFile(fileMatch, &findData);
+  if(hFind == INVALID_HANDLE_VALUE) {
+    printf("GetNextFileName failed:%d for %s", GetLastError(), fileMatch);
+    return false;
+  }
+
+  foundFile.assign(&findData.cFileName[0]);
+  
+  if(!currentFile) {
+    return true; //first match is fine
+  }
+
+  bool nextOne = false;
+  while(true) {
+    if (strstr(&findData.cFileName[0], currentFile)) {
+      nextOne = true;
+    }
+    if(0 == FindNextFile(hFind, &findData)) {
+      return true; //hit the end of the list, return what was the first one
+    }
+
+    if(nextOne) {
+      foundFile.assign(&findData.cFileName[0]);
+      return true;
+    }
+  }
+
+  return true;
 }
 
 void PlatformWindow::GetWidthHeight(int* outWidth, int* outHeight) {
