@@ -639,8 +639,6 @@ void Motion(int x, int y) {
 }
 
 void UpdatePointerEntity() {
-  return;
-
   if(g_camera.getMovementMode() == Camera::LOOK) {
 
     Vec4f position = g_camera.getCameraPos();

@@ -78,18 +78,31 @@ namespace fd {
     unsigned char connectFlags;
   };
 
-  typedef std::vector<Vec4f> VertList;
+  // stb actually abandons indices
+  // using 8 byte verts, 2 byte indices
+  // tesseract: 16 verts * 8 bytes = 128 vert bytes
+  // tri indices: 8 cubes * 6 faces * 2 tris * 3 indices * 2 bytes = 576 index bytes
+  // just quads: 8 cubes * 6 faces * 1 quad * 8 bytes = 384 bytes
+  // so tri indices + verts = 704 bytes
+  // but tri quad verts = 384 bytes
+  struct QuaxolVert {
+    int32 _position; // 8 bits per x,y,z,w
+    int32 _uv_color_ao; // 8 bits u,v, 8 bit color, 8 bit ao
+  };
+  typedef ::std::vector<QuaxolVert> QVertList;
+
+  typedef ::std::vector<Vec4f> VecList;
   typedef ::std::vector<int> IndexList;
   
   struct CanonicalCube {
-    VertList m_verts;
+    VecList m_verts;
     IndexList m_indices;
     RenderBlock::Dir m_dir; // used by dir
     RenderBlock::DirIndex m_dirIndex; // used by dir
     unsigned char m_connectFlags; // used by flag
 
     typedef ::std::vector<unsigned char> VertDirs;
-    static void populateVerts(float size, VertList& verts, VertDirs& vertDirs);
+    static void populateVerts(float size, VecList& verts, VertDirs& vertDirs);
     static void addFlaggedTesseract(IndexList& indices, VertDirs& vertDirs, unsigned char flags);
     static void addFlaggedCube(IndexList& indices, VertDirs& vertDirs, unsigned char flags, int a, int b, int c, int d, int e, int f, int g, int h);
     static void addFlaggedQuad(IndexList& indices, VertDirs& vertDirs, unsigned char flags, int a, int b, int c, int d);
@@ -107,7 +120,7 @@ namespace fd {
     static CanonicalCube s_canonicalCubesByFlag[RenderBlock::NumDirCombinations];
     static CanonicalCube s_canonicalCubesByDir[RenderBlock::NumDirs];
 
-    VertList m_verts;
+    VecList m_verts;
     IndexList m_indices;
 
     Vec4f m_position;

@@ -15,8 +15,8 @@ namespace fd {
 class Mesh {
 public:
 
-  typedef std::vector<Vec4f> VertList;
-  VertList _verts;
+  typedef std::vector<Vec4f> VecList;
+  VecList _verts;
   typedef std::vector<int> IndexList;
   IndexList _indices;
 
@@ -61,7 +61,7 @@ public:
   
 private:
   void populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& step);
-  void buildNormals(const VertList& verts, const IndexList& indices, VertList& normals);
+  void buildNormals(const VecList& verts, const IndexList& indices, VecList& normals);
   void addTri(int a, int b, int c);
   void addQuad(int a, int b, int c, int d);
   void addTri(int a, int b, int c, IndexList& indices);
@@ -136,7 +136,7 @@ private:
   class Shape {
    private:
     // vertex storage elsewhere
-    VertList& _globalVerts;
+    VecList& _globalVerts;
     // index storage elsewhere
     IndexList& _globalIndices;
 
@@ -150,7 +150,7 @@ private:
     TriHash _uniqueTris;
 
    public:
-    Shape(VertList& verts, IndexList& indices) : _globalVerts(verts), _globalIndices(indices) {}
+    Shape(VecList& verts, IndexList& indices) : _globalVerts(verts), _globalIndices(indices) {}
     const Edges& getExteriors() const { return _exteriors; }
     const IndexList& getTriangles() const { return _triangles; }
 
@@ -167,12 +167,12 @@ private:
 
   class TriConnectivity {
     // vertex storage elsewhere
-    VertList& _verts;
+    VecList& _verts;
     // index storage elsewhere
     IndexList& _indices;
 
    public:
-    TriConnectivity(VertList& verts, IndexList& indices) : _verts(verts), _indices(indices) {}
+    TriConnectivity(VecList& verts, IndexList& indices) : _verts(verts), _indices(indices) {}
     ~TriConnectivity();
 
     Shape* buildEmptyShape() const { return new Shape(_verts, _indices); }
@@ -186,14 +186,14 @@ private:
 
      private:
       IndexList _indices;
-      const VertList& _globalVerts;
+      const VecList& _globalVerts;
       TriangleList _connections;
       EdgeSet _edges;
       int64 _triCode;
       int _triIndex;
 
      public:
-      Triangle(int startIndex, const VertList& verts, const IndexList& indices);
+      Triangle(int startIndex, const VecList& verts, const IndexList& indices);
 
       iterator begin() { return _connections.begin(); }
       iterator end() { return _connections.end(); }
@@ -226,7 +226,7 @@ private:
   static Edge decodeEdgeCode(int64 edgeCode);
 
   Shape* collectCoPlanar(TriConnectivity& connectivity, int triangle, TriHash& unique);
-  void buildShapes(VertList& verts, IndexList& indices, Shapes& outShapes);
+  void buildShapes(VecList& verts, IndexList& indices, Shapes& outShapes);
 };
 
 }  // namespace fd

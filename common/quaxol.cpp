@@ -150,7 +150,7 @@ void CanonicalCube::addFlaggedTesseract(IndexList& indices, VertDirs& vertDirs, 
   }
 }
 
-void CanonicalCube::populateVerts(float size, VertList& verts, VertDirs& vertDirs) {
+void CanonicalCube::populateVerts(float size, VecList& verts, VertDirs& vertDirs) {
   const int dim = 4;
   int numVerts = 1 << dim;
   verts.resize(0);
@@ -179,7 +179,7 @@ void CanonicalCube::populateVerts(float size, VertList& verts, VertDirs& vertDir
 
 CanonicalCube QuaxolChunk::s_canonicalCubesByFlag[RenderBlock::NumDirCombinations];
 void QuaxolChunk::BuildCanonicalCubesByFlag(float blockSize) {
-  VertList tessVerts;
+  VecList tessVerts;
   CanonicalCube::VertDirs vertDirs;
   CanonicalCube::populateVerts(blockSize, tessVerts, vertDirs);
 

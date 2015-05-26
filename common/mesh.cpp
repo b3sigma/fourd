@@ -187,10 +187,7 @@ void Mesh::buildFourTetrad(float size, Vec4f offset) {
   vert.set(0, 0, 0, size);
   _verts.push_back(vert);
 
-  for (VertList::iterator iV = _verts.begin();
-      iV != _verts.end();
-      ++iV) {
-    Vec4f& v = *iV;
+  for (auto v : _verts) {
     v += offset;
   }
 
@@ -212,7 +209,7 @@ void Mesh::buildFourTetrad(float size, Vec4f offset) {
 // entire plane (in 4d, or n-2 in n) with triangles. I started writing this thinking that
 // I could use the 3rd edge but then realized I am dumb and that is defined as 0 (pretty sure
 // there's an elegant tie in with curvature for that). Anyways, fcuk me?
-void Mesh::buildNormals(const VertList& verts, const IndexList& indices, VertList& normals) {
+void Mesh::buildNormals(const VecList& verts, const IndexList& indices, VecList& normals) {
   int numTris = (int)(indices.size() / 3);
   normals.resize(0);
   normals.reserve(numTris);
@@ -264,7 +261,7 @@ int64 Mesh::makeUniqueTriCode(int a, int b, int c) {
       | (((int64)indices[2] & indexMask) << (shiftAmount * 2)));
 }
 
-Mesh::TriConnectivity::Triangle::Triangle(int startIndex, const VertList& verts, const IndexList& indices)
+Mesh::TriConnectivity::Triangle::Triangle(int startIndex, const VecList& verts, const IndexList& indices)
     : _globalVerts(verts) {
   _triIndex = startIndex / 3;
   _indices.resize(3);
@@ -349,7 +346,7 @@ bool Mesh::TriConnectivity::Triangle::isCoplanarWith(const Triangle* other) cons
     return true;
   }
 
-  VertList edgeVectors;
+  VecList edgeVectors;
   for (EdgeSet::iterator iEdge = disjointSet.begin();
       iEdge != disjointSet.end();
       ++iEdge) {
@@ -432,7 +429,7 @@ void Mesh::Shape::printIt() {
   }
 }
 
-void Mesh::buildShapes(VertList& verts, IndexList& indices, Shapes& outShapes) {
+void Mesh::buildShapes(VecList& verts, IndexList& indices, Shapes& outShapes) {
   TriConnectivity connectivity(verts, indices);
   connectivity.buildGraph();
 
@@ -476,13 +473,10 @@ void Mesh::buildShapes(VertList& verts, IndexList& indices, Shapes& outShapes) {
 // a 4d approach to rendering which would do the equivalent of interior surface removal.
 void Mesh::projectIntoFour(float insideDist, Vec4f step) {
   Vec4f shift(0, 0, 0, insideDist);
-  VertList fourVerts;
+  VecList fourVerts;
   fourVerts.resize(_verts.size());
   std::copy(_verts.begin(), _verts.end(), fourVerts.begin());
-  for (VertList::iterator iV = fourVerts.begin();
-      iV != fourVerts.end();
-      ++iV) {
-    Vec4f& v = *iV;
+  for (auto v : fourVerts) {
     v += shift;
     v += step;
   }

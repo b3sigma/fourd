@@ -163,7 +163,7 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
     glBegin(GL_TRIANGLES);
 
     IndexList& indices = m_pQuaxolChunk->m_indices; 
-    VertList& verts = m_pQuaxolChunk->m_verts;
+    VecList& verts = m_pQuaxolChunk->m_verts;
     int numTris = (int)indices.size() / 3;
     int currentIndex = 0;
     for(int tri = 0; tri < numTris; ++tri) {

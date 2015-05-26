@@ -10,7 +10,7 @@ Getting:
 * If you don't need a submodule because you already have something installed, you can do them manually. You may avoid the submodulepocalype this way.
 
 Running on Windows:
-* open up the .sln in under ./project/, build
+* open up the .sln in under ./project/, build, run
 
 Running on Linux (haven't done this in a while, likely broken):
 * make
@@ -41,7 +41,6 @@ z adds some quaxols
 Z adds some dynamic entites
 
 Game TODOs:
-* put collision back, verify consistency with new rendering
 * quaxol texturing, color
 * better depth handling shader
 ** flat projection within w range, still with falloff?
