@@ -28,8 +28,8 @@ i/k = animated pi/2 rotation between inside right (seems like miegakure button)
 o/l = animated pi/2 rotation between inside up
 
 Rendering UI:
-0-9 load different base shapes and different levels. (Default is quaxols in 4d.)
-!-^ load different shaders and alpha/depth options
+0-9&* load different base shapes and different levels. (Default is quaxols in 4d.)
+!-^) load different shaders and alpha/depth options
 % loads settings for a nearly flat sliced w-projection
 x/c Decrease/increase near w-plane
 v/b Decrease/increase far w-plane
@@ -41,24 +41,35 @@ z adds some quaxols
 Z adds some dynamic entites
 
 Game TODOs:
-* cleanup rift
-* finish auto shape gen
-* add simple creation tool 
-* Setup real quaxol rendering
-* Add collision
+* put collision back, verify consistency with new rendering
+* quaxol texturing, color
+* better depth handling shader
+** flat projection within w range, still with falloff?
+** sub-surface w mode?
+** multipass 
+** more visualization attempts
+** Alpha test cleaner clipping?
+* cleanup rift positioning
+* auto shape gen
+* add simple creation/destruction tool
+* quaxol chunking
+* quaxol streaming
+* collision shapes
+* decent player movement
 * Add 120 cell
 * Load compressed textures with mipmaps directly
+* Cleanup quaxol size/worldscale
+* Simple game mode - miegakure style i/k button only + sliced projection?
 
 QM/Physics TODOs:
 * Add spin system
 * Add lisp parser (ecl? clisp?)
 * Add maxima
+* lorentz transformation rendering?
+* gr rendering?
 
 General TODOs:
-* Switch the mat4 class to be column major? Cleanup matrix math?
-* Switch to integer based quaxol sizes for ease of computation with corresponding units.
-** Why is this really important cleanup so low on the list?
-** It will only get worse.....
+* Cleanup matrix math?
 * Add text window with command entry
 * Fix portability, CMake
 
