@@ -31,6 +31,7 @@ PlatformWindow* PlatformInit(const char* windowName, int width, int height) {
   pWindow->m_width = width;
   pWindow->m_height = height;
   pWindow->m_fullscreen = false;
+  pWindow->m_cursorCaptured = false;
 
   Win32Platform::s_Platform->m_pWindow = pWindow;
   return pWindow;
@@ -120,6 +121,12 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
     }
   }
 
+  // drop cursor capture for the moment
+  bool wasCursorCaptured = m_cursorCaptured;
+  if(wasCursorCaptured) {
+    CaptureCursor(false);
+  }
+
   if(m_fullscreen) {
     if(foundPrimary) {
       int width = bestMonitorRect.right - bestMonitorRect.left;
@@ -129,6 +136,7 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
           SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
     // Mixing of win32 and glut code is... interesting
+
     glutFullScreen();
   } else {
     glutLeaveFullScreen();
@@ -138,9 +146,16 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
           SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
   } 
+
+  // recapture with new size/pos
+  if(wasCursorCaptured) {
+    CaptureCursor(true);
+  }
+
 }
 
 void PlatformWindow::CaptureCursor(bool capture) {
+  m_cursorCaptured = capture;
   if (capture) {
     RECT windowRect; // will include border
     GetWindowRect(m_hWnd, &windowRect);

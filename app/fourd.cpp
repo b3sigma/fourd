@@ -101,6 +101,8 @@ bool LoadLevel(const char* levelName) {
     g_scene.AddLoadedChunk(&chunks);
     printf("Level (%s) loaded %d quaxols!\n",
         fullName.c_str(), (int)g_scene.m_quaxols.size());
+    printf("Had %d verts and %d tris\n", g_scene.m_pQuaxolChunk->m_verts.size(),
+        g_scene.m_pQuaxolChunk->m_indices.size() / 3);
     return true;
   }
   else {
@@ -119,7 +121,7 @@ bool Initialize() {
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
   g_camera.SetWProjection(
-      0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
+      0.0f /* wNear */, 40.0f /* wFar */, 0.9f /* wScreenRatio */);
   g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   g_camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 15.5f, 4.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
@@ -156,8 +158,9 @@ bool Initialize() {
   }
 
   
-  //LoadLevel("level_4d_double_base");
-  LoadLevel("level_single");
+  LoadLevel("level_4d_double_base");
+  //LoadLevel("level_plus_minus_centered");
+  //LoadLevel("level_pillar");
   g_renderer.AddCamera(&g_camera);
   g_renderer.AddScene(&g_scene);
   g_scene.m_pQuaxolMesh = &tesseract;
@@ -636,6 +639,8 @@ void Motion(int x, int y) {
 }
 
 void UpdatePointerEntity() {
+  return;
+
   if(g_camera.getMovementMode() == Camera::LOOK) {
 
     Vec4f position = g_camera.getCameraPos();
@@ -683,7 +688,10 @@ void OnIdle() {
 }
 
 void StaticInitialize() {
-  QuaxolChunk::BuildCanonicalCubes(g_blockSize);
+  Timer staticTimer(std::string("StaticInitialize"));
+
+  QuaxolChunk::BuildCanonicalCubesByDir(g_blockSize);
+  QuaxolChunk::BuildCanonicalCubesByFlag(g_blockSize);
 }
 
 float Rand() { return (float)rand() / (float)RAND_MAX; }

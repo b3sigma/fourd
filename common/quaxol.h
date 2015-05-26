@@ -73,30 +73,39 @@ namespace fd {
       ZMinus    = (1 << ZMinusInd),
       WPlus     = (1 << WPlusInd),
       WMinus    = (1 << WMinusInd),
+      NumDirCombinations = (1 << NumDirs),
     };
     unsigned char connectFlags;
   };
 
   typedef std::vector<Vec4f> VertList;
-  typedef std::vector<int> IndexList;
+  typedef ::std::vector<int> IndexList;
   
   struct CanonicalCube {
     VertList m_verts;
     IndexList m_indices;
-    RenderBlock::Dir m_dir;
-    RenderBlock::DirIndex m_dirIndex;
+    RenderBlock::Dir m_dir; // used by dir
+    RenderBlock::DirIndex m_dirIndex; // used by dir
+    unsigned char m_connectFlags; // used by flag
+
+    typedef ::std::vector<unsigned char> VertDirs;
+    static void populateVerts(float size, VertList& verts, VertDirs& vertDirs);
+    static void addFlaggedTesseract(IndexList& indices, VertDirs& vertDirs, unsigned char flags);
+    static void addFlaggedCube(IndexList& indices, VertDirs& vertDirs, unsigned char flags, int a, int b, int c, int d, int e, int f, int g, int h);
+    static void addFlaggedQuad(IndexList& indices, VertDirs& vertDirs, unsigned char flags, int a, int b, int c, int d);
   };
 
   class QuaxolChunk {
   public:
     static const int c_mxSz = 16; // this means 16^4 blocks, or 32k
-    // indexing [x][y][w][z] for the moment
+    // indexing [x][y][z][w] for the moment
     
     int m_cubeCount; // might not end up exact? suggestion
     RenderBlock m_connects[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
     Block m_blocks[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
-    
-    static CanonicalCube s_canonicalCubes[RenderBlock::NumDirs];
+
+    static CanonicalCube s_canonicalCubesByFlag[RenderBlock::NumDirCombinations];
+    static CanonicalCube s_canonicalCubesByDir[RenderBlock::NumDirs];
 
     VertList m_verts;
     IndexList m_indices;
@@ -114,11 +123,11 @@ namespace fd {
     // unchecked, local
     inline bool IsPresent(int x, int y, int z, int w) const { 
       assert(x >= 0 && x < c_mxSz && y >= 0 && y < c_mxSz && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);
-      return m_blocks[x][y][w][z].present;
+      return m_blocks[x][y][z][w].present;
     }
 
     inline Block& GetBlock(int x, int y, int z, int w) { // unchecked, local
-      return m_blocks[x][y][w][z];
+      return m_blocks[x][y][z][w];
     }
     
     inline bool IsValid(int x, int y, int z, int w) {
@@ -129,7 +138,10 @@ namespace fd {
     // for now, always populate chunk edges
     inline int SetConnect(RenderBlock& rBlock, RenderBlock::Dir dir,
         int x, int y, int z, int w) {
-      if(!IsValid(x, y, z, w) || !IsPresent(x, y, z, w)) {
+      if(!IsValid(x, y, z, w))
+        return 0;
+      //if(!IsValid(x, y, z, w) || !IsPresent(x, y, z, w)) {
+      if(!IsPresent(x, y, z, w)) {
         rBlock.connectFlags |= (unsigned char)(dir);
         return 1;
       } else {
@@ -140,8 +152,10 @@ namespace fd {
     void UpdateConnects();
     void UpdateTrisFromConnects();
 
-    void AddRenderCube(const Vec4f& vertOffset, RenderBlock::DirIndex dirIndex);
-    static void BuildCanonicalCubes(float blockSize);
+    void AddRenderCubeByDir(const Vec4f& vertOffset, RenderBlock::DirIndex dirIndex);
+    void AddRenderCubeByFlag(const Vec4f& vertOffset, unsigned char connectFlags);
+    static void BuildCanonicalCubesByDir(float blockSize);
+    static void BuildCanonicalCubesByFlag(float blockSize);
   };
 
   class QuaxolScene {

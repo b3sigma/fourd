@@ -11,6 +11,7 @@ public:
   int m_width;
   int m_height;
   bool m_fullscreen;
+  bool m_cursorCaptured;
 
   int GetNumDisplays();
   void ToggleFullscreenByMonitorName(const char* name);
