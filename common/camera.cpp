@@ -1,8 +1,37 @@
 #include <stdio.h>
 #include "camera.h"
 #include "components/animated_rotation.h"
+#include "components/animated_camera_params.h"
 
 using namespace ::fd;
+
+Camera::Camera()
+    : _movement(ORBIT)
+    , _zNear(0.1f)
+    , _zFar(1000.0f)
+    , _zFov(90.0f)
+    , _wNear(0.0f)
+    , _wFar(40.0f)
+    , _wScreenSizeRatio(0.5)
+    , _wProjectionEnabled(true) {
+  _cameraMatrix.storeIdentity();
+  _cameraPos.storeZero();
+  _renderMatrix.storeIdentity();
+  _renderPos.storeZero();
+  _fourToThree.storeIdentity();
+
+  bool success = _componentBus.RegisterOwnerData(
+      std::string("orientation"), &_cameraMatrix, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("position"), &_cameraPos, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("wNear"), &_wNear, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("wFar"), &_wFar, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("wScreenSizeRatio"), &_wScreenSizeRatio, true);
+  assert(success == true);
+}
 
 void Camera::setMovementMode(MovementMode mode) {
   _movement = mode;
@@ -114,6 +143,17 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
     _cameraPos += _cameraMatrix[direction] * amount;
   }
 }
+
+void Camera::SetWProjection(float wNear, float wFar, float wScreenSizeRatio, float animateTime) {
+  if(animateTime > 0.0f) {
+    GetComponentBus().AddComponent(new AnimatedCameraParams(wNear, wFar, wScreenSizeRatio, animateTime));
+  } else {
+    _wNear = wNear;
+    _wFar = wFar;
+    _wScreenSizeRatio = wScreenSizeRatio;
+  }
+}
+
 
 void Camera::printIt() {
   printf("Camera pos:");

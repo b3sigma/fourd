@@ -40,27 +40,7 @@ public:
 
   ComponentBus _componentBus;
 
-  Camera()
-      : _movement(ORBIT)
-      , _zNear(0.1f)
-      , _zFar(1000.0f)
-      , _zFov(90.0f)
-      , _wNear(0.0f)
-      , _wFar(40.0f)
-      , _wScreenSizeRatio(0.5)
-      , _wProjectionEnabled(true) {
-    _cameraMatrix.storeIdentity();
-    _cameraPos.storeZero();
-    _renderMatrix.storeIdentity();
-    _renderPos.storeZero();
-    _fourToThree.storeIdentity();
-
-    bool success = _componentBus.RegisterOwnerData(
-        std::string("orientation"), &_cameraMatrix, true);
-    success &= _componentBus.RegisterOwnerData(
-        std::string("position"), &_cameraPos, true);
-    assert(success == true);
-  }
+  Camera();
 
   Camera(MovementMode mode)
       : _movement(mode) {
@@ -85,11 +65,7 @@ public:
     _zProjectionMatrix.store3dProjection(_zFov, aspect, _zNear, _zFar);
   }
 
-  void SetWProjection(float wNear, float wFar, float wScreenSizeRatio) {
-    _wNear = wNear;
-    _wFar = wFar;
-    _wScreenSizeRatio = wScreenSizeRatio;
-  }
+  void SetWProjection(float wNear, float wFar, float wScreenSizeRatio, float animateTime = 0.0f);
 
   void SetCameraPosition(Vec4f position) {
     _cameraPos = position;

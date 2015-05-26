@@ -190,6 +190,7 @@ bool Initialize() {
     || !LoadShader("AlphaTestTex")
     || !LoadShader("ColorBlend")
     || !LoadShader("BlendNoTex")
+    || !LoadShader("ColorBlendClipped")
     ) {
     printf("Shader loading failed\n");
     exit(-1);
@@ -233,8 +234,9 @@ void UpdatePerspective() {
 }
 
 void SetSimpleProjectiveMode() {
-  g_camera.SetWProjection(-5.5f, 5.5f, 0.9f);
-  LoadShader("AlphaTest");
+  g_camera.SetWProjection(-5.5f, 5.5f, 0.9f, 1.0f /*animateTime*/);
+  //LoadShader("AlphaTest");
+  LoadShader("AlphaTestTex");
   g_renderer.ToggleAlphaDepthModes(Render::AlphaTestDepthOnSrcDest);
   UpdatePerspective();
 }
@@ -517,27 +519,27 @@ void Update(int key, int x, int y) {
     // Sure this looks like an unsorted mess, but is spatially aligned kinda.
     case 'x' : {
       g_camera.SetWProjection(
-          g_camera._wNear - 1.0f, g_camera._wFar, g_camera._wScreenSizeRatio);
+          g_camera._wNear - 1.0f, g_camera._wFar, g_camera._wScreenSizeRatio, 1.0f /*animateTime*/);
     } break;
     case 'c' : {
       g_camera.SetWProjection(
-          g_camera._wNear + 1.0f, g_camera._wFar, g_camera._wScreenSizeRatio);
+          g_camera._wNear + 1.0f, g_camera._wFar, g_camera._wScreenSizeRatio, 1.0f /*animateTime*/);
     } break;
     case 'v' : {
       g_camera.SetWProjection(
-          g_camera._wNear, g_camera._wFar - 1.0f, g_camera._wScreenSizeRatio);
+          g_camera._wNear, g_camera._wFar - 1.0f, g_camera._wScreenSizeRatio, 1.0f /*animateTime*/);
     } break;
     case 'b' : {
       g_camera.SetWProjection(
-          g_camera._wNear, g_camera._wFar + 1.0f, g_camera._wScreenSizeRatio);
+          g_camera._wNear, g_camera._wFar + 1.0f, g_camera._wScreenSizeRatio, 1.0f /*animateTime*/);
     } break;
     case 'n' : {
       g_camera.SetWProjection(
-          g_camera._wNear, g_camera._wFar, g_camera._wScreenSizeRatio - 0.1f);
+          g_camera._wNear, g_camera._wFar, g_camera._wScreenSizeRatio - 0.1f, 1.0f /*animateTime*/);
     } break;
     case 'm' : {
       g_camera.SetWProjection(
-          g_camera._wNear, g_camera._wFar, g_camera._wScreenSizeRatio + 0.1f);
+          g_camera._wNear, g_camera._wFar, g_camera._wScreenSizeRatio + 0.1f, 1.0f /*animateTime*/);
     } break;
     case '?' : {
       g_camera.printIt();
@@ -560,11 +562,11 @@ void Update(int key, int x, int y) {
       float newWScreenRatio = savedWScreenRatio;
       if (g_camera._wScreenSizeRatio == 1.0f) {
         g_camera.SetWProjection(
-            g_camera._wNear, g_camera._wFar, savedWScreenRatio);
+            g_camera._wNear, g_camera._wFar, savedWScreenRatio, 1.0f /*animateTime*/);
       } else {
         savedWScreenRatio = g_camera._wScreenSizeRatio;
         g_camera.SetWProjection(
-            g_camera._wNear, g_camera._wFar, 1.0f);
+            g_camera._wNear, g_camera._wFar, 1.0f, 1.0f /*animateTime*/);
       }
     } break;
     case 'z' : {
@@ -797,7 +799,7 @@ void RunTests() {
 // Soooo tacky!
 #define RUN_TESTS
 
-int main(int argc, char *argv[]) {
+  int main(int argc, char *argv[]) {
 
   StaticInitialize();
 
