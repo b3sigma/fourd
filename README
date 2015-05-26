@@ -62,5 +62,4 @@ General TODOs:
 * Add text window with command entry
 * Fix portability, CMake
 
-Remnants of a Nehe starting tutorial are probably still around. Thanks!
 Using a Makefile from Michael Crawford. Thanks!

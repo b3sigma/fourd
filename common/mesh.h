@@ -51,6 +51,8 @@ public:
   void build120cell(float radius, Vec4f offset); // {5,3,3}
   void buildGeneralizedTesseract(float size, const Vec4f& start);
 
+  void buildQuaxolTesseract(float size); // assumptions about tri positions
+
   //void carveSolids(
 
   void clearCurrent();

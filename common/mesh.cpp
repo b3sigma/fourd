@@ -133,6 +133,29 @@ void Mesh::buildReferenceTesseract(float size, Vec4f offset, Vec4f step) {
   addCube(0, 1, 2, 3, 8, 9, 10, 11);
 }
 
+// The purpose of this is for copying into the canonical cubes for quaxol
+// connectivity. 
+// assumptions about tris:
+// x+, x-, y+, y-, z+, z-, w+, w-
+// each taking 6 * 6 indices
+void Mesh::buildQuaxolTesseract(float size) {
+  int dim = 4;
+  populateVerts(size, dim, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+
+  _indices.resize(0);
+  _indices.reserve(6 * 6 * 8);
+
+  addCube(1, 3, 5, 7, 9, 11, 13, 15); // x plus
+  addCube(0, 2, 4, 6, 8, 10, 12, 14); // x minus
+  addCube(2, 3, 6, 7, 10, 11, 14, 15); // y plus
+  addCube(0, 1, 4, 5, 8, 9, 12, 13); // y minus
+  addCube(4, 5, 6, 7, 12, 13, 14, 15); // z plus
+  addCube(0, 1, 2, 3, 8, 9, 10, 11); // z minus
+  addCube(8, 9, 10, 11, 12, 13, 14, 15); // w plus
+  addCube(0, 1, 2, 3, 4, 5, 6, 7); // w minus
+
+}
+
 // TODO: did I mention finding and using a good unit test framework?
 
 void Mesh::buildTesseract(float size, Vec4f offset, Vec4f step) {
@@ -1050,8 +1073,8 @@ void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
 }
 
 void Mesh::build120cell(float radius, Vec4f offset) {
-  const int polyVerts = 5;
-  // ^ wow already did the hard line! great progress!
+  buildPolytope(radius, offset, 5 /*vertsPerPoly*/, 3 /*polysPerCellVert*/,
+      3 /*cellsPerEdge*/);
 }
 
 int Mesh::addUniqueVert(const Vec4f& vert) { // wow this is slow and inaccurate

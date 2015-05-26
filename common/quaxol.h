@@ -51,13 +51,56 @@ namespace fd {
     bool present;
   };
   
+  struct RenderBlock {
+    enum DirIndex { 
+      XPlusInd  = 0x0,
+      XMinusInd = 0x1,
+      YPlusInd  = 0x2,
+      YMinusInd = 0x3,
+      ZPlusInd  = 0x4,
+      ZMinusInd = 0x5,
+      WPlusInd  = 0x6,
+      WMinusInd = 0x7,
+      NumDirs,
+    };
+
+    enum Dir {
+      XPlus     = (1 << XPlusInd),
+      XMinus    = (1 << XMinusInd),
+      YPlus     = (1 << YPlusInd),
+      YMinus    = (1 << YMinusInd),
+      ZPlus     = (1 << ZPlusInd),
+      ZMinus    = (1 << ZMinusInd),
+      WPlus     = (1 << WPlusInd),
+      WMinus    = (1 << WMinusInd),
+    };
+    unsigned char connectFlags;
+  };
+
+  typedef std::vector<Vec4f> VertList;
+  typedef std::vector<int> IndexList;
+  
+  struct CanonicalCube {
+    VertList m_verts;
+    IndexList m_indices;
+    RenderBlock::Dir m_dir;
+    RenderBlock::DirIndex m_dirIndex;
+  };
 
   class QuaxolChunk {
   public:
     static const int c_mxSz = 16; // this means 16^4 blocks, or 32k
     // indexing [x][y][w][z] for the moment
     
+    int m_cubeCount; // might not end up exact? suggestion
+    RenderBlock m_connects[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
     Block m_blocks[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
+    
+    static CanonicalCube s_canonicalCubes[RenderBlock::NumDirs];
+
+    VertList m_verts;
+    IndexList m_indices;
+
     Vec4f m_position;
     Vec4f m_blockSize; // this should probably live higher up?
     QuaxolSpec m_blockDims;
@@ -77,6 +120,28 @@ namespace fd {
     inline Block& GetBlock(int x, int y, int z, int w) { // unchecked, local
       return m_blocks[x][y][w][z];
     }
+    
+    inline bool IsValid(int x, int y, int z, int w) {
+      return (x >= 0 && x < c_mxSz && y >= 0 && y < c_mxSz 
+        && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);
+    }
+
+    // for now, always populate chunk edges
+    inline int SetConnect(RenderBlock& rBlock, RenderBlock::Dir dir,
+        int x, int y, int z, int w) {
+      if(!IsValid(x, y, z, w) || !IsPresent(x, y, z, w)) {
+        rBlock.connectFlags |= (unsigned char)(dir);
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+ 
+    void UpdateConnects();
+    void UpdateTrisFromConnects();
+
+    void AddRenderCube(const Vec4f& vertOffset, RenderBlock::DirIndex dirIndex);
+    static void BuildCanonicalCubes(float blockSize);
   };
 
   class QuaxolScene {

@@ -48,6 +48,7 @@ using namespace ::fd;
 
 int _width = 800;
 int _height = 600;
+float g_blockSize = 10.0f;
 Mesh tesseract;
 ::fd::Scene g_scene;
 ::fd::Camera g_camera;
@@ -112,8 +113,8 @@ bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
-  tesseract.buildTesseract(10.0f, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
-  
+  tesseract.buildTesseract(g_blockSize, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
+ 
   // Set up some reasonable defaults
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
@@ -349,7 +350,8 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '&' : {
-      LoadLevel("level_sparse");
+      LoadLevel("level_line");
+      //LoadLevel("level_sparse");
       //LoadLevel("level_single");
     } break;
     case '*' : {
@@ -381,13 +383,14 @@ void Update(int key, int x, int y) {
       //tesseract.buildReferenceTesseract(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
     case '6' : {
+      //tesseract.build120cell(10.0f, Vec4f(0,0,0,0));
       tesseract.buildCircle(10.0f, Vec4f(10.5, 0.5, 0.5, 0.5), Vec4f(1, 0, 0, 0), Vec4f(0, 1, 0, 0), 6);
     } break;
     case '7' : {
       tesseract.buildCylinder(10.0f, 10.f, 60);
     } break;
     case '8' : {
-      tesseract.buildFourCylinder(10.0f, 10.f, 10.0f, 6);
+      tesseract.buildFourCylinder(10.0f, 10.f, 10.0f, 20);
     } break;
     case '9' : {
       tesseract.build16cell(10.0f, Vec4f(0,0,0,0));
@@ -679,6 +682,10 @@ void OnIdle() {
   glutPostRedisplay();
 }
 
+void StaticInitialize() {
+  QuaxolChunk::BuildCanonicalCubes(g_blockSize);
+}
+
 float Rand() { return (float)rand() / (float)RAND_MAX; }
 const float cfThreshold = 0.000001f;
 bool IsEqual(float l, float r) { return (fabs(l - r) < cfThreshold); }
@@ -743,6 +750,9 @@ void RunTests() {
 #define RUN_TESTS
 
 int main(int argc, char *argv[]) {
+
+  StaticInitialize();
+
 #ifdef RUN_TESTS
   RunTests();
 #endif // RUN_TESTS

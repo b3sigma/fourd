@@ -137,6 +137,8 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
   if(!m_pQuaxolShader || !m_pQuaxolMesh)
     return;
 
+
+
   // if you thought the above was ugly and wasteful, just wait!
   WasGLErrorPlusPrint();
   m_pQuaxolShader->StartUsing();
@@ -153,52 +155,84 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
     SetTexture(0, hTex0);
   }
 
-  for (auto quaxol : m_quaxols) {
-    
-    const QuaxolSpec& q = quaxol;
-
-    float shift_amount = 10.0f;
-    Vec4f shift;
-    shift.x = shift_amount * q.x;
-    shift.y = shift_amount * q.y;
-    shift.z = shift_amount * q.z;
-    shift.w = shift_amount * q.w;
-    m_pQuaxolShader->SetPosition(&shift);
-    WasGLErrorPlusPrint();
-
-    if (m_texList.size() > 0) {
-      int layerTexIndex = abs(q.w) % m_texList.size();
-      SetTexture(layerTexIndex, hTex0);
-    }
-
-    int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
-    int startTriangle = 0;
-    int endTriangle = tesseractTris;
-    WasGLErrorPlusPrint();
-
+  static bool renderChunk = true;
+  if(renderChunk) {
+    m_pQuaxolShader->SetPosition(&Vec4f(0,0,0,0));
     GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
+
     glBegin(GL_TRIANGLES);
-    //WasGLErrorPlusPrint();
-    Vec4f a, b, c;
-    int colorIndex = abs(q.w) % m_colorArray.size();
-    for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
+
+    IndexList& indices = m_pQuaxolChunk->m_indices; 
+    VertList& verts = m_pQuaxolChunk->m_verts;
+    int numTris = (int)indices.size() / 3;
+    int currentIndex = 0;
+    for(int tri = 0; tri < numTris; ++tri) {
+
+      const Vec4f& a = verts[indices[currentIndex++]]; 
+      const Vec4f& b = verts[indices[currentIndex++]]; 
+      const Vec4f& c = verts[indices[currentIndex++]]; 
+
       if(colorHandle != -1) {
+        float minW = min(a.w, min(b.w, c.w));
+        int colorIndex = ((int)abs(minW)) % m_colorArray.size();
         glVertexAttrib4fv(colorHandle,
             m_colorArray[colorIndex].raw());
       }
-      //WasGLErrorPlusPrint();
-      m_pQuaxolMesh->getTriangle(t, a, b, c);
+
       glVertex4fv(a.raw());
       glVertex4fv(b.raw());
       glVertex4fv(c.raw());
-      //WasGLErrorPlusPrint();
-      //if ((t+1) % 2 == 0) {
-      //  colorIndex = (colorIndex + 1) % m_colorArray.size();
-      //}
     }
-    //WasGLErrorPlusPrint();
     glEnd();
-    WasGLErrorPlusPrint();
+
+  } else {
+    for (auto quaxol : m_quaxols) {
+    
+      const QuaxolSpec& q = quaxol;
+
+      float shift_amount = 10.0f;
+      Vec4f shift;
+      shift.x = shift_amount * q.x;
+      shift.y = shift_amount * q.y;
+      shift.z = shift_amount * q.z;
+      shift.w = shift_amount * q.w;
+      m_pQuaxolShader->SetPosition(&shift);
+      WasGLErrorPlusPrint();
+
+      if (m_texList.size() > 0) {
+        int layerTexIndex = abs(q.w) % m_texList.size();
+        SetTexture(layerTexIndex, hTex0);
+      }
+
+      int tesseractTris = m_pQuaxolMesh->getNumberTriangles();
+      int startTriangle = 0;
+      int endTriangle = tesseractTris;
+      WasGLErrorPlusPrint();
+
+      GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
+      glBegin(GL_TRIANGLES);
+      //WasGLErrorPlusPrint();
+      Vec4f a, b, c;
+      int colorIndex = abs(q.w) % m_colorArray.size();
+      for (int t = startTriangle; t < endTriangle && t < tesseractTris; t++) {
+        if(colorHandle != -1) {
+          glVertexAttrib4fv(colorHandle,
+              m_colorArray[colorIndex].raw());
+        }
+        //WasGLErrorPlusPrint();
+        m_pQuaxolMesh->getTriangle(t, a, b, c);
+        glVertex4fv(a.raw());
+        glVertex4fv(b.raw());
+        glVertex4fv(c.raw());
+        //WasGLErrorPlusPrint();
+        //if ((t+1) % 2 == 0) {
+        //  colorIndex = (colorIndex + 1) % m_colorArray.size();
+        //}
+      }
+      //WasGLErrorPlusPrint();
+      glEnd();
+      WasGLErrorPlusPrint();
+    }
   }
 
   m_pQuaxolShader->StopUsing();
