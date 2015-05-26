@@ -69,10 +69,11 @@ public:
 
   // Right now this is convenient, but separate calls are fine too.
   enum EAlphaDepthModes {
-    AlphaOnDepthOffSrcDest = 0,
-    AlphaOnDepthOffAdditive = 1,
-    AlphaTestDepthOnSrcDest = 2,
-    AlphaOffDepthOn = 3,
+    AlphaOnDepthOffSrcDest,
+    AlphaOnDepthOffAdditive,
+    AlphaTestDepthOffSrcDest,
+    AlphaTestDepthOnSrcDest,
+    AlphaOffDepthOn,
     ENumAlphaDepthModes,
     EToggleModes
   };

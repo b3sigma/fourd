@@ -44,8 +44,10 @@ namespace fd {
       mode = (EAlphaDepthModes)(((int)m_alphaDepthMode + 1) % ((int)ENumAlphaDepthModes));
     }
     m_alphaDepthMode = mode;
+    std::string modeName = "dunno";
     switch(m_alphaDepthMode) {
       case AlphaOnDepthOffSrcDest: {
+        modeName = "AlphaOnDepthOffSrcDest";
         glEnable(GL_BLEND);
         glAlphaFunc(GL_ALWAYS, 0.0f);
         glDisable(GL_ALPHA_TEST);
@@ -56,6 +58,7 @@ namespace fd {
         glDisable(GL_DEPTH_TEST);
       } break;
       case AlphaOnDepthOffAdditive: {
+        modeName = "AlphaOnDepthOffAdditive";
         glEnable(GL_BLEND);
         glAlphaFunc(GL_ALWAYS, 0.0f);
         glDisable(GL_ALPHA_TEST);
@@ -65,7 +68,19 @@ namespace fd {
         glDepthFunc(GL_ALWAYS);
         glDisable(GL_DEPTH_TEST);
       } break;
+      case AlphaTestDepthOffSrcDest: {
+        modeName = "AlphaTestDepthOffSrcDest";
+        glEnable(GL_BLEND);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GEQUAL, 2.0f / 255.0f);
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glDepthFunc(GL_ALWAYS);
+        glDisable(GL_DEPTH_TEST);
+      } break;
       case AlphaTestDepthOnSrcDest: {
+        modeName = "AlphaTestDepthOnSrcDest";
         glEnable(GL_BLEND);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GEQUAL, 154.0f / 255.0f);
@@ -76,6 +91,7 @@ namespace fd {
         glEnable(GL_DEPTH_TEST);
       } break;
       case AlphaOffDepthOn: {
+        modeName = "AlphaOffDepthOn";
         glDisable(GL_BLEND);
         glAlphaFunc(GL_ALWAYS, 0.0f);
         glDisable(GL_ALPHA_TEST);
@@ -84,6 +100,8 @@ namespace fd {
         glEnable(GL_DEPTH_TEST);
       } break;
     }
+
+    printf("switched to %s\n", modeName.c_str());
   }
 
-  } // namespace fd
+} // namespace fd

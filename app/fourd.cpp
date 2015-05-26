@@ -62,15 +62,33 @@ bool g_captureMouse = false;
 Mat4f g_debugHeadPose;
 
 bool LoadShader(const char* shaderName) {
+  static std::string g_currentShader;
   std::string shaderDir = "data\\";
-  std::string vertName = shaderDir + std::string("vert")
-    + std::string(shaderName) + std::string(".glsl");
-  std::string fragName = shaderDir + std::string("frag")
-    + std::string(shaderName) + std::string(".glsl");
-  std::string commonVert = shaderDir + std::string("vertCommonTransform.glsl");
+  std::string vertPrefix = std::string("vert");
+  std::string fragPrefix = std::string("frag");
+  std::string ext = std::string(".glsl");
+
+  std::string baseNameWithExt;
+  if(shaderName == NULL) {
+    std::string search = shaderDir + vertPrefix + "*" + ext;
+    const char* currentLevel = (g_currentShader.empty()) ? NULL : g_currentShader.c_str();
+    std::string nextNameWithExt;
+    if(!::fd::Platform::GetNextFileName(search.c_str(), currentLevel, nextNameWithExt)) {
+      return false;
+    }
+    // muhahaha so robust
+    const char* baseStart = &(nextNameWithExt.c_str()[4]); // skip vert
+    baseNameWithExt.assign(baseStart);
+  } else {
+    std::string nameBase(shaderName);
+    baseNameWithExt = nameBase + ext;
+  }
+
+  std::string vertName = shaderDir + vertPrefix + baseNameWithExt;
+  std::string fragName = shaderDir + fragPrefix + baseNameWithExt;
 
   std::unique_ptr<::fd::Shader> shaderMem;
-  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(shaderName);
+  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(baseNameWithExt.c_str());
   if (pShader) {
     pShader->Release();
   } else {
@@ -78,8 +96,9 @@ bool LoadShader(const char* shaderName) {
     shaderMem.reset(pShader);
   }
 
+  std::string commonVert = shaderDir + std::string("cvCommonTransform.glsl");
   pShader->AddSubShader(commonVert.c_str(), GL_VERTEX_SHADER); 
-  if(!pShader->LoadFromFile(shaderName, vertName.c_str(), fragName.c_str())) {
+  if(!pShader->LoadFromFile(baseNameWithExt.c_str(), vertName.c_str(), fragName.c_str())) {
     printf("Failed loading shader!\n");
     return false;
   }
@@ -87,6 +106,9 @@ bool LoadShader(const char* shaderName) {
   shaderMem.release();
   g_shader = pShader;
   g_scene.m_pQuaxolShader = g_shader;
+
+  g_currentShader = vertPrefix + baseNameWithExt;
+  printf("Loaded shader %s\n", vertName.c_str());
 
   return true;
 }
@@ -101,7 +123,6 @@ bool LoadLevel(const char* levelName) {
   if(levelName == NULL) {
     std::string search = levelPath + "*" + nameExt;
     const char* currentLevel = (g_currentLevel.empty()) ? NULL : g_currentLevel.c_str();
-    std::string nextName;
     if(!::fd::Platform::GetNextFileName(search.c_str(), currentLevel, baseNameWithExt)) {
       return false;
     }
@@ -138,7 +159,7 @@ bool Initialize() {
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
   g_camera.SetWProjection(
-      0.0f /* wNear */, 40.0f /* wFar */, 0.9f /* wScreenRatio */);
+      0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
   g_camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 15.5f, 4.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
@@ -355,7 +376,7 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '#' : {
-      LoadShader("AlphaTest");
+      LoadShader("ColorBlendClipped");
       UpdatePerspective();
     } break;
     case '$' : {
@@ -370,14 +391,18 @@ void Update(int key, int x, int y) {
       UpdatePerspective();
     } break;
     case '&' : {
-      LoadLevel(NULL);
+      LoadShader(NULL);
+      UpdatePerspective();
     } break;
     case '*' : {
+      LoadLevel(NULL);
+    } break;
+    case '(' : {
       LoadLevel("4d_double_base");
       //LoadLevel("sparse");
       //LoadLevel("single");
     } break;
-    case '(' : {
+    case ')' : {
       static bool fill = false;
       fill = !fill;
       if (fill) {
