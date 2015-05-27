@@ -19,7 +19,8 @@ public:
   InterpValue(T start, T end) : _targetVal(end), _startVal(start) {}
 
   T GetCurrent(float interp) {
-    return _startVal + (T)((float)(_targetVal - _startVal) * interp);
+    // structured so that garbage _startVal still ends up at target
+    return _targetVal - (T)((float)(_targetVal - _startVal) * (1.0f - interp));
   }
 };
 
@@ -80,6 +81,10 @@ public:
     *_wScreenSizeRatioOwner = _wScreenSizeRatio.GetCurrent(interp);
     
     if(_current >= _duration && _duration > 0.0f) {
+      // just make sure we end up at the right spot
+      *_wNearOwner = _wNear.GetCurrent(1.0f);
+      *_wFarOwner = _wFar.GetCurrent(1.0f);
+      *_wScreenSizeRatioOwner = _wScreenSizeRatio.GetCurrent(1.0f);
       SelfDestruct();
     }
   }

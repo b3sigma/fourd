@@ -166,8 +166,8 @@ bool Initialize() {
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
   g_debugHeadPose.storeIdentity();
 
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  //glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
+  //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
   WasGLErrorPlusPrint();
   glClearDepth(1.0f);
   WasGLErrorPlusPrint();

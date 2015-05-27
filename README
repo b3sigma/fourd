@@ -43,7 +43,6 @@ Z adds some dynamic entites
 Game TODOs:
 * quaxol texturing, color
 * better depth handling shader
-** flat projection within w range, still with falloff?
 ** sub-surface w mode?
 ** multipass 
 ** more visualization attempts

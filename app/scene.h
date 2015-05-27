@@ -26,6 +26,8 @@ protected:
   typedef std::vector<Vec4f> ColorList;
   ColorList m_colorArray;
 
+  //Mesh m_groundPlane;
+
   ComponentBus m_componentBus;
 
 public:

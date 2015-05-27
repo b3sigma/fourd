@@ -187,7 +187,10 @@ void Mesh::buildFourTetrad(float size, Vec4f offset) {
   vert.set(0, 0, 0, size);
   _verts.push_back(vert);
 
-  for (auto v : _verts) {
+  for (VecList::iterator iV = _verts.begin();
+      iV != _verts.end();
+      ++iV) {
+    Vec4f& v = *iV;
     v += offset;
   }
 
@@ -476,7 +479,10 @@ void Mesh::projectIntoFour(float insideDist, Vec4f step) {
   VecList fourVerts;
   fourVerts.resize(_verts.size());
   std::copy(_verts.begin(), _verts.end(), fourVerts.begin());
-  for (auto v : fourVerts) {
+  for (VecList::iterator iV = fourVerts.begin();
+      iV != fourVerts.end();
+      ++iV) {
+    Vec4f& v = *iV;
     v += shift;
     v += step;
   }
