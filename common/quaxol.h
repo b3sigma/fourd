@@ -130,17 +130,27 @@ namespace fd {
     ~QuaxolChunk();
 
     bool LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset);
-    
+    void SetAt(const QuaxolSpec& pos, bool present);
+    void UpdateRendering();
+
     // unchecked, local
     inline bool IsPresent(int x, int y, int z, int w) const { 
       assert(x >= 0 && x < c_mxSz && y >= 0 && y < c_mxSz && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);
       return m_blocks[x][y][z][w].present;
     }
 
+    inline Block& GetBlock(const QuaxolSpec& pos) {
+      return GetBlock(pos.x, pos.y, pos.z, pos.w);
+    }
+
     inline Block& GetBlock(int x, int y, int z, int w) { // unchecked, local
       return m_blocks[x][y][z][w];
     }
     
+    inline bool IsValid(const QuaxolSpec& pos) {
+      return IsValid(pos.x, pos.y, pos.z, pos.w);
+    }
+
     inline bool IsValid(int x, int y, int z, int w) {
       return (x >= 0 && x < c_mxSz && y >= 0 && y < c_mxSz 
         && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);

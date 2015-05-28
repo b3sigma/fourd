@@ -345,6 +345,40 @@ void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, cons
   //    new TimedDeath(21.0f /* duration */));
 }
 
+void AddQuaxolUnderCursor() {
+  Vec4f position = g_camera.getCameraPos();
+  Vec4f ray = g_camera.getCameraForward();
+  ray *= 1000.0f;
+
+  QuaxolSpec gridPos;
+  if(g_scene.m_pPhysics->RayCastToOpenQuaxol(
+      position, ray, &gridPos, NULL /*hitPos*/)) {
+    g_scene.SetQuaxolAt(gridPos, true /*present*/);
+  }
+}
+
+void AddRaycastEntity() {
+  Vec4f position = g_camera.getCameraPos();
+  Vec4f ray = g_camera.getCameraForward();
+  ray *= 1000.0f;
+  float dist;
+  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+    Entity* pEntity = g_scene.AddEntity();
+    // ugh need like a mesh manager and better approach to shader handling
+    pEntity->Initialize(&tesseract, g_shader, NULL);
+    pEntity->m_orientation.storeScale(0.1f);
+
+    pEntity->m_position = position + ray.normalized() * dist;
+
+    pEntity->GetComponentBus().AddComponent(
+      new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+      20.0f, true));
+
+    //pEntity->GetComponentBus().AddComponent(
+    //    new TimedDeath(10.0f /* duration */));
+  }
+}
+
 void AddTesseractLine() {
   Vec4f cameraPos = g_camera.getCameraPos();
   cameraPos *= 1.0f / 10.0f;
@@ -570,25 +604,8 @@ void Update(int key, int x, int y) {
       }
     } break;
     case 'z' : {
-      Vec4f position = g_camera.getCameraPos();
-      Vec4f ray = g_camera.getCameraForward();
-      ray *= 1000.0f;
-      float dist;
-      if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
-        Entity* pEntity = g_scene.AddEntity();
-        // ugh need like a mesh manager and better approach to shader handling
-        pEntity->Initialize(&tesseract, g_shader, NULL);
-        pEntity->m_orientation.storeScale(0.1f);
-
-        pEntity->m_position = position + ray.normalized() * dist;
-
-        pEntity->GetComponentBus().AddComponent(
-            new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
-            20.0f, true));
-
-        //pEntity->GetComponentBus().AddComponent(
-        //    new TimedDeath(10.0f /* duration */));
-      }
+      //AddRaycastEntity();
+      AddQuaxolUnderCursor();
     } break;
     case 'X' : {
       AddTesseractLine();
@@ -686,20 +703,11 @@ void RaycastToOpenQuaxol() {
   Vec4f position = g_camera.getCameraPos();
   Vec4f ray = g_camera.getCameraForward();
   ray *= 1000.0f;
-  float dist;
 
   Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
-
   static Entity* openEntity = NULL;
-  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
-    hitPos = position + ray.normalized() * (dist * 0.9999f);
-
-    Vec4f cellPos(hitPos);
-    cellPos *= 1.0f / g_blockSize;
-    QuaxolSpec gridPos(cellPos);
-
-    Vec4f renderPos = gridPos.ToFloatCoords(Vec4f(), Vec4f(g_blockSize, g_blockSize, g_blockSize, g_blockSize));
-
+  if (g_scene.m_pPhysics->RayCastToOpenQuaxol(
+      position, ray, NULL /*quaxolSpec*/, &hitPos)) {
     if(!openEntity) {
       openEntity = g_scene.AddEntity();
       static Mesh addBlock;
@@ -707,7 +715,7 @@ void RaycastToOpenQuaxol() {
       openEntity->Initialize(&addBlock, g_shader, NULL);
     }
     
-    openEntity->m_position = renderPos;
+    openEntity->m_position = hitPos;
     openEntity->m_pShader = g_shader;
   } else {
     if(openEntity) {

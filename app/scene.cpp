@@ -48,6 +48,12 @@ void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
   m_pPhysics->AddChunk(m_pQuaxolChunk);
 }
 
+void Scene::SetQuaxolAt(const QuaxolSpec& pos, bool present) {
+  if(!m_pQuaxolChunk) return;
+  m_pQuaxolChunk->SetAt(pos, present);
+  m_pQuaxolChunk->UpdateRendering();
+}
+
 void Scene::AddTexture(Texture* pTex) {
   m_texList.push_back(pTex);
 }

@@ -46,10 +46,20 @@ bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* off
     block.present = !startFilled;
   }
 
-  UpdateConnects();
-  UpdateTrisFromConnects();
+  UpdateRendering();
 
   return true;
+}
+
+void QuaxolChunk::UpdateRendering() {
+  UpdateConnects();
+  UpdateTrisFromConnects();
+}
+
+void QuaxolChunk::SetAt(const QuaxolSpec& pos, bool present) {
+  if(!IsValid(pos)) return;
+  Block& block = GetBlock(pos);
+  block.present = present;
 }
  
 void QuaxolChunk::UpdateConnects() {

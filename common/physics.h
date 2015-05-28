@@ -43,7 +43,8 @@ namespace fd {
 
     // returns true if hit, overwrites distance with amount if so.
     bool RayCast(const Vec4f& position, const Vec4f& ray, float* outDistance);
-    bool RayCastQuaxol(const Vec4f& position, const Vec4f& ray, QuaxolSpec* outOpenBlock);
+    bool RayCastToOpenQuaxol(const Vec4f& position, const Vec4f& ray,
+        QuaxolSpec* outOpenBlock, Vec4f* outPos);
 
     bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
     void ClampToGround(Vec4f* position);

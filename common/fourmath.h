@@ -93,6 +93,10 @@ public:
     return Vec(x * v.x, y * v.y, z * v.z, w * v.w);
 	}
 
+  Vec operator / (const Vec& r) const {
+    return Vec(x / r.x, y / r.y, z / r.z, w / r.w);
+  }
+
 	T dot(const Vec& v) const {
     return x * v.x + y * v.y + z * v.z + w * v.w;
 	}

@@ -51,6 +51,8 @@ public:
 
   void AddLoadedChunk(const ChunkLoader* pChunk);
 
+  void SetQuaxolAt(const QuaxolSpec& pos, bool present);
+
   void AddTexture(Texture* pTex);
 
   // Let the scene do the allocation to allow for mem opt

@@ -109,6 +109,30 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
   return true;
 }
 
+bool Physics::RayCastToOpenQuaxol(const Vec4f& position, const Vec4f& ray,
+    QuaxolSpec* outOpenBlock, Vec4f* outPos) {
+  if(m_chunk) {
+    float outDist = FLT_MAX;
+    if(RayCastChunk(*m_chunk, position, ray, &outDist)) {
+      Vec4f hitPos = position + ray.normalized() * (outDist * 0.9999f);
+
+      Vec4f cellPos(hitPos);
+      cellPos = cellPos / m_chunk->m_blockSize;
+      QuaxolSpec gridPos(cellPos);
+
+      if(outOpenBlock) {
+        *outOpenBlock = gridPos;
+      }
+
+      if(outPos) {
+        *outPos = gridPos.ToFloatCoords(Vec4f(), m_chunk->m_blockSize);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 inline int GetSign(float val) {
   if(signbit(val)) return -1;
   else return 1;
