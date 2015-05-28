@@ -13,6 +13,8 @@ Entity::Entity()
   
   m_componentBus.RegisterSignal(
       std::string("DeleteSelf"), this, &Entity::OnDeleteSelf);
+
+  m_orientation.storeIdentity();
 }
 
 Entity::~Entity() {

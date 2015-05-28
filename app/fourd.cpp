@@ -682,32 +682,75 @@ void Motion(int x, int y) {
   //printf("Motion x:%d y:%d\n", x, y);
 }
 
+void RaycastToOpenQuaxol() {
+  Vec4f position = g_camera.getCameraPos();
+  Vec4f ray = g_camera.getCameraForward();
+  ray *= 1000.0f;
+  float dist;
+
+  Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
+
+  static Entity* openEntity = NULL;
+  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+    hitPos = position + ray.normalized() * (dist * 0.9999f);
+
+    Vec4f cellPos(hitPos);
+    cellPos *= 1.0f / g_blockSize;
+    QuaxolSpec gridPos(cellPos);
+
+    Vec4f renderPos = gridPos.ToFloatCoords(Vec4f(), Vec4f(g_blockSize, g_blockSize, g_blockSize, g_blockSize));
+
+    if(!openEntity) {
+      openEntity = g_scene.AddEntity();
+      static Mesh addBlock;
+      addBlock.buildTesseract(g_blockSize, Vec4f(), Vec4f());
+      openEntity->Initialize(&addBlock, g_shader, NULL);
+    }
+    
+    openEntity->m_position = renderPos;
+    openEntity->m_pShader = g_shader;
+  } else {
+    if(openEntity) {
+      openEntity->m_pShader = NULL;      
+    }
+  }
+  
+}
+
+void RaycastToCollsion() {
+  Vec4f position = g_camera.getCameraPos();
+  Vec4f ray = g_camera.getCameraForward();
+  ray *= 1000.0f;
+  float dist;
+
+  Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
+
+  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+    hitPos = position + ray.normalized() * dist;
+  }
+  
+  if(!g_pointerEntity) {
+    g_pointerEntity = g_scene.AddEntity();
+    g_pointerEntity->Initialize(&tesseract, g_shader, NULL);
+    g_pointerEntity->m_orientation.storeScale(0.1f);
+    g_pointerEntity->m_position = hitPos;
+
+    g_pointerEntity->GetComponentBus().AddComponent(
+        new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+        -20.0f, true));
+  } else {
+    g_pointerEntity->m_position = hitPos;
+    g_pointerEntity->m_pShader = g_shader;
+  }
+}
+
 void UpdatePointerEntity() {
   if(g_camera.getMovementMode() == Camera::LOOK) {
-
-    Vec4f position = g_camera.getCameraPos();
-    Vec4f ray = g_camera.getCameraForward();
-    ray *= 1000.0f;
-    float dist;
-
-    Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
-
-    if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
-      hitPos = position + ray.normalized() * dist;
-    }
-  
-    if(!g_pointerEntity) {
-      g_pointerEntity = g_scene.AddEntity();
-      g_pointerEntity->Initialize(&tesseract, g_shader, NULL);
-      g_pointerEntity->m_orientation.storeScale(0.1f);
-      g_pointerEntity->m_position = hitPos;
-
-      g_pointerEntity->GetComponentBus().AddComponent(
-          new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
-          -20.0f, true));
+    static bool quaxolMode = true;
+    if(quaxolMode) {
+      RaycastToOpenQuaxol();
     } else {
-      g_pointerEntity->m_position = hitPos;
-      g_pointerEntity->m_pShader = g_shader;
+      RaycastToCollsion();
     }
   }
 }
