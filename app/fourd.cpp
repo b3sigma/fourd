@@ -357,6 +357,18 @@ void AddQuaxolUnderCursor() {
   }
 }
 
+void RemoveQuaxolUnderCursor() {
+  Vec4f position = g_camera.getCameraPos();
+  Vec4f ray = g_camera.getCameraForward();
+  ray *= 1000.0f;
+
+  QuaxolSpec gridPos;
+  if(g_scene.m_pPhysics->RayCastToPresentQuaxol(
+      position, ray, &gridPos, NULL /*hitPos*/)) {
+    g_scene.SetQuaxolAt(gridPos, false /*present*/);
+  }
+}
+
 void AddRaycastEntity() {
   Vec4f position = g_camera.getCameraPos();
   Vec4f ray = g_camera.getCameraForward();
@@ -611,24 +623,7 @@ void Update(int key, int x, int y) {
       AddTesseractLine();
     } break;
     case 'Z' : {
-      Entity* pEntity = g_scene.AddEntity();
-      // ugh need like a mesh manager and better approach to shader handling
-      pEntity->Initialize(&tesseract, g_shader, NULL);
-      pEntity->m_orientation.storeIdentity();
-
-      // Also put it in front of the camera.
-      Vec4f forwardDir = g_camera.getCameraForward();
-      forwardDir *= 50.0f;
-      pEntity->m_position = g_camera._cameraPos + forwardDir;
-
-      Vec4f tangentDir = g_camera.getCameraMatrix()[Camera::INSIDE];
-      tangentDir *= -50.0f;
-
-      pEntity->GetComponentBus().AddComponent(
-          new PeriodicMotion(10.0f /* duration */, 2.0f /* period */,
-              0.0f /* phase */, tangentDir));
-      pEntity->GetComponentBus().AddComponent(
-          new TimedDeath(13.0f /* duration */));
+      RemoveQuaxolUnderCursor();
     } break;
     case 'C' : {
       if (g_vr) {

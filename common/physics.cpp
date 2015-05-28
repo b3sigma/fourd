@@ -133,6 +133,33 @@ bool Physics::RayCastToOpenQuaxol(const Vec4f& position, const Vec4f& ray,
   return false;
 }
 
+bool Physics::RayCastToPresentQuaxol(const Vec4f& position, const Vec4f& ray,
+    QuaxolSpec* outPresentBlock, Vec4f* outPos) {
+  if(m_chunk) {
+    float outDist = FLT_MAX;
+    if(RayCastChunk(*m_chunk, position, ray, &outDist)) {
+      float offset = 1.00001f;
+      Vec4f hitPos = position + ray.normalized() * (outDist * offset);
+
+      Vec4f cellPos(hitPos);
+      cellPos = cellPos / m_chunk->m_blockSize;
+      QuaxolSpec gridPos(cellPos);
+
+      if(outPresentBlock) {
+        *outPresentBlock = gridPos;
+      }
+
+      if(outPos) {
+        *outPos = gridPos.ToFloatCoords(Vec4f(), m_chunk->m_blockSize);
+      }
+      return true;
+    }
+  }
+  return false;
+
+}
+
+
 inline int GetSign(float val) {
   if(signbit(val)) return -1;
   else return 1;
