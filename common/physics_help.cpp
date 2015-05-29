@@ -13,7 +13,7 @@ bool PhysicsHelp::RayToPlane(
 
   float startDotPlane = planeNormal.dot(localStart);
   float endDotPlane = planeNormal.dot(localEnd);
-  if(startDotPlane * endDotPlane >= 0.0f) {
+  if(startDotPlane * endDotPlane > 0.0f) {
     return false; // both on same side, no collision
   } else {
     if(outCollisionPoint || outDistance) {
@@ -39,7 +39,7 @@ bool PhysicsHelp::RayToAlignedBox(
   Vec4f end(start);
   end += ray;
   bool startWithinBox = WithinBox(min, max, start);
-  bool endWithinBox = WithinBox(min, start, end);
+  bool endWithinBox = WithinBox(min, max, end);
   if (startWithinBox && endWithinBox) return false; // uh?
 
   float smallestDist = 99999999.0f;

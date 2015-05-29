@@ -49,7 +49,7 @@ namespace fd {
         QuaxolSpec* outPresentBlock, Vec4f* outPos);
 
     bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
-    void ClampToGround(Vec4f* position);
+    void ClampToGround(Vec4f* position, Vec4f* velocity);
 
     bool RayCastChunk(const QuaxolChunk& chunk,
         const Vec4f& position, const Vec4f& ray, float* outDistance);

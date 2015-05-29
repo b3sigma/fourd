@@ -19,6 +19,7 @@
 #include "../common/chunkloader.h"
 #include "../common/physics.h"
 #include "../common/physics_help.h"
+#include "../common/raycast_shape.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/periodic_motion.h"
 #include "../common/components/physics_component.h"
@@ -598,9 +599,14 @@ void Update(int key, int x, int y) {
         //g_camera.setMovementMode(Camera::ORBIT);
         g_camera.setMovementMode(Camera::WALK);
         g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
-        g_camera.GetComponentBus().AddComponent(new PhysicsComponent(g_scene.m_pPhysics));
+        RaycastShape* shape = new RaycastShape(g_scene.m_pPhysics);
+        shape->AddCapsuleRays(g_blockSize);
+        PhysicsComponent* physicsComp =
+            new PhysicsComponent(g_scene.m_pPhysics, shape);
+        g_camera.GetComponentBus().AddComponent(physicsComp);
       } else {
         g_camera.setMovementMode(Camera::LOOK);
+        g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
       }
     } break;
     case ']' : { // ortho projection

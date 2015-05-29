@@ -3,6 +3,7 @@
 #include "../component.h"
 #include "../fourmath.h"
 #include "../physics.h"
+#include "../raycast_shape.h"
 
 namespace fd {
 
@@ -14,7 +15,8 @@ namespace fd {
   // Probably should factor into fixed step and render step later, but for now just step.
   class PhysicsComponent : public Component {
   public:
-    Physics* m_pPhysics;
+    Physics* m_pPhysics; // not owned
+    RaycastShape* m_pShape; //owned
 
     Vec4f m_velocity;
 
@@ -22,8 +24,11 @@ namespace fd {
     Vec4f* m_pOwnerPosition; // also need full vec4 for position.
   public:
 
-    PhysicsComponent(Physics* pPhys) : m_pPhysics(pPhys) {}
-    virtual ~PhysicsComponent() {}
+    PhysicsComponent(Physics* pPhys, RaycastShape* shape)
+        : m_pPhysics(pPhys), m_pShape(shape) {}
+    virtual ~PhysicsComponent() {
+      delete m_pShape;
+    }
 
     virtual void OnConnected() {
       static std::string BDATpos("position");
@@ -46,19 +51,32 @@ namespace fd {
     
     void OnStepSignal(float delta) {
       m_velocity += m_pPhysics->m_gravity * delta;
-      Vec4f deltaPos = m_velocity * delta;
-      float distance = 0.0f; 
-      if(m_pPhysics->RayCast(*m_pOwnerPosition, m_velocity, &distance)) {
-        if(deltaPos.lengthSq() > (distance*distance)) {
-          deltaPos = m_velocity.normalized() * (distance - m_pPhysics->m_cushion);
-        }
-      } 
-      
-      *m_pOwnerPosition += deltaPos;
+
+      Vec4f frameVelocity = m_velocity * delta;
+
+      // yeah it's becoming quickly clear that a slow progression of physics bits
+      // is the wrong way to proceed. Should just do a proper decoupled system
+      // where there are rigidbody + shape things in a physics scene.
+      Vec4f outImpulse;
+      if(m_pShape->GenerateImpulse(*m_pOwnerOrientation, *m_pOwnerPosition,
+          frameVelocity, outImpulse)) {
+        frameVelocity += outImpulse;
+      }
+      *m_pOwnerPosition += frameVelocity;
+
+      //float distance = 0.0f; 
+
+      //if(m_pPhysics->RayCast(*m_pOwnerPosition, m_velocity, &distance)) {
+      //  if(deltaPos.lengthSq() > (distance*distance)) {
+      //    deltaPos = m_velocity.normalized() * (distance - m_pPhysics->m_cushion);
+      //  }
+      //} 
+      //
+      //*m_pOwnerPosition += deltaPos;
       
       // right now movement can mess things up since we're doing direct set
       // so clamp to ground
-      m_pPhysics->ClampToGround(m_pOwnerPosition);
+      m_pPhysics->ClampToGround(m_pOwnerPosition, &m_velocity);
     }
   };
 

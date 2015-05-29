@@ -28,10 +28,15 @@ bool Physics::RayCastGround(
       NULL /* outCollisionPoint */, outDistance);
 }
 
-void Physics::ClampToGround(Vec4f* position) {
+void Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
   float dotGround = m_groundNormal.dot(*position);
   if(dotGround < 0.0f) {
     *position -= (m_groundNormal * dotGround);
+
+    float velDot = m_groundNormal.dot(*velocity);
+    if(velDot < 0.0f) {
+      *velocity -= (m_groundNormal * velDot);
+    }
   }
 }
 
@@ -464,11 +469,19 @@ void Physics::TestPhysics() {
   ray.set(-701.758179f, -701.228516f, -125.758827f, -0.000000000f);
   physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
 
-  //quaxols.emplace_back(12, 10, 13, 10);
-  //assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
-  //pos.set(140.621994f, 129.451874f, 131.667252f, 152.824280f);
-  //ray.set(-846.823059f, 495.832581f, 192.447861f, 0.00135995192f);
-  //assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
+  pos.set(40.5596008f, 19.8676262f, 0.000000000f, 4.50000000f);
+  ray.set(1.00000000f, 0.000000000f, -0.317290395f, 0.000000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
+  pos.set(0.500000000f, 0.500000000f, 15.5000000f, 4.50000000f);
+  ray.set(69.9288635f, 997.351501f, -19.9986229f, -0.000000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
+  // urrgh need to do the local clipping of ray to the box better
+  //pos.set(42.2373123f, 28.4113293f, 0.000000000f, 4.50000000f);
+  //ray.set(0.000000000f, 0.000000000f, -7.50906911e-005f, -10.0000000f);
+  //physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
 }
 
 } // namespace fd

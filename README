@@ -49,7 +49,6 @@ Game TODOs:
 ** Alpha test cleaner clipping?
 * cleanup rift positioning
 * auto shape gen
-* add simple creation/destruction tool
 * quaxol chunking
 * quaxol streaming
 * collision shapes
