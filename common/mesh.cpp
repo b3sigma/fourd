@@ -38,6 +38,26 @@ void Mesh::printIt() {
   }
 }
 
+void Mesh::populateVerts(const Vec4f& min, const Vec4f& max, int dim) {
+  assert(dim <= 4 && dim >= 2);
+  int numVerts = 1 << dim;
+  _verts.resize(0);
+  _verts.reserve(numVerts);
+  for (int i = 0; i < numVerts; i++) {
+    int possibleDim = dim - 1;
+    const int& mask = i;
+    Vec4f vert(min);
+    while (possibleDim >= 0) {
+      if (mask & (1 << possibleDim)) {
+        vert.set(possibleDim, max[possibleDim]);
+      }
+      possibleDim--;
+    }
+
+    _verts.push_back(vert);
+  }
+}
+
 void Mesh::populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& step) {
   assert(dim <= 4 && dim >= 2);
   int numVerts = 1 << dim;
@@ -163,7 +183,21 @@ void Mesh::buildQuaxolTesseract(float size) {
   addCube(0, 1, 2, 3, 4, 5, 6, 7); // w minus
 }
 
-// TODO: did I mention finding and using a good unit test framework?
+void Mesh::buildTesseract(const Vec4f& min, const Vec4f& max) {
+  populateVerts(min, max, 4 /*dim*/);
+
+  _indices.resize(0);
+  _indices.reserve(6 * 6 * 8);
+
+  addCube(1, 3, 5, 7, 9, 11, 13, 15); // x plus
+  addCube(0, 2, 4, 6, 8, 10, 12, 14); // x minus
+  addCube(2, 3, 6, 7, 10, 11, 14, 15); // y plus
+  addCube(0, 1, 4, 5, 8, 9, 12, 13); // y minus
+  addCube(4, 5, 6, 7, 12, 13, 14, 15); // z plus
+  addCube(0, 1, 2, 3, 8, 9, 10, 11); // z minus
+  addCube(8, 9, 10, 11, 12, 13, 14, 15); // w plus
+  addCube(0, 1, 2, 3, 4, 5, 6, 7); // w minus
+}
 
 void Mesh::buildTesseract(float size, Vec4f offset, Vec4f step) {
   buildCube(size, offset, step);

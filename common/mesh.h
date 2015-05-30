@@ -41,6 +41,7 @@ public:
   void buildQuad(float size, Vec4f offset, Vec4f step); // {4}
   void buildCube(float size, Vec4f offset, Vec4f step); // {4,3}
   void buildTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
+  void buildTesseract(const Vec4f& min, const Vec4f& max);
   void buildReferenceTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
   void buildFourTetrad(float size, Vec4f offset); // 5-cell {3,3,3}
   void buildCircle(float radius, Vec4f center, Vec4f right, Vec4f up, int faceCount);
@@ -61,6 +62,7 @@ public:
   
 private:
   void populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& step);
+  void populateVerts(const Vec4f& min, const Vec4f& max, int dim);
   void buildNormals(const VecList& verts, const IndexList& indices, VecList& normals);
   void addTri(int a, int b, int c);
   void addQuad(int a, int b, int c, int d);

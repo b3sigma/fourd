@@ -70,6 +70,7 @@ namespace fd {
     void SetPosition(const Vec4f* pPosition) const;
     GLint GetColorHandle() const;
 
+    bool AddDynamicMeshCommonSubShaders();
     bool AddSubShader(const char* filename, GLenum shaderType);
     bool LoadFromFile(const char* refName, const char* vertexFile, const char* pixelFile);
     void Release();

@@ -97,8 +97,7 @@ bool LoadShader(const char* shaderName) {
     shaderMem.reset(pShader);
   }
 
-  std::string commonVert = shaderDir + std::string("cvCommonTransform.glsl");
-  pShader->AddSubShader(commonVert.c_str(), GL_VERTEX_SHADER); 
+  pShader->AddDynamicMeshCommonSubShaders();
   if(!pShader->LoadFromFile(baseNameWithExt.c_str(), vertName.c_str(), fragName.c_str())) {
     printf("Failed loading shader!\n");
     return false;
@@ -205,6 +204,7 @@ bool Initialize() {
   g_renderer.AddScene(&g_scene);
   g_scene.m_pQuaxolMesh = &tesseract;
   g_scene.m_pQuaxolShader = g_shader;
+  g_scene.Initialize();
 
   {
     Timer texTimer(std::string("texture loading"));

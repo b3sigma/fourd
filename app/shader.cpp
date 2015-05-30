@@ -224,6 +224,9 @@ bool Shader::CheckGLShaderLinkStatus(
   }
 }
 
+bool Shader::AddDynamicMeshCommonSubShaders() {
+  return AddSubShader("data\\cvCommonTransform.glsl", GL_VERTEX_SHADER);
+}
 
 bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
   std::string buffer;

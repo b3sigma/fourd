@@ -22,23 +22,41 @@
 
 //////////////////////
 // Function list
-FDSFIDEF std::string fd_file_to_string(const char* filename);
+FDSFIDEF bool fd_file_to_string(const char* filename, std::string& outBuffer);
+FDSFIDEF bool fd_file_to_byte(const char* filename,
+    unsigned char** outBuffer, size_t& outSize);
 
 #endif // FD_SIMPLE_FILE_HEADER
 
 #ifdef FD_SIMPLE_FILE_IMPLEMENTATION
 
-bool fd_file_to_string(const char* filename, std::string& buffer) {
+bool fd_file_to_string(const char* filename, std::string& outBuffer) {
   if (NULL == filename) return false;
   std::ifstream file(filename, std::ios::in | std::ios::binary);
   if (!file || !file.is_open()) return false;
   
   file.seekg(0, std::ios::end);
-  buffer.resize(static_cast<unsigned int>(file.tellg()));
+  outBuffer.resize(static_cast<unsigned int>(file.tellg()));
   file.seekg(0, std::ios::beg);
-  file.read(&buffer[0], buffer.size());
+  file.read(&outBuffer[0], outBuffer.size());
   file.close();
   return true;
 }
+
+bool fd_file_to_byte(const char* filename,
+    unsigned char** outBuffer, unsigned int& outSize) {
+  if (NULL == filename) return false;
+  std::ifstream file(filename, std::ios::in | std::ios::binary);
+  if (!file || !file.is_open()) return false;
+  
+  file.seekg(0, std::ios::end);
+  outSize = (size_t)file.tellg();
+  *outBuffer = new unsigned char[outSize];
+  file.seekg(0, std::ios::beg);
+  file.read((char*)*outBuffer, outSize);
+  file.close();
+  return true;
+}
+
 
 #endif // FD_SIMPLE_FILE_IMPLEMENTATION

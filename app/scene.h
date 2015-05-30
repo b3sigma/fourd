@@ -26,7 +26,8 @@ protected:
   typedef std::vector<Vec4f> ColorList;
   ColorList m_colorArray;
 
-  //Mesh m_groundPlane;
+  Mesh* m_pGroundPlane; // owned
+  Shader* m_pGroundShader;
 
   ComponentBus m_componentBus;
 
@@ -49,28 +50,28 @@ public:
   Scene();
   ~Scene();
 
+  bool Initialize();
   void AddLoadedChunk(const ChunkLoader* pChunk);
-
+  
   void SetQuaxolAt(const QuaxolSpec& pos, bool present);
 
-  void AddTexture(Texture* pTex);
-
+  // ugh this is all wrong, not going to be shader sorted, etc
+  // but let's just do the stupid thing first
+  void RenderEntitiesStupidly(Camera* pCamera);
+  void Step(float fDelta);
+  
   // Let the scene do the allocation to allow for mem opt
   // Some kind of entity def that at least includes shader, texture and mesh
   // types would be better for this as we could pre-sort by shader/texture/mesh
   Entity* AddEntity();
   void RemoveEntity(Entity* pEntity);
-
   void OnDeleteEntity(Entity* pEntity);
-
-  void Step(float fDelta);
-
-  // ugh this is all wrong, not going to be shader sorted, etc
-  // but let's just do the stupid thing first
-  void RenderEntitiesStupidly(Camera* pCamera);
 
   // Hacky garbage, should be on the mesh/quaxol
   void BuildColorArray();
+  void AddTexture(Texture* pTex);
+
+  void RenderGroundPlane(Camera* pCamera);
 
 protected:
   // horrible way to index textures

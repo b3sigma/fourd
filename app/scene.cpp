@@ -22,19 +22,40 @@ Scene::Scene()
   , m_pQuaxolMesh(NULL)
   , m_pQuaxolBuffer(NULL)
   , m_pQuaxolChunk(NULL)
+  , m_pGroundPlane(NULL)
 {
   BuildColorArray();
 
   m_pPhysics = new Physics();
 
-  m_componentBus.RegisterSignal(std::string("EntityDeleted"), this, &Scene::RemoveEntity);  // notification from entity that it is being deleted
-  m_componentBus.RegisterSignal(std::string("DeleteEntity"), this, &Scene::OnDeleteEntity); // command from entity to delete it
+  m_componentBus.RegisterSignal(std::string("EntityDeleted"), this,
+      &Scene::RemoveEntity);  // notification from entity that it is being deleted
+  m_componentBus.RegisterSignal(std::string("DeleteEntity"), this,
+      &Scene::OnDeleteEntity); // command from entity to delete it
 }
 
 Scene::~Scene() {
   delete m_pQuaxolBuffer;
   delete m_pQuaxolChunk;
   delete m_pPhysics;
+  delete m_pGroundPlane;
+}
+
+bool Scene::Initialize() {
+  m_pGroundPlane = new Mesh;
+  float extents = 1000.0f;
+  Vec4f minGround(-extents, -extents, -extents, -extents);
+  Vec4f maxGround(extents, extents, 0.0f, extents);
+  m_pGroundPlane->buildTesseract(minGround, maxGround);
+
+  m_pGroundShader = new Shader();
+  m_pGroundShader->AddDynamicMeshCommonSubShaders();
+  if(!m_pGroundShader->LoadFromFile(
+      "Ground", "data\\vertGround.glsl", "data\\fragGround.glsl")) {
+    return false;
+  }
+
+  return true;
 }
 
 void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
@@ -101,43 +122,61 @@ void Scene::Step(float fDelta) {
   m_toBeDeleted.resize(0);
 }
 
+void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
+    const Vec4f& position, const Mat4f& orientation) {
+  if(pShader == NULL) return; // should go away when we sort
+  if(pMesh == NULL) return; // should go away when we sort
+
+  pShader->StartUsing();
+  pShader->SetPosition(&position);
+  pShader->SetOrientation(&orientation);
+  pShader->SetCameraParams(pCamera);
+
+  // this is getting ugly to look at in a hurry
+  // need to do buffers soon
+  int numTris = pMesh->getNumberTriangles();
+  int startTriangle = 0;
+  int endTriangle = numTris;
+  glBegin(GL_TRIANGLES);
+  Vec4f a, b, c;
+  //int colorIndex = 0;
+  for (int t = startTriangle; t < endTriangle && t < numTris; t++) {
+    //glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
+    pMesh->getTriangle(t, a, b, c);
+    glVertex4fv(a.raw());
+    glVertex4fv(b.raw());
+    glVertex4fv(c.raw());
+    //if ((t+1) % 2 == 0) {
+    //  colorIndex = (colorIndex + 1) % colorArray.size();
+    //}
+  }
+  glEnd();
+  pShader->StopUsing();
+}
+
+void Scene::RenderGroundPlane(Camera* pCamera) {
+  static bool renderGroundPlane = false;
+  if(!renderGroundPlane)
+    return;
+
+  static Mat4f groundOrientation = Mat4f().storeIdentity();
+  static Vec4f groundPosition = Vec4f().storeZero();
+  RenderMesh(pCamera, m_pGroundShader, m_pGroundPlane,
+      groundPosition, groundOrientation);
+}
+
 // ugh this is all wrong, not going to be shader sorted, etc
 // but let's just do the stupid thing first
 // Also, shouldn't this be in a render class instead of scene?
 void Scene::RenderEntitiesStupidly(Camera* pCamera) {
+  RenderGroundPlane(pCamera);
+
   for(const auto pEntity : m_dynamicEntities) {
     //TODO: cache shader transitions? or does opengl kind of handle it
     // as long as they are sorted?
-    Shader* pShader = pEntity->m_pShader;
-    if(pShader == NULL) continue; // should go away when we sort
-    Mesh* pMesh = pEntity->m_pMesh;
-    if(pMesh == NULL) continue; // should go away when we sort
-
-    pShader->StartUsing();
-    pShader->SetPosition(&(pEntity->m_position));
-    pShader->SetOrientation(&(pEntity->m_orientation));
-    pShader->SetCameraParams(pCamera);
-
-    // this is getting ugly to look at in a hurry
-    // need to do buffers soon
-    int numTris = pMesh->getNumberTriangles();
-    int startTriangle = 0;
-    int endTriangle = numTris;
-    glBegin(GL_TRIANGLES);
-    Vec4f a, b, c;
-    //int colorIndex = 0;
-    for (int t = startTriangle; t < endTriangle && t < numTris; t++) {
-      //glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
-      pMesh->getTriangle(t, a, b, c);
-      glVertex4fv(a.raw());
-      glVertex4fv(b.raw());
-      glVertex4fv(c.raw());
-      //if ((t+1) % 2 == 0) {
-      //  colorIndex = (colorIndex + 1) % colorArray.size();
-      //}
-    }
-    glEnd();
-    pShader->StopUsing();
+    //TODO: sort by shader transition
+    RenderMesh(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
+        pEntity->m_position, pEntity->m_orientation);
   }
 
   if(!m_pQuaxolShader || !m_pQuaxolMesh)
@@ -162,7 +201,7 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
   }
 
   static bool renderChunk = true;
-  if(renderChunk) {
+  if(renderChunk && m_pQuaxolChunk) {
     m_pQuaxolShader->SetPosition(&Vec4f(0,0,0,0));
     GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
 
