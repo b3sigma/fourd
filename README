@@ -27,6 +27,10 @@ u/j = rotate between inside up
 i/k = animated pi/2 rotation between inside right (seems like miegakure button)
 o/l = animated pi/2 rotation between inside up
 
+VR:
+V = enable VR (rift only)
+F = fullscreen
+
 Rendering UI:
 0-9&* load different base shapes and different levels. (Default is quaxols in 4d.)
 !-^) load different shaders and alpha/depth options
@@ -37,8 +41,11 @@ n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
 ] toggles w-ortho and w-projection (w-ortho can also be set by far/near ratio=1)
 
 Action UI (vague due to being in flux):
-z adds some quaxols
-Z adds some dynamic entites
+z add quaxol
+Z remove quaxol
+X add bunch of quaxols in a line
+` lock mouse to window
+Esc quit
 
 Game TODOs:
 * quaxol texturing, color
