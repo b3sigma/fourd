@@ -4,22 +4,9 @@
 #include <memory>
 
 #include "fd_simple_file.h"
+#include "filedata.h"
 
 namespace fd {
-
-  FileData* FileData::LoadFromFile(const char* filename) {
-    std::unique_ptr<FileData> file(new FileData);
-
-    unsigned char* data = NULL;
-    size_t dataSize;
-    if(!fd_file_to_byte(filename, &data, dataSize)) {
-      return NULL;
-    }
-
-    file->m_data = data;
-    file->m_dataSize = dataSize;
-    return file.release();
-  }
 
   bool ChunkLoader::LoadFromTextFile(const char* filename) {
 #pragma warning(push)
@@ -51,10 +38,25 @@ namespace fd {
     if(strstr(filename, ".txt")) {
       return LoadFromTextFile(filename);
     } else {
-      return false;
+      std::unique_ptr<FileData> file(FileData::LoadFromFile(filename));
+      if(!file.get())
+        return false;
+
+      if(!LoadFromFileData(file.get()))
+        return false;
+
+      return true;
     }
 
     return true;
+  }
+
+  bool ChunkLoader::LoadFromFileData(const FileData* file) {
+    QuaxolChunk* chunk = new QuaxolChunk(Vec4f(), Vec4f(10.0f, 10.0f, 10.0f, 10.0f));
+
+    const int fileHeader = 0xdeadb00b;
+
+    return false;
   }
 
 } // namespace fd

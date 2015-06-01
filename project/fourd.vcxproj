@@ -97,6 +97,7 @@
     <ClCompile Include="..\app\win32_platform.cpp" />
     <ClCompile Include="..\common\camera.cpp" />
     <ClCompile Include="..\common\chunkloader.cpp" />
+    <ClCompile Include="..\common\filedata.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />
@@ -121,6 +122,7 @@
     <ClInclude Include="..\common\components\physics_component.h" />
     <ClInclude Include="..\common\components\timed_death.h" />
     <ClInclude Include="..\common\fd_simple_file.h" />
+    <ClInclude Include="..\common\filedata.h" />
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\mesh.h" />
     <ClInclude Include="..\common\physics.h" />
