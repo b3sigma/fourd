@@ -51,8 +51,9 @@ public:
   ~Scene();
 
   bool Initialize();
-  void AddLoadedChunk(const ChunkLoader* pChunk);
-  
+  //void AddLoadedChunk(const ChunkLoader* pChunk);
+  void TakeLoadedChunk(QuaxolChunk* pChunk);
+
   void SetQuaxolAt(const QuaxolSpec& pos, bool present);
 
   // ugh this is all wrong, not going to be shader sorted, etc

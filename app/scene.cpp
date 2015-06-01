@@ -58,16 +58,22 @@ bool Scene::Initialize() {
   return true;
 }
 
-void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
-  m_quaxols.assign(pChunk->quaxols_.begin(), pChunk->quaxols_.end());
-
-  QuaxolSpec offset(0, 0, 0, 0);
-  Vec4f position(0, 0, 0, 0); // need to fill these out with appropriate values
-  Vec4f blockSize(10.0f, 10.0f, 10.0f, 10.0f);
-  m_pQuaxolChunk = new QuaxolChunk(position, blockSize);
-  m_pQuaxolChunk->LoadFromList(&m_quaxols, &offset);
+void Scene::TakeLoadedChunk(QuaxolChunk* pChunk) {
+  m_pQuaxolChunk = pChunk;
   m_pPhysics->AddChunk(m_pQuaxolChunk);
+
 }
+
+//void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
+//  m_quaxols.assign(pChunk->quaxols_.begin(), pChunk->quaxols_.end());
+//
+//  QuaxolSpec offset(0, 0, 0, 0);
+//  Vec4f position(0, 0, 0, 0); // need to fill these out with appropriate values
+//  Vec4f blockSize(10.0f, 10.0f, 10.0f, 10.0f);
+//  m_pQuaxolChunk = new QuaxolChunk(position, blockSize);
+//  m_pQuaxolChunk->LoadFromList(&m_quaxols, &offset);
+//  m_pPhysics->AddChunk(m_pQuaxolChunk);
+//}
 
 void Scene::SetQuaxolAt(const QuaxolSpec& pos, bool present) {
   if(!m_pQuaxolChunk) return;

@@ -10,6 +10,7 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
 
 #ifndef FD_SIMPLE_FILE_HEADER
 #define FD_SIMPLE_FILE_HEADER
@@ -25,6 +26,10 @@
 FDSFIDEF bool fd_file_to_string(const char* filename, std::string& outBuffer);
 FDSFIDEF bool fd_file_to_byte(const char* filename,
     unsigned char** outBuffer, size_t& outSize);
+FDSFIDEF bool fd_file_to_vec(const char* filename,
+    std::vector<unsigned char>& outBuffer);
+FDSFIDEF bool fd_file_write_vec(const char* filename,
+    std::vector<unsigned char>& buffer);
 
 #endif // FD_SIMPLE_FILE_HEADER
 
@@ -54,6 +59,32 @@ bool fd_file_to_byte(const char* filename,
   *outBuffer = new unsigned char[outSize];
   file.seekg(0, std::ios::beg);
   file.read((char*)*outBuffer, outSize);
+  file.close();
+  return true;
+}
+
+bool fd_file_to_vec(const char* filename,
+    std::vector<unsigned char>& outBuffer) {
+  if (NULL == filename) return false;
+  std::ifstream file(filename, std::ios::in | std::ios::binary);
+  if (!file || !file.is_open()) return false;
+  
+  file.seekg(0, std::ios::end);
+  outBuffer.resize((size_t)file.tellg());
+  file.seekg(0, std::ios::beg);
+  file.read((char*)&(outBuffer[0]), outBuffer.size());
+  file.close();
+  return true;
+}
+
+bool fd_file_write_vec(const char* filename,
+    std::vector<unsigned char>& buffer) {
+  if (NULL == filename) return false;
+
+  std::ofstream file(filename, std::ios::out | std::ios::binary);
+  if(!file || !file.is_open()) return false;
+
+  file.write((char*)&buffer[0], buffer.size());
   file.close();
   return true;
 }

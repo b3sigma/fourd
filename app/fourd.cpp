@@ -113,30 +113,54 @@ bool LoadShader(const char* shaderName) {
   return true;
 }
 
+std::string g_levelPath = "data\\levels\\";
+bool SaveLevel(const char* levelName) {
+  std::string nameExt = ".bin";
+  std::string fullname = g_levelPath + std::string(levelName) + nameExt;
+
+  ChunkLoader chunkLoader;
+  if(chunkLoader.SaveToFile(fullname.c_str(), g_scene.m_pQuaxolChunk)) {
+    printf("Saved out %s\n", fullname.c_str());
+    return true;
+  }
+  return false;
+}
+
 bool LoadLevel(const char* levelName) {
+  Timer timer(std::string("LoadLevel"));
+
   static std::string g_currentLevel;
 
-  std::string levelPath = "data\\levels\\";
-  std::string nameExt = ".txt"; // This is going to get old soon
+  std::string nameExt = ".txt"; // default if unspecified
 
   std::string baseNameWithExt;
   if(levelName == NULL) {
-    std::string search = levelPath + "*" + nameExt;
+    std::string search = g_levelPath + "*" + nameExt;
     const char* currentLevel = (g_currentLevel.empty()) ? NULL : g_currentLevel.c_str();
     if(!::fd::Platform::GetNextFileName(search.c_str(), currentLevel, baseNameWithExt)) {
       return false;
     }
   } else {
     std::string nameBase(levelName);
-    baseNameWithExt = nameBase + nameExt;
+    
+    std::string binExt(".bin");
+    size_t binExtStart = nameBase.rfind(binExt);
+    if(binExtStart != std::string::npos) {
+      baseNameWithExt = nameBase;
+    } else {
+      baseNameWithExt = nameBase + nameExt;
+    }
   }
-  std::string fullName = levelPath + baseNameWithExt;
+  std::string fullName = g_levelPath + baseNameWithExt;
 
-  ChunkLoader chunks;
-  if (chunks.LoadFromFile(fullName.c_str())) {
-    g_scene.AddLoadedChunk(&chunks);
-    printf("Level (%s) loaded %d quaxols!\n",
-        fullName.c_str(), (int)g_scene.m_quaxols.size());
+  ChunkLoader chunkLoader;
+  QuaxolChunk* chunk = chunkLoader.LoadFromFile(fullName.c_str());
+  if (chunk) {
+    chunk->UpdateRendering();
+    g_scene.TakeLoadedChunk(chunk);
+    //g_scene.AddLoadedChunk(&chunks);
+    printf("Level (%s) loaded!\n",
+        fullName.c_str());
     printf("Had %d verts and %d tris\n", g_scene.m_pQuaxolChunk->m_verts.size(),
         g_scene.m_pQuaxolChunk->m_indices.size() / 3);
 
@@ -196,8 +220,9 @@ bool Initialize() {
     exit(-1);
   }
 
-  
-  LoadLevel("4d_double_base");
+
+  LoadLevel("current.bin");
+  //LoadLevel("4d_double_base");
   //LoadLevel("plus_minus_centered");
   //LoadLevel("pillar");
   g_renderer.AddCamera(&g_camera);
@@ -452,6 +477,12 @@ void Update(int key, int x, int y) {
       //LoadLevel("single");
     } break;
     case ')' : {
+      LoadLevel("current.bin");
+    } break;
+    case '_' : {
+      SaveLevel("current");
+    } break;
+    case '+' : {
       static bool fill = false;
       fill = !fill;
       if (fill) {
