@@ -246,6 +246,7 @@ bool Initialize() {
         g_scene.AddTexture(pTex.release());
       }
     }
+
     WasGLErrorPlusPrint();
   }
 

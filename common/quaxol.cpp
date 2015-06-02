@@ -42,8 +42,11 @@ bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* off
       continue;
     }
 
+    int autoType = (local.w * 4 + (local.x % 3)) % 3;
+
     Block& block = GetBlock(local.x, local.y, local.z, local.w);
     block.present = !startFilled;
+    block.type = autoType;
   }
 
   UpdateRendering();
@@ -160,9 +163,11 @@ void CanonicalCube::addFlaggedTesseract(IndexList& indices, VertDirs& vertDirs, 
   }
 }
 
-void CanonicalCube::populateVerts(float size, VecList& verts, VertDirs& vertDirs) {
+void CanonicalCube::populateVerts(float size, QVertList& packVerts, VecList& verts, VertDirs& vertDirs) {
   const int dim = 4;
   int numVerts = 1 << dim;
+  packVerts.resize(0);
+  packVerts.reserve(numVerts);
   verts.resize(0);
   verts.reserve(numVerts);
   vertDirs.resize(0);
@@ -170,10 +175,16 @@ void CanonicalCube::populateVerts(float size, VecList& verts, VertDirs& vertDirs
   for (int i = 0; i < numVerts; i++) {
     int possibleDim = dim - 1;
     const int& mask = i;
+    
+    QuaxolVert packVert;
+    packVert._position = 0;
+    packVert._uv_ao = 0;
     Vec4f vert;
+    
     unsigned char dirs = 0;
     while (possibleDim >= 0) {
       if (mask & (1 << possibleDim)) {
+        packVert._position |= (1 << (possibleDim * c_quaxolPositionBits));
         vert.set(possibleDim, size);
         dirs |= (1 << ((possibleDim * 2) + 0));
       } else {
@@ -184,14 +195,17 @@ void CanonicalCube::populateVerts(float size, VecList& verts, VertDirs& vertDirs
 
     verts.push_back(vert);
     vertDirs.push_back(dirs);
+    packVerts.push_back(packVert);
   }
 }
 
 CanonicalCube QuaxolChunk::s_canonicalCubesByFlag[RenderBlock::NumDirCombinations];
 void QuaxolChunk::BuildCanonicalCubesByFlag(float blockSize) {
   VecList tessVerts;
+  QVertList packVerts;
   CanonicalCube::VertDirs vertDirs;
-  CanonicalCube::populateVerts(blockSize, tessVerts, vertDirs);
+  assert(sizeof(QuaxolVert) == 4);
+  CanonicalCube::populateVerts(blockSize, packVerts, tessVerts, vertDirs);
 
   IndexList indices;
   indices.reserve(8 * 6 * 3 * 2);
@@ -217,6 +231,7 @@ void QuaxolChunk::BuildCanonicalCubesByFlag(float blockSize) {
       if(oldToNewIt == oldToNew.end()) {
         newIndex = (int)cube.m_verts.size();
         cube.m_verts.emplace_back(tessVerts[oldIndex]);
+        cube.m_packVerts.emplace_back(packVerts[oldIndex]);
         oldToNew.insert(std::make_pair(oldIndex, newIndex));
       } else {
         newIndex = oldToNewIt->second;
@@ -273,7 +288,7 @@ void QuaxolChunk::BuildCanonicalCubesByDir(float blockSize) {
 }
 
 void QuaxolChunk::AddRenderCubeByFlag(
-    const Vec4f& vertOffset, unsigned char connectFlags) {
+    const Vec4f& vertOffset, const QuaxolVert& packOffset, unsigned char connectFlags) {
   CanonicalCube& cube = s_canonicalCubesByFlag[connectFlags];
   assert(cube.m_connectFlags == connectFlags); // call BuildCanonicalCubesByFlag
 
@@ -281,10 +296,15 @@ void QuaxolChunk::AddRenderCubeByFlag(
   for(auto vert : cube.m_verts) {
     m_verts.emplace_back(vert + vertOffset);
   }
+  for(auto vert : cube.m_packVerts) {
+    QuaxolVert movedVert = packOffset;
+    //as long there isn't overflow this should be fine
+    movedVert._position += vert._position;
+    m_packVerts.emplace_back(movedVert);
+  }
   for(auto index : cube.m_indices) {
     m_indices.emplace_back(index + indexOffset);
   }
-
 }
 
 void QuaxolChunk::AddRenderCubeByDir(
@@ -307,21 +327,31 @@ void QuaxolChunk::UpdateTrisFromConnects() {
   int expectedTris = m_cubeCount * 12; // probably should do quads?
   m_verts.resize(0);
   m_verts.reserve(expectedVerts);
+  m_packVerts.resize(0);
+  m_packVerts.reserve(expectedVerts);
   m_indices.resize(0);
   m_indices.reserve(expectedTris * 3);
 
   Vec4f zeroOffset(0,0,0,0);
 
+  QuaxolVert offsetPackVert;
+
   for (int x = 0; x < c_mxSz; ++x) {
+    offsetPackVert._pos_x = x;
     for (int y = 0; y < c_mxSz; ++y) {
+      offsetPackVert._pos_y = y;
       for (int z = 0; z < c_mxSz; ++z) {
+        offsetPackVert._pos_z = z;
         for (int w = 0; w < c_mxSz; ++w) {
+          offsetPackVert._pos_w = w;
+
+          const Block& block = m_blocks[x][y][z][w];
           const RenderBlock& rBlock = m_connects[x][y][z][w];
           QuaxolSpec blockSpec(x, y, z, w);
-          // I guess do offset at render time
-          // Begs the question of whether to do scaling also
+
+          offsetPackVert._uvInd = block.type;
           Vec4f blockCoords = blockSpec.ToFloatCoords(zeroOffset, m_blockSize);
-          AddRenderCubeByFlag(blockCoords, rBlock.connectFlags);
+          AddRenderCubeByFlag(blockCoords, offsetPackVert, rBlock.connectFlags);
 
           //for(int c = 0; c < RenderBlock::NumDirs; ++c) {
           //  if(rBlock.connectFlags & (1 << c)) {

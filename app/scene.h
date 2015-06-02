@@ -39,6 +39,7 @@ public:
   TVecQuaxol m_quaxols;
   Shader* m_pQuaxolShader; //not owned
   Mesh* m_pQuaxolMesh; //not owned
+  Texture* m_pQuaxolAtlas;
 
   typedef std::vector<Texture*> TTextureList;
   TTextureList m_texList;

@@ -67,6 +67,8 @@ namespace fd {
     std::unique_ptr<QuaxolChunk> chunk(
         new QuaxolChunk(position, blockSize));
 
+    assert(sizeof(Block) == 2);
+
     // to future me who reordered or added to blocks, hahah!
     file->readRaw((unsigned char*)&(chunk->m_blocks), sizeof(chunk->m_blocks));
 

@@ -22,6 +22,7 @@ Scene::Scene()
   , m_pQuaxolMesh(NULL)
   , m_pQuaxolBuffer(NULL)
   , m_pQuaxolChunk(NULL)
+  , m_pQuaxolAtlas(NULL)
   , m_pGroundPlane(NULL)
 {
   BuildColorArray();
@@ -55,13 +56,17 @@ bool Scene::Initialize() {
     return false;
   }
 
+  m_pQuaxolAtlas = new Texture();
+  if(!m_pQuaxolAtlas->LoadFromFile("data\\textures\\atlas.png")) {
+    return false;
+  }
+
   return true;
 }
 
 void Scene::TakeLoadedChunk(QuaxolChunk* pChunk) {
   m_pQuaxolChunk = pChunk;
   m_pPhysics->AddChunk(m_pQuaxolChunk);
-
 }
 
 //void Scene::AddLoadedChunk(const ChunkLoader* pChunk) {
@@ -208,6 +213,13 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
 
   static bool renderChunk = true;
   if(renderChunk && m_pQuaxolChunk) {
+    GLint hTexCoord = m_pQuaxolShader->getAttrib("vertCoord");
+    if(m_pQuaxolAtlas) {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, m_pQuaxolAtlas->GetTextureID());
+      glUniform1i(hTex0, 0);
+    }
+
     m_pQuaxolShader->SetPosition(&Vec4f(0,0,0,0));
     GLuint colorHandle = m_pQuaxolShader->GetColorHandle();
 
@@ -215,12 +227,16 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
 
     IndexList& indices = m_pQuaxolChunk->m_indices; 
     VecList& verts = m_pQuaxolChunk->m_verts;
+    QVertList& packVerts = m_pQuaxolChunk->m_packVerts;
     int numTris = (int)indices.size() / 3;
     int currentIndex = 0;
     for(int tri = 0; tri < numTris; ++tri) {
 
+      const QuaxolVert& vA = packVerts[indices[currentIndex]];
       const Vec4f& a = verts[indices[currentIndex++]]; 
+      const QuaxolVert& vB = packVerts[indices[currentIndex]];
       const Vec4f& b = verts[indices[currentIndex++]]; 
+      const QuaxolVert& vC = packVerts[indices[currentIndex]];
       const Vec4f& c = verts[indices[currentIndex++]]; 
 
       if(colorHandle != -1) {
@@ -229,10 +245,29 @@ void Scene::RenderEntitiesStupidly(Camera* pCamera) {
         glVertexAttrib4fv(colorHandle,
             m_colorArray[colorIndex].raw());
       }
-
-      glVertex4fv(a.raw());
-      glVertex4fv(b.raw());
-      glVertex4fv(c.raw());
+      
+      if(hTexCoord != -1) {
+        const float invTexSteps = 1.0f / 16.0f;
+        if (tri % 2 == 0) {
+          glVertexAttrib2f(hTexCoord, (float)((vA._uvInd % 8) + 0) * invTexSteps, (float)((vA._uvInd / 8) + 0) * invTexSteps);
+          glVertex4fv(a.raw());
+          glVertexAttrib2f(hTexCoord, (float)((vB._uvInd % 8) + 1) * invTexSteps, (float)((vB._uvInd / 8) + 0) * invTexSteps);
+          glVertex4fv(b.raw());
+          glVertexAttrib2f(hTexCoord, (float)((vC._uvInd % 8) + 0) * invTexSteps, (float)((vC._uvInd / 8) + 1) * invTexSteps);
+          glVertex4fv(c.raw());
+        } else {
+          glVertexAttrib2f(hTexCoord, (float)((vA._uvInd % 8) + 0) * invTexSteps, (float)((vA._uvInd / 8) + 1) * invTexSteps);
+          glVertex4fv(a.raw());
+          glVertexAttrib2f(hTexCoord, (float)((vB._uvInd % 8) + 1) * invTexSteps, (float)((vB._uvInd / 8) + 0) * invTexSteps);
+          glVertex4fv(b.raw());
+          glVertexAttrib2f(hTexCoord, (float)((vC._uvInd % 8) + 1) * invTexSteps, (float)((vC._uvInd / 8) + 1) * invTexSteps);
+          glVertex4fv(c.raw());
+        }
+      } else {
+        glVertex4fv(a.raw());
+        glVertex4fv(b.raw());
+        glVertex4fv(c.raw());
+      }
     }
     glEnd();
 

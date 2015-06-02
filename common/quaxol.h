@@ -47,8 +47,9 @@ namespace fd {
 
 
   struct Block {
-    // bit pack this shortly, but let's get it running first
-    bool present;
+    bool present : 1;
+    unsigned char color : 7; 
+    unsigned char type : 8;
   };
   
   struct RenderBlock {
@@ -78,14 +79,26 @@ namespace fd {
     unsigned char connectFlags;
   };
 
-
   // using 8 byte verts, 2 byte indices
   // tesseract: 16 verts * 8 bytes = 128 vert bytes
   // tri indices: 8 cubes * 6 faces * 2 tris * 3 indices * 2 bytes = 576 index bytes
   // so tri indices + verts = 704 bytes
+  const int c_quaxolPositionBits = 5;
   struct QuaxolVert {
-    int _position; // 8 bits per x,y,z,w
-    int _uv_color_ao; // 8 bits u,v, 8 bit color, 8 bit ao
+    union {
+      struct {
+        int _position : 20; // 5 bits per x,y,z,w
+        int _uv_ao : 12; // 6 bits uv, 6 bit ao
+      };
+      struct {
+        int _pos_x : 5;
+        int _pos_y : 5;
+        int _pos_z : 5;
+        int _pos_w : 5;
+        int _uvInd : 6;
+        int _ao : 6;
+      };
+    };
   };
   typedef ::std::vector<QuaxolVert> QVertList;
 
@@ -93,6 +106,7 @@ namespace fd {
   typedef ::std::vector<int> IndexList;
   
   struct CanonicalCube {
+    QVertList m_packVerts;
     VecList m_verts;
     IndexList m_indices;
     RenderBlock::Dir m_dir; // used by dir
@@ -100,7 +114,7 @@ namespace fd {
     unsigned char m_connectFlags; // used by flag
 
     typedef ::std::vector<unsigned char> VertDirs;
-    static void populateVerts(float size, VecList& verts, VertDirs& vertDirs);
+    static void populateVerts(float size, QVertList& packVerts, VecList& verts, VertDirs& vertDirs);
     static void addFlaggedTesseract(IndexList& indices, VertDirs& vertDirs, unsigned char flags);
     static void addFlaggedCube(IndexList& indices, VertDirs& vertDirs, unsigned char flags, int a, int b, int c, int d, int e, int f, int g, int h);
     static void addFlaggedQuad(IndexList& indices, VertDirs& vertDirs, unsigned char flags, int a, int b, int c, int d);
@@ -118,6 +132,7 @@ namespace fd {
     static CanonicalCube s_canonicalCubesByFlag[RenderBlock::NumDirCombinations];
     static CanonicalCube s_canonicalCubesByDir[RenderBlock::NumDirs];
 
+    QVertList m_packVerts;
     VecList m_verts;
     IndexList m_indices;
 
@@ -173,9 +188,9 @@ namespace fd {
     void UpdateConnects();
     void UpdateTrisFromConnects();
 
-    void AddRenderCubeByDir(const Vec4f& vertOffset, RenderBlock::DirIndex dirIndex);
-    void AddRenderCubeByFlag(const Vec4f& vertOffset, unsigned char connectFlags);
-    static void BuildCanonicalCubesByDir(float blockSize);
+    void AddRenderCubeByDir(const Vec4f& vertOffset, RenderBlock::DirIndex dirIndex); // deprecated
+    void AddRenderCubeByFlag(const Vec4f& vertOffset, const QuaxolVert& packOffset, unsigned char connectFlags);
+    static void BuildCanonicalCubesByDir(float blockSize); // deprecated
     static void BuildCanonicalCubesByFlag(float blockSize);
   };
 
