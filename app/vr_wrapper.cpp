@@ -183,7 +183,23 @@ public:
           ovrEyePos[transposer[2]] * sign.z, 
           0.0f);
 
-      static int doLocalTrans = 1; // 0
+      static float amount = (float)PI / 2.0f;
+      static int targetAxis = 2;
+      static int sourceAxis = 1;
+      Mat4f matArbitrary(Mat4f().storeRotation(
+          amount, targetAxis, sourceAxis));
+      //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
+      //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
+      static int doArbitrary = 1;
+      if(doArbitrary > 0) {
+        localOffset = matArbitrary.transform(localOffset);
+      } else if (doArbitrary < 0) {
+        localOffset = matArbitrary.transpose().transform(localOffset);
+      } else { 
+        // do nothing
+      }
+      
+      static int doLocalTrans = 0;
       Vec4f eyeSpaceOffset = localOffset;
       if(doLocalTrans > 0) {
         eyeSpaceOffset = localEye.transform(eyeSpaceOffset);
@@ -203,7 +219,7 @@ public:
         // do nothing
       }
 
-      static int doRenderTrans = 0; // -1;
+      static int doRenderTrans = 0;
       Vec4f renderOffset = worldSpaceOffset;
       if(doRenderTrans > 0) {
         renderOffset = pCamera->_renderMatrix.transform(renderOffset);
@@ -213,6 +229,22 @@ public:
         // do nothing
       }
 
+      static float postAmount = -(float)PI / 2.0f;
+      static int postTargetAxis = 2;
+      static int postSourceAxis = 1;
+      Mat4f matPostArbitrary(Mat4f().storeRotation(
+          postAmount, postTargetAxis, postSourceAxis));
+      //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
+      //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
+      static int doPostArbitrary = 0;
+      if(doPostArbitrary > 0) {
+        renderOffset = matPostArbitrary.transform(renderOffset);
+      } else if (doPostArbitrary < 0) {
+        renderOffset = matPostArbitrary.transpose().transform(renderOffset);
+      } else { 
+        // do nothing
+      }
+      
       static int finalTransposer[4] = {0, 1, 2, 3};
       static Vec4f finalSign(1.0f, 1.0f, 1.0f, 1.0f);
     

@@ -260,7 +260,7 @@ void UpdatePerspective() {
 }
 
 void SetSimpleProjectiveMode() {
-  g_camera.SetWProjection(-5.5f, 5.5f, 0.9f, 1.0f /*animateTime*/);
+  g_camera.SetWProjection(-8.5f, 8.5f, 1.0f, 1.0f /*animateTime*/);
   //LoadShader("AlphaTest");
   LoadShader("AlphaTestTex");
   g_renderer.ToggleAlphaDepthModes(Render::AlphaTestDepthOnSrcDest);
