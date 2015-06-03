@@ -48,10 +48,11 @@ X add bunch of quaxols in a line
 Esc quit
 
 Game TODOs:
-* better depth handling shader
+* more visualization attempts
+** rainbow but with fixed z writing
+** textured solid prepass, then clamped alpha w+ w- overdraw
 ** sub-surface w mode?
 ** multipass 
-** more visualization attempts
 ** Alpha test cleaner clipping?
 * cleanup rift positioning
 * auto shape gen

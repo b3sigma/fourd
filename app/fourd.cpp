@@ -209,6 +209,7 @@ bool Initialize() {
     || !LoadShader("ColorBlend")
     || !LoadShader("BlendNoTex")
     || !LoadShader("ColorBlendClipped")
+    || !LoadShader("Rainbow")
     ) {
     printf("Shader loading failed\n");
     exit(-1);
@@ -465,7 +466,7 @@ void Update(int key, int x, int y) {
       g_renderer.ToggleAlphaDepthModes(Render::EToggleModes);
     } break;
     case '@' : {
-      LoadShader("BlendNoTex");
+      LoadShader("Rainbow");
       UpdatePerspective();
     } break;
     case '#' : {

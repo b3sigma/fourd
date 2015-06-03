@@ -83,7 +83,7 @@ namespace fd {
         modeName = "AlphaTestDepthOnSrcDest";
         glEnable(GL_BLEND);
         glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GEQUAL, 154.0f / 255.0f);
+        glAlphaFunc(GL_GEQUAL, 0.2f); //154.0f / 255.0f);
   
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

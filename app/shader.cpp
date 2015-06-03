@@ -255,15 +255,15 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
 }
 
 void Shader::StartUsing() const {
-  assert(GetIsUsing() == false);
+  //assert(GetIsUsing() == false);
   glUseProgram(m_programId);
-  assert(GetIsUsing() == true);
+  //assert(GetIsUsing() == true);
 }
 
 void Shader::StopUsing() const {
-  assert(GetIsUsing() == true);
+  //assert(GetIsUsing() == true);
   glUseProgram(0);
-  assert(GetIsUsing() == false);
+  //assert(GetIsUsing() == false);
 }
 
 bool Shader::GetIsUsing() const {
