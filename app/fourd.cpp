@@ -190,22 +190,16 @@ bool Initialize() {
   g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
   g_debugHeadPose.storeIdentity();
 
-  //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
-  WasGLErrorPlusPrint();
+  //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  static Vec4f clearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
+  glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
   glClearDepth(1.0f);
-  WasGLErrorPlusPrint();
   glDisable(GL_CULL_FACE); // no backface culling for 4d
-  WasGLErrorPlusPrint();
   glShadeModel(GL_FLAT);
-  WasGLErrorPlusPrint();
   //glShadeModel(GL_SMOOTH);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-  WasGLErrorPlusPrint();
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
-  WasGLErrorPlusPrint();
   //glDisable(GL_MIPMAP);
-  //WasGLErrorPlusPrint();
 
   g_renderer.ToggleAlphaDepthModes(Render::AlphaOnDepthOffSrcDest);
   // Just preload the shaders to check for compile errors

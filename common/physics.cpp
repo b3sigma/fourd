@@ -116,26 +116,29 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
 
 bool Physics::RayCastToOpenQuaxol(const Vec4f& position, const Vec4f& ray,
     QuaxolSpec* outOpenBlock, Vec4f* outPos) {
-  if(m_chunk) {
-    float outDist = FLT_MAX;
-    if(RayCastChunk(*m_chunk, position, ray, &outDist)) {
-      Vec4f hitPos = position + ray.normalized() * (outDist * 0.9999f);
+  if(!m_chunk) return false;
 
-      Vec4f cellPos(hitPos);
-      cellPos = cellPos / m_chunk->m_blockSize;
-      QuaxolSpec gridPos(cellPos);
-
-      if(outOpenBlock) {
-        *outOpenBlock = gridPos;
-      }
-
-      if(outPos) {
-        *outPos = gridPos.ToFloatCoords(Vec4f(), m_chunk->m_blockSize);
-      }
-      return true;
+  float outDist = FLT_MAX;
+  if(!RayCastChunk(*m_chunk, position, ray, &outDist)) {
+    if(!RayCastGround(position, ray, &outDist)) {
+      return false;
     }
   }
-  return false;
+
+  Vec4f hitPos = position + ray.normalized() * (outDist * 0.9999f);
+
+  Vec4f cellPos(hitPos);
+  cellPos = cellPos / m_chunk->m_blockSize;
+  QuaxolSpec gridPos(cellPos);
+
+  if(outOpenBlock) {
+    *outOpenBlock = gridPos;
+  }
+
+  if(outPos) {
+    *outPos = gridPos.ToFloatCoords(Vec4f(), m_chunk->m_blockSize);
+  }
+  return true;
 }
 
 bool Physics::RayCastToPresentQuaxol(const Vec4f& position, const Vec4f& ray,
