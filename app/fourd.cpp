@@ -480,7 +480,7 @@ void Update(int key, int x, int y) {
       SetSimpleProjectiveMode();
     } break;
     case '^' : {
-      LoadShader("ColorBlend");
+      LoadShader("RedShift");
       UpdatePerspective();
     } break;
     case '&' : {
