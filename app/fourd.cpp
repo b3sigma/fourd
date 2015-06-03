@@ -325,15 +325,36 @@ void PassiveMotion(int x, int y) {
   }
 }
 
+enum MouseMoveMode {
+  MouseMoveRightUp,
+  MouseMoveRightInside,
+  MouseMoveInsideUp,
+  MouseMoveModeCount,
+};
+MouseMoveMode g_mouseMoveMode = MouseMoveRightUp;
+
+void ToggleMouseMoveMode() {
+  g_mouseMoveMode = (MouseMoveMode)(((int)g_mouseMoveMode + 1) % MouseMoveModeCount);
+}
+
 void ApplyMouseMove() {
+  Camera::Direction xDir = Camera::RIGHT;
+  if(g_mouseMoveMode == MouseMoveInsideUp) {
+    xDir = Camera::INSIDE;
+  }
+  Camera::Direction yDir = Camera::UP;
+  if(g_mouseMoveMode == MouseMoveRightInside) {
+    yDir = Camera::INSIDE;
+  }
+
   static float moveAmount = 0.01f;
   if (accumulatedMouseX) {
-    g_camera.ApplyRotationInput(moveAmount * -accumulatedMouseX, Camera::FORWARD, Camera::RIGHT);
+    g_camera.ApplyRotationInput(moveAmount * -accumulatedMouseX, Camera::FORWARD, xDir);
     accumulatedMouseX = 0;
   }
 
   if (accumulatedMouseY) {
-    g_camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, Camera::UP);
+    g_camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, yDir);
     accumulatedMouseY = 0;
   }
 }
@@ -442,6 +463,9 @@ void Update(int key, int x, int y) {
   switch (key) {
     case '`' : {
       ToggleMouseCapture();
+    } break;
+    case '~' : {
+      ToggleMouseMoveMode();
     } break;
     case '!' : {
       g_renderer.ToggleAlphaDepthModes(Render::EToggleModes);

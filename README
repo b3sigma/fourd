@@ -48,7 +48,6 @@ X add bunch of quaxols in a line
 Esc quit
 
 Game TODOs:
-* quaxol texturing, color
 * better depth handling shader
 ** sub-surface w mode?
 ** multipass 
@@ -56,6 +55,7 @@ Game TODOs:
 ** Alpha test cleaner clipping?
 * cleanup rift positioning
 * auto shape gen
+* quaxol bitpacked rendering
 * quaxol chunking
 * quaxol streaming
 * collision shapes
