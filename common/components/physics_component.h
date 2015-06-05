@@ -59,8 +59,8 @@ namespace fd {
       // where there are rigidbody + shape things in a physics scene.
       Vec4f outImpulse;
       if(m_pShape->GenerateImpulse(*m_pOwnerOrientation, *m_pOwnerPosition,
-          frameVelocity, outImpulse)) {
-        frameVelocity += outImpulse;
+          m_velocity, delta, outImpulse)) {
+        frameVelocity = outImpulse * delta;
       }
       *m_pOwnerPosition += frameVelocity;
 

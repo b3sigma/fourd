@@ -102,6 +102,7 @@
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />
     <ClCompile Include="..\common\quaxol.cpp" />
+    <ClCompile Include="..\common\raycast_shape.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +128,7 @@
     <ClInclude Include="..\common\mesh.h" />
     <ClInclude Include="..\common\physics.h" />
     <ClInclude Include="..\common\quaxol.h" />
+    <ClInclude Include="..\common\raycast_shape.h" />
     <ClInclude Include="..\common\thirdparty\signals\Delegate.h" />
     <ClInclude Include="..\common\thirdparty\signals\Signal.h" />
     <ClInclude Include="..\common\timer.h" />
