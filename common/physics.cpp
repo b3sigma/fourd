@@ -62,6 +62,7 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
   const float edgeThreshold = 0.001f; // ok these are getting silly...
   Vec4f floatThresholdMax(edgeThreshold, edgeThreshold, edgeThreshold, edgeThreshold);
   chunkMax -= floatThresholdMax;
+  chunkMin += floatThresholdMax;
   // to avoid array checks on every block step, clip the ray to the possible
   // array bounds beforehand
   Vec4f unclippedLocalPos = localPos;
@@ -206,8 +207,16 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
       // we will add this to the counter whenever we take a step
       step[c] = abs(1.0f / normal[c]);
        // start out with the right number of "steps" based on start position
-      stepCounter[c] = (1.0f - abs(clampDir[c])) * step[c];
-    } else {
+      if(clampDir[c] != 0.0f) {
+        stepCounter[c] = (1.0f - abs(clampDir[c])) * step[c];
+      } else {
+        if(sign[c] < 0.0f) {
+          stepCounter[c] = 0.0f;
+        } else {
+          stepCounter[c] = step[c];
+        }
+      }
+   } else {
       step[c] = 0.0f;
       stepCounter[c] = FLT_MAX;
     }
@@ -480,10 +489,17 @@ void Physics::TestPhysics() {
   ray.set(69.9288635f, 997.351501f, -19.9986229f, -0.000000000f);
   physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
 
-  // urrgh need to do the local clipping of ray to the box better
-  //pos.set(42.2373123f, 28.4113293f, 0.000000000f, 4.50000000f);
-  //ray.set(0.000000000f, 0.000000000f, -7.50906911e-005f, -10.0000000f);
-  //physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+  pos.set(38.5371017f, 15.0098648f, 20.0000000f, 9.22431374f);
+  ray.set(10.0000000f, 0.000000000f, -0.000565912109f, 0.000000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
+  pos.set(0.500000000f, 0.500000000f, 20.0000000f, 4.50000000f);
+  ray.set(10.0000000f, 0.000000000f, 5.34876919f, 0.000000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
+  pos.set(42.2373123f, 28.4113293f, 0.000000000f, 4.50000000f);
+  ray.set(0.000000000f, 0.000000000f, -7.50906911e-005f, -10.0000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
 
 }
 

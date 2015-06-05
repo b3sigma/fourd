@@ -12,8 +12,11 @@ class Physics;
 // shape interface class
 class PhysicsShape {
 public:
-  virtual bool GenerateImpulse(const Mat4f& orientation, const Vec4f& position,
-    const Vec4f& velocity, float deltaTime, Vec4f& outVelocity) { return false; }
+  virtual bool DoesMovementCollide(
+      const Mat4f& orientation, const Vec4f& position,
+      const Vec4f& velocity, float deltaTime, Vec4f& outVelocity) {
+    return false; 
+  }
 };
 
 class RaycastShape : public PhysicsShape {
@@ -28,7 +31,8 @@ public:
 
   void AddCapsuleRays(float size);
 
-  virtual bool GenerateImpulse(const Mat4f& orientation, const Vec4f& position,
+  virtual bool DoesMovementCollide(
+      const Mat4f& orientation, const Vec4f& position,
       const Vec4f& velocity, float deltaTime, Vec4f& outVelocity); 
 };
 

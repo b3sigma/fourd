@@ -97,6 +97,7 @@
     <ClCompile Include="..\app\win32_platform.cpp" />
     <ClCompile Include="..\common\camera.cpp" />
     <ClCompile Include="..\common\chunkloader.cpp" />
+    <ClCompile Include="..\common\components\physics_component.cpp" />
     <ClCompile Include="..\common\filedata.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
