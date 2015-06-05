@@ -34,10 +34,10 @@ bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
       } else {
         frameVelocity = correctedVel;
       }
-      outVelocity = frameVelocity * (1.0f / deltaTime);
       hitSomething = true;
     }
   }
+  outVelocity = frameVelocity * (1.0f / deltaTime);
   return hitSomething;
 }
 

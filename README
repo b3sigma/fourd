@@ -59,8 +59,9 @@ Game TODOs:
 * quaxol bitpacked rendering
 * quaxol chunking
 * quaxol streaming
-* collision shapes
-* decent player movement
+* sphere vs quaxol collision
+* refactor input
+* refactor player movement
 * Add 120 cell
 * Load compressed textures with mipmaps directly
 * Cleanup quaxol size/worldscale
