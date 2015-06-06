@@ -341,7 +341,7 @@ void ApplyMouseMove() {
     yDir = Camera::INSIDE;
   }
 
-  static bool constrainedWalkCamera = false;
+  static bool constrainedWalkCamera = true;
   static float moveAmount = 0.01f;
   if (accumulatedMouseX) {
     if(constrainedWalkCamera && g_camera.getMovementMode() == Camera::WALK) {

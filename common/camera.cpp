@@ -21,6 +21,7 @@ Camera::Camera()
   _renderMatrix.storeIdentity();
   _renderPos.storeZero();
   _fourToThree.storeIdentity();
+  _yawPitchTrans.storeIdentity();
 
   bool success = _componentBus.RegisterOwnerData(
       std::string("orientation"), &_cameraMatrix, true);
@@ -37,6 +38,14 @@ Camera::Camera()
 
 void Camera::setMovementMode(MovementMode mode) {
   _movement = mode;
+  if(_movement != MovementMode::WALK) {
+    _yawPitchTrans.storeIdentity();
+  }
+}
+
+void Camera::NoOffsetUpdate() {
+  _renderMatrix = _yawPitchTrans * _cameraMatrix;
+  _renderPos = _cameraPos;
 }
 
 void Camera::RebuildOrientationFromYawPitch() {
@@ -45,7 +54,7 @@ void Camera::RebuildOrientationFromYawPitch() {
   Mat4f pitchRot;
   pitchRot.storeRotation(_pitch,  (int)Camera::FORWARD, (int)Camera::UP);
 
-  _cameraMatrix = pitchRot * yawRot;
+  _yawPitchTrans = pitchRot * yawRot;
 }
 
 void Camera::ApplyYawInput(float radians) {
@@ -162,6 +171,8 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
         RenormalizeCamera(direction);
       }
     }
+  } else if (_movement == WALK) {
+    _cameraPos += _renderMatrix[direction] * amount;
   } else {
     _cameraPos += _cameraMatrix[direction] * amount;
   }

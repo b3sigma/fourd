@@ -10,7 +10,7 @@ public:
   float _yaw; // only used in walk mode
   float _pitch; // only used in walk mode
   float _inspin; // only used in walk mode
-  Mat4f _preYawPitch;
+  Mat4f _yawPitchTrans;
 
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
@@ -53,11 +53,7 @@ public:
     _cameraPos.storeZero();
   }
 
-  void NoOffsetUpdate() {
-    _renderMatrix = _cameraMatrix;
-    _renderPos = _cameraPos;
-  }
-
+  void NoOffsetUpdate();
   void SetZProjection(int width, int height, 
       float zFov, float zNear, float zFar);
   void SetWProjection(float wNear, float wFar, float wScreenSizeRatio,
