@@ -305,6 +305,8 @@ public:
   
   FdMat operator * (const FdMat& m) const {
     FdMat r;
+    // holy fuck sticks really?
+    // TODO: don't be a dumbass
     FdMat t = m.transpose();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {

@@ -39,6 +39,27 @@ void Camera::setMovementMode(MovementMode mode) {
   _movement = mode;
 }
 
+void Camera::RebuildOrientationFromYawPitch() {
+  Mat4f yawRot;
+  yawRot.storeRotation(_yaw, (int)Camera::FORWARD, (int)Camera::RIGHT);
+  Mat4f pitchRot;
+  pitchRot.storeRotation(_pitch,  (int)Camera::FORWARD, (int)Camera::UP);
+
+  _cameraMatrix = pitchRot * yawRot;
+}
+
+void Camera::ApplyYawInput(float radians) {
+  _yaw += radians;
+
+  RebuildOrientationFromYawPitch();
+}
+
+void Camera::ApplyPitchInput(float radians) {
+  _pitch += radians;
+
+  RebuildOrientationFromYawPitch();
+}
+
 void Camera::ApplyRotationInput(float radians, Direction target, Direction source) {
   if (_movement == LOOK || _movement == WALK) {
     Mat4f rot;
@@ -145,6 +166,19 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
     _cameraPos += _cameraMatrix[direction] * amount;
   }
 }
+
+void Camera::SetZProjection(int width, int height, 
+    float zFov, float zNear, float zFar) {
+
+  _screenBounds.x() = width;
+  _screenBounds.y() = height;
+  _zFov = zFov;
+  _zNear = zNear;
+  _zFar = zFar;
+  float aspect = static_cast<float>(width) / static_cast<float>(height);
+  _zProjectionMatrix.store3dProjection(_zFov, aspect, _zNear, _zFar);
+}
+
 
 void Camera::SetWProjection(float wNear, float wFar, float wScreenSizeRatio, float animateTime) {
   if(animateTime > 0.0f) {

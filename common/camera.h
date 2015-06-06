@@ -9,6 +9,8 @@ class Camera {
 public:
   float _yaw; // only used in walk mode
   float _pitch; // only used in walk mode
+  float _inspin; // only used in walk mode
+  Mat4f _preYawPitch;
 
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
@@ -33,7 +35,7 @@ public:
   enum Direction {
     RIGHT = 0, UP = 1, FORWARD = 2, INSIDE = 3,
   };
-
+  
   enum MovementMode {
     LOOK = 1, ORBIT = 2, WALK = 3,
   };
@@ -57,18 +59,9 @@ public:
   }
 
   void SetZProjection(int width, int height, 
-      float zFov, float zNear, float zFar) {
-
-    _screenBounds.x() = width;
-    _screenBounds.y() = height;
-    _zFov = zFov;
-    _zNear = zNear;
-    _zFar = zFar;
-    float aspect = static_cast<float>(width) / static_cast<float>(height);
-    _zProjectionMatrix.store3dProjection(_zFov, aspect, _zNear, _zFar);
-  }
-
-  void SetWProjection(float wNear, float wFar, float wScreenSizeRatio, float animateTime = 0.0f);
+      float zFov, float zNear, float zFar);
+  void SetWProjection(float wNear, float wFar, float wScreenSizeRatio,
+      float animateTime = 0.0f);
 
   void SetCameraPosition(Vec4f position) {
     _cameraPos = position;
@@ -78,6 +71,9 @@ public:
   void ApplyRotationInput(float radians, Direction target, Direction source);
   void ApplyRollInput(float radians, Direction target, Direction source);
   void ApplyWorldRotation(float radians, Direction target, Direction source);
+  void ApplyYawInput(float radians);
+  void ApplyPitchInput(float radians);
+  void RebuildOrientationFromYawPitch();
 
   void ApplyTranslationInput(float amount, Direction direction);
 

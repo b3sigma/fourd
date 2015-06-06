@@ -215,7 +215,6 @@ bool Initialize() {
     exit(-1);
   }
 
-
   LoadLevel("current.bin");
   //LoadLevel("4d_double_base");
   //LoadLevel("plus_minus_centered");
@@ -342,14 +341,23 @@ void ApplyMouseMove() {
     yDir = Camera::INSIDE;
   }
 
+  static bool constrainedWalkCamera = false;
   static float moveAmount = 0.01f;
   if (accumulatedMouseX) {
-    g_camera.ApplyRotationInput(moveAmount * -accumulatedMouseX, Camera::FORWARD, xDir);
+    if(constrainedWalkCamera && g_camera.getMovementMode() == Camera::WALK) {
+      g_camera.ApplyYawInput(moveAmount * -accumulatedMouseX);
+    } else {
+      g_camera.ApplyRotationInput(moveAmount * -accumulatedMouseX, Camera::FORWARD, xDir);
+    }
     accumulatedMouseX = 0;
   }
 
   if (accumulatedMouseY) {
-    g_camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, yDir);
+    if(constrainedWalkCamera && g_camera.getMovementMode() == Camera::WALK) {
+      g_camera.ApplyPitchInput(moveAmount * accumulatedMouseY);
+    } else {
+      g_camera.ApplyRotationInput(moveAmount * accumulatedMouseY, Camera::FORWARD, yDir);
+    }
     accumulatedMouseY = 0;
   }
 }
