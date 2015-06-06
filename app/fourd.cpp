@@ -185,13 +185,13 @@ bool Initialize() {
   g_camera.SetWProjection(
       0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
-  g_camera.SetCameraPosition(Vec4f(0.5f, 0.5f, 15.5f, 4.5f));
+  g_camera.SetCameraPosition(Vec4f(0.5f, 15.5f, 0.5f, 4.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
-  g_camera.ApplyRotationInput(-(float)PI / 2.0f, Camera::FORWARD, Camera::UP);
+  g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
   g_debugHeadPose.storeIdentity();
 
   //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  static Vec4f clearColor(158.0f / 255.0f, 224.0f / 155.0f, 238.0f / 255.0f, 0.0f);
+  static Vec4f clearColor(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
   glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
   glClearDepth(1.0f);
   glDisable(GL_CULL_FACE); // no backface culling for 4d
@@ -502,15 +502,20 @@ void Update(int key, int x, int y) {
     case '_' : {
       SaveLevel("current");
     } break;
-    case '+' : {
-      static bool fill = false;
-      fill = !fill;
-      if (fill) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      } else {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    case '|' : {
+      if(g_scene.m_pQuaxolChunk) {
+        g_scene.m_pQuaxolChunk->DebugSwapAxis(2 /*z*/, 1 /*y*/);
       }
     } break;
+    //case '+' : {
+    //  static bool fill = false;
+    //  fill = !fill;
+    //  if (fill) {
+    //    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //  } else {
+    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //  }
+    //} break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
@@ -545,7 +550,7 @@ void Update(int key, int x, int y) {
       exit(0);
     } break;
     case ' ' : {
-      Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 2.0f;
+      Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 1.0f;
       g_camera.GetComponentBus().SendSignal("AddImpulse", SignalN<const Vec4f&>(), jumpAmount);
     } break;
     case 'a' : {

@@ -7,6 +7,9 @@ namespace fd {
 
 class Camera {
 public:
+  float _yaw; // only used in walk mode
+  float _pitch; // only used in walk mode
+
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
 

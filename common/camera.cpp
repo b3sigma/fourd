@@ -7,6 +7,8 @@ using namespace ::fd;
 
 Camera::Camera()
     : _movement(ORBIT)
+    , _yaw(0.0f)
+    , _pitch(0.0f)
     , _zNear(0.1f)
     , _zFar(1000.0f)
     , _zFov(90.0f)

@@ -162,11 +162,11 @@ namespace fd {
       return m_blocks[x][y][z][w];
     }
     
-    inline bool IsValid(const QuaxolSpec& pos) {
+    inline bool IsValid(const QuaxolSpec& pos) const {
       return IsValid(pos.x, pos.y, pos.z, pos.w);
     }
 
-    inline bool IsValid(int x, int y, int z, int w) {
+    inline bool IsValid(int x, int y, int z, int w) const {
       return (x >= 0 && x < c_mxSz && y >= 0 && y < c_mxSz 
         && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);
     }
@@ -192,6 +192,8 @@ namespace fd {
     void AddRenderCubeByFlag(const Vec4f& vertOffset, const QuaxolVert& packOffset, unsigned char connectFlags);
     static void BuildCanonicalCubesByDir(float blockSize); // deprecated
     static void BuildCanonicalCubesByFlag(float blockSize);
+
+    void DebugSwapAxis(int sourceInd, int destInd);
   };
 
   class QuaxolScene {

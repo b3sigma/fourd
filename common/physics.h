@@ -27,9 +27,9 @@ namespace fd {
 
   public:
     Physics() 
-      : m_groundNormal(0.0f, 0.0f, 1.0f, 0.0f) // default to z up, cuz fashion
+      : m_groundNormal(0.0f, 1.0f, 0.0f, 0.0f) // y up
       , m_groundHeight(0.0f)
-      , m_gravity(0.0f, 0.0f, -50.0f, 0.0f) // default gravity down
+      , m_gravity(0.0f, -50.0f, 0.0f, 0.0f) // blocksize has been 10, which feels like .5m
       , m_cushion(0.0001f)
       , m_chunk(NULL)
     {
@@ -58,6 +58,9 @@ namespace fd {
 
     void LineDraw4D(const Vec4f& start, const Vec4f& ray,
         DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback);
+
+    void SweepSphereQuaxol(const Vec4f& pos, float radius, const Vec4f& velocity,
+        float deltaTime, Vec4f& outPos, Vec4f& outVelocity);
 
     static void TestPhysics();
   protected:

@@ -365,4 +365,27 @@ void QuaxolChunk::UpdateTrisFromConnects() {
   } // x
 }
 
+void QuaxolChunk::DebugSwapAxis(int sourceInd, int destInd) {
+  Block copyBlocks[c_mxSz][c_mxSz][c_mxSz][c_mxSz];
+  memcpy(&copyBlocks, m_blocks, sizeof(m_blocks));
+
+  for (int x = 0; x < c_mxSz; ++x) {
+    for (int y = 0; y < c_mxSz; ++y) {
+      for (int z = 0; z < c_mxSz; ++z) {
+        for (int w = 0; w < c_mxSz; ++w) {
+          QuaxolSpec orig(x, y, z, w);
+          QuaxolSpec swapped(orig);
+          swapped[sourceInd] = orig[destInd];
+          swapped[destInd] = orig[sourceInd];
+
+          m_blocks[swapped.x][swapped.y][swapped.z][swapped.w] =
+              copyBlocks[orig.x][orig.y][orig.z][orig.w];
+        } // w
+      } // z
+    } // y
+  } // x
+
+  UpdateRendering();
+}
+
 }; // namespace fd

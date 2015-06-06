@@ -5,14 +5,14 @@
 namespace fd {
 
 void RaycastShape::AddCapsuleRays(float size) {
-  m_rays.emplace_back(size, 0.0f, 0.0f, 0.0f);
-  m_rays.emplace_back(-size, 0.0f, 0.0f, 0.0f);
-  m_rays.emplace_back(0.0f, size, 0.0f, 0.0f);
+  //m_rays.emplace_back(size, 0.0f, 0.0f, 0.0f);
+  //m_rays.emplace_back(-size, 0.0f, 0.0f, 0.0f);
+  //m_rays.emplace_back(0.0f, size, 0.0f, 0.0f);
   m_rays.emplace_back(0.0f, -size, 0.0f, 0.0f);
-  m_rays.emplace_back(0.0f, 0.0f, size, 0.0f);
-  m_rays.emplace_back(0.0f, 0.0f, -size, 0.0f);
-  m_rays.emplace_back(0.0f, 0.0f, 0.0f, size);
-  m_rays.emplace_back(0.0f, 0.0f, 0.0f, -size);
+  //m_rays.emplace_back(0.0f, 0.0f, size, 0.0f);
+  //m_rays.emplace_back(0.0f, 0.0f, -size, 0.0f);
+  //m_rays.emplace_back(0.0f, 0.0f, 0.0f, size);
+  //m_rays.emplace_back(0.0f, 0.0f, 0.0f, -size);
 }
 
 bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,

@@ -60,7 +60,8 @@ Game TODOs:
 * quaxol chunking
 * quaxol streaming
 * sphere vs quaxol collision
-* refactor input
+* add yaw/pitch camera mode
+* refactor input to be inertial
 * refactor player movement
 * Add 120 cell
 * Load compressed textures with mipmaps directly

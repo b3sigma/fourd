@@ -40,6 +40,16 @@ void Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
   }
 }
 
+void Physics::SweepSphereQuaxol(const Vec4f& pos, float radius, const Vec4f& velocity,
+     float deltaTime, Vec4f& outPos, Vec4f& outVelocity) {
+  // establish min and max bb
+  // collect relevant quaxols
+  // for each quaxols
+  //  find closest face
+  //  sphere vs face
+
+}
+
 bool Physics::RayCastChunk(const QuaxolChunk& chunk,
     const Vec4f& position, const Vec4f& ray, float* outDistance) {
   assert(ray.length() > 0.0f);
@@ -188,6 +198,8 @@ inline void ClampToInteger(const Vec4f& position, const int (&signs)[4],
   }
 }
 
+#define SAFE_BOUNDARY
+
 bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
     const Vec4f& start, const Vec4f& ray, Vec4f* outPos) {
 
@@ -252,6 +264,13 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
 
     gridPos[nextAxis] += sign[nextAxis];
     stepCounter[nextAxis] += step[nextAxis];
+
+#ifdef SAFE_BOUNDARY
+    if(!chunk.IsValid(gridPos)) {
+      return false;
+    }
+#endif // SAFE_BOUNDARY
+
     if(chunk.IsPresent(gridPos[0], gridPos[1], gridPos[2], gridPos[3])
         && PhysicsHelp::RayToQuaxol(gridPos, start, ray, NULL /*outDist*/, outPos)) {
       return true;
@@ -326,16 +345,20 @@ void Physics::TestPhysics() {
   ////////////////////////
   // Basic raycast
   Vec4f posTest(1.0f, 1.0f, 1.0f, 1.0f);
-  Vec4f rayDown(0.0f, 0.0f, -10.0f, 0.0f);
+  //Vec4f rayDown(0.0f, 0.0f, -10.0f, 0.0f);
+  Vec4f rayDown(0.0f, -10.0f, 0.0f, 0.0f);
   float dist = 0.0f;
   assert(true == physTest.RayCastGround(posTest, rayDown, &dist));
   assert(dist == 1.0f); // may need to do some float threshold compares
 
-  posTest.set(20.0f, 0.0f, 11.0f, 0.0f);
+  //posTest.set(20.0f, 0.0f, 11.0f, 0.0f);
+  posTest.set(20.0f, 11.0f, 0.0f, 0.0f);
   assert(false == physTest.RayCastGround(posTest, rayDown, &dist));
 
-  posTest.set(10.0f, 0.0f, 3.0f, 0.0f);
-  rayDown.set(8.0f, 0.0f, -6.0f, 0.0f);
+  //posTest.set(10.0f, 0.0f, 3.0f, 0.0f);
+  //rayDown.set(8.0f, 0.0f, -6.0f, 0.0f);
+  posTest.set(10.0f, 3.0f, 0.0f, 0.0f);
+  rayDown.set(8.0f, -6.0f, 0.0f, 0.0f);
   assert(true == physTest.RayCastGround(posTest, rayDown, &dist));
   assert(dist == 5.0f);
 
@@ -499,6 +522,10 @@ void Physics::TestPhysics() {
 
   pos.set(42.2373123f, 28.4113293f, 0.000000000f, 4.50000000f);
   ray.set(0.000000000f, 0.000000000f, -7.50906911e-005f, -10.0000000f);
+  physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
+
+  pos.set(40.0000038f, 63.3713875f, 9.99999905f, 4.50000000f);
+  ray.set(-4.76829791e-006f, 0.000000000f, 9.53674316e-007f, 10.0000000f);
   physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
 
 }

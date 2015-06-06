@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "fourmath.h"
 
 namespace fd {
 
@@ -8,6 +9,12 @@ namespace fd {
 // impulse responses, which makes a shitty approximation to a shape depending
 // on how many rays there are.
 class Physics;
+
+class BoundingBox {
+public:
+  Vec4f m_min;
+  Vec4f m_max;
+};
 
 // shape interface class
 class PhysicsShape {
