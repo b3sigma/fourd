@@ -40,12 +40,20 @@ void Camera::setMovementMode(MovementMode mode) {
   _movement = mode;
   if(_movement != MovementMode::WALK) {
     _yawPitchTrans.storeIdentity();
+  } else {
+    RebuildOrientationFromYawPitch();
+    _cameraMatrix.storeIdentity();
   }
 }
 
-void Camera::NoOffsetUpdate() {
-  _renderMatrix = _yawPitchTrans * _cameraMatrix;
-  _renderPos = _cameraPos;
+void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
+  if(lookOffset && posOffset) {
+    _renderMatrix = (*lookOffset) * _yawPitchTrans * _cameraMatrix;
+    _renderPos = _cameraPos + *posOffset;
+  } else {
+    _renderMatrix = _yawPitchTrans * _cameraMatrix;
+    _renderPos = _cameraPos;
+  }
 }
 
 void Camera::RebuildOrientationFromYawPitch() {

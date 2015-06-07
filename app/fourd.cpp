@@ -173,6 +173,21 @@ bool LoadLevel(const char* levelName) {
   }
 }
 
+void ToggleCameraMode(Camera::MovementMode mode) {
+  g_camera.setMovementMode(mode);
+
+  if (g_camera.getMovementMode() == Camera::WALK) {
+    g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
+    RaycastShape* shape = new RaycastShape(g_scene.m_pPhysics);
+    shape->AddCapsuleRays(g_blockSize);
+    PhysicsComponent* physicsComp =
+        new PhysicsComponent(g_scene.m_pPhysics, shape);
+    g_camera.GetComponentBus().AddComponent(physicsComp);
+  } else {
+    g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
+  }
+}
+
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
@@ -184,11 +199,13 @@ bool Initialize() {
       0.1f /* zNear */, 10000.0f /* zFar */);
   g_camera.SetWProjection(
       0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
-  g_camera.setMovementMode(Camera::MovementMode::LOOK); //ORBIT); //LOOK);
-  g_camera.SetCameraPosition(Vec4f(0.5f, 15.5f, 0.5f, 4.5f));
+
+  g_camera.SetCameraPosition(Vec4f(1.5f, 20.5f, 1.5f, 4.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
-  g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
+  //g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
   g_debugHeadPose.storeIdentity();
+  g_camera._yaw = (float)PI;
+  ToggleCameraMode(Camera::MovementMode::WALK);
 
   //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
   static Vec4f clearColor(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
@@ -558,7 +575,7 @@ void Update(int key, int x, int y) {
       exit(0);
     } break;
     case ' ' : {
-      Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 1.0f;
+      Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 0.75f;
       g_camera.GetComponentBus().SendSignal("AddImpulse", SignalN<const Vec4f&>(), jumpAmount);
     } break;
     case 'a' : {
@@ -660,17 +677,9 @@ void Update(int key, int x, int y) {
     } break;
     case '[' : {
       if (g_camera.getMovementMode() == Camera::LOOK) {
-        //g_camera.setMovementMode(Camera::ORBIT);
-        g_camera.setMovementMode(Camera::WALK);
-        g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
-        RaycastShape* shape = new RaycastShape(g_scene.m_pPhysics);
-        shape->AddCapsuleRays(g_blockSize);
-        PhysicsComponent* physicsComp =
-            new PhysicsComponent(g_scene.m_pPhysics, shape);
-        g_camera.GetComponentBus().AddComponent(physicsComp);
+        ToggleCameraMode(Camera::WALK);
       } else {
-        g_camera.setMovementMode(Camera::LOOK);
-        g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
+        ToggleCameraMode(Camera::LOOK);
       }
     } break;
     case ']' : { // ortho projection
@@ -741,7 +750,7 @@ void Draw(void) {
     g_renderer.RenderAllScenesPerCamera();
     g_vr->FinishFrame();
   } else {
-    g_camera.NoOffsetUpdate();
+    g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
     g_renderer.RenderAllScenesPerCamera();
   }
 

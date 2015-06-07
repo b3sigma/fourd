@@ -53,7 +53,7 @@ public:
     _cameraPos.storeZero();
   }
 
-  void NoOffsetUpdate();
+  void UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset);
   void SetZProjection(int width, int height, 
       float zFov, float zNear, float zFar);
   void SetWProjection(float wNear, float wFar, float wScreenSizeRatio,

@@ -161,8 +161,7 @@ public:
     if(m_debugHeadPose) {
       localEye = *m_debugHeadPose;
     }
-    pCamera->_renderMatrix = localEye * pCamera->_cameraMatrix;
-
+    
     const float worldScale = 20.0f;
     static bool simpleEyeOffset = true;
     if(simpleEyeOffset) {
@@ -170,7 +169,9 @@ public:
       Vec4f ovrEyePos(-localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
       ovrEyePos *= worldScale;
       ovrEyePos = pCamera->_renderMatrix.transpose().transform(ovrEyePos);
-      pCamera->_renderPos = pCamera->_cameraPos + ovrEyePos;
+      //pCamera->_renderPos = pCamera->_cameraPos + ovrEyePos;
+      pCamera->UpdateRenderMatrix(&localEye, &ovrEyePos);
+
     } else {
       const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
       static int transposer[3] = {0, 1, 2};
@@ -257,7 +258,8 @@ public:
       const float derpEyes[2] = { -0.6f, 0.6f };
       Vec4f derpEye = (pCamera->_renderMatrix[Camera::RIGHT] * (derpEyes[eye]));
 
-      pCamera->_renderPos = pCamera->_cameraPos + finalOffset;
+      //pCamera->_renderPos = pCamera->_cameraPos + finalOffset;
+      pCamera->UpdateRenderMatrix(&localEye, &finalOffset);
     
       static int framecount = 0;
       if(eye == 0) {
