@@ -43,6 +43,8 @@ namespace fd {
 
     // returns true if hit, overwrites distance with amount if so.
     bool RayCast(const Vec4f& position, const Vec4f& ray, float* outDistance);
+    bool RayCast(const Vec4f& position, const Vec4f& ray,
+        float* outDistance, Vec4f* outNormal);
     bool RayCastToOpenQuaxol(const Vec4f& position, const Vec4f& ray,
         QuaxolSpec* outOpenBlock, Vec4f* outPos);
     bool RayCastToPresentQuaxol(const Vec4f& position, const Vec4f& ray,
@@ -53,8 +55,12 @@ namespace fd {
 
     bool RayCastChunk(const QuaxolChunk& chunk,
         const Vec4f& position, const Vec4f& ray, float* outDistance);
+    bool RayCastChunk(const QuaxolChunk& chunk,
+        const Vec4f& position, const Vec4f& ray,
+        float* outDistance, Vec4f* normal);
     bool LocalRayCastChunk(const QuaxolChunk& chunk,
-        const Vec4f& start, const Vec4f& ray, Vec4f* outPos);
+        const Vec4f& start, const Vec4f& ray,
+        Vec4f* outPos, Vec4f* normal);
 
     void LineDraw4D(const Vec4f& start, const Vec4f& ray,
         DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback);

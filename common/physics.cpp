@@ -9,17 +9,27 @@ namespace fd {
 void Physics::Step(float fDelta) {
 }
 
-// returns true if hit, overwrites distance with amount if so.
-bool Physics::RayCast(
-    const Vec4f& position, const Vec4f& ray, float* outDistance) {
-
+bool Physics::RayCast(const Vec4f& position, const Vec4f& ray,
+    float* outDistance, Vec4f* normal) {
   if(m_chunk) {
-    if(RayCastChunk(*m_chunk, position, ray, outDistance)) {
+    if(RayCastChunk(*m_chunk, position, ray, outDistance, normal)) {
       return true;
     }
   }
-  return RayCastGround(position, ray, outDistance);
+  if(RayCastGround(position, ray, outDistance)) {
+    if(normal) {
+      *normal = m_groundNormal;
+    }
+  }
+  return false;
 }
+
+// returns true if hit, overwrites distance with amount if so.
+bool Physics::RayCast(
+    const Vec4f& position, const Vec4f& ray, float* outDistance) {
+  return RayCast(position, ray, outDistance, NULL /*normal*/);
+}
+
 
 bool Physics::RayCastGround(
     const Vec4f& position, const Vec4f& ray, float* outDistance) {
@@ -52,6 +62,11 @@ void Physics::SweepSphereQuaxol(const Vec4f& pos, float radius, const Vec4f& vel
 
 bool Physics::RayCastChunk(const QuaxolChunk& chunk,
     const Vec4f& position, const Vec4f& ray, float* outDistance) {
+  return RayCastChunk(chunk, position, ray, outDistance, NULL /*normal*/);
+}
+
+bool Physics::RayCastChunk(const QuaxolChunk& chunk,
+    const Vec4f& position, const Vec4f& ray, float* outDistance, Vec4f* outNormal) {
   assert(ray.length() > 0.0f);
 
   Vec4f localPos(position);
@@ -111,7 +126,9 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
 
   // This does a stepping algorithm checking against quaxols in the ray path.
   Vec4f localHitPos;
-  if(!LocalRayCastChunk(chunk, localPos, localRay, &localHitPos)) {
+  Vec4f localHitNormal;
+  if(!LocalRayCastChunk(chunk, localPos, localRay,
+      &localHitPos, &localHitNormal)) {
     return false;
   }
   //localHitPos *= chunk.m_blockSize;
@@ -120,6 +137,9 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
   if(outDistance) {
     Vec4f hitDelta = (localHitPos - unclippedLocalPos) * chunk.m_blockSize;
     *outDistance = abs(hitDelta.length());
+  }
+  if(outNormal) {
+    *outNormal = localHitNormal;
   }
 
   return true;
@@ -201,7 +221,8 @@ inline void ClampToInteger(const Vec4f& position, const int (&signs)[4],
 #define SAFE_BOUNDARY
 
 bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
-    const Vec4f& start, const Vec4f& ray, Vec4f* outPos) {
+    const Vec4f& start, const Vec4f& ray,
+    Vec4f* outPos, Vec4f* outNormal) {
 
   int sign[4];
   for(int c = 0; c < 4; c++) {
@@ -245,7 +266,7 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
     Vec4f shiftedStart = start - (normal * shiftAmount);
     Vec4f shiftedRay = ray + (normal * (2.0f * shiftAmount));
     if(!PhysicsHelp::RayToQuaxol(
-        gridPos, shiftedStart, shiftedRay, NULL /*outDist*/, outPos)) {
+        gridPos, shiftedStart, shiftedRay, NULL /*outDist*/, outPos, outNormal)) {
       // probably started within a block and a tiny ray
       *outPos = start;
     }
@@ -272,7 +293,7 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
 #endif // SAFE_BOUNDARY
 
     if(chunk.IsPresent(gridPos[0], gridPos[1], gridPos[2], gridPos[3])
-        && PhysicsHelp::RayToQuaxol(gridPos, start, ray, NULL /*outDist*/, outPos)) {
+        && PhysicsHelp::RayToQuaxol(gridPos, start, ray, NULL /*outDist*/, outPos, outNormal)) {
       return true;
     }
   }
@@ -331,7 +352,7 @@ void Physics::TestPhysicsCallback(
     int x, int y, int z, int w, const Vec4f& position, const Vec4f& ray) {
   s_testQuaxols.emplace_back(x, y, z, w);
   assert(true == PhysicsHelp::RayToQuaxol(
-      QuaxolSpec(x, y, z, w), position, ray, NULL /*dist*/, NULL /*outPoint*/));
+      QuaxolSpec(x, y, z, w), position, ray, NULL /*dist*/, NULL /*outPoint*/, NULL /*outNormal*/));
   const int infiniteCheck = 100;
   assert(x >= -infiniteCheck && x < infiniteCheck);
   assert(y >= -infiniteCheck && y < infiniteCheck);

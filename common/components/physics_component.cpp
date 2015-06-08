@@ -45,22 +45,26 @@ void PhysicsComponent::OnStepSignal(float delta) {
   // is the wrong way to proceed. Should just do a proper decoupled system
   // where there are rigidbody + shape things in a physics scene.
   Vec4f possibleVelocity;
-  bool hadCollision = false;
+  bool hadGroundCollision = false;
+  Vec4f hitNormal;
   if(m_pShape->DoesMovementCollide(*m_pOwnerOrientation, *m_pOwnerPosition,
-      m_velocity, delta, possibleVelocity)) {
+      m_velocity, delta, possibleVelocity, hitNormal)) {
     frameVelocity = possibleVelocity * delta;
     m_velocity = possibleVelocity;
-    hadCollision = true;
+    const float groundCollisionThreshold = 0.1f;
+    if(hitNormal.dot(m_pPhysics->m_groundNormal) > groundCollisionThreshold) {
+      hadGroundCollision = true;
+    }
   }
 
   // not quite right as we should really just be doing friction based on
   // ground collision
-  if(hadCollision) {
+  if(hadGroundCollision) {
     static float frictionCoef = -10.0f;
     m_velocity += (m_velocity * (frictionCoef * delta));
   }
   if(m_pOwnerCollidingLastFrame) {
-    *m_pOwnerCollidingLastFrame = hadCollision;
+    *m_pOwnerCollidingLastFrame = hadGroundCollision;
   }
 
   *m_pOwnerPosition += frameVelocity;

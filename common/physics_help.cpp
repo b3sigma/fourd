@@ -30,11 +30,19 @@ bool PhysicsHelp::RayToPlane(
     return true;
   }
 }
-    
+
 bool PhysicsHelp::RayToAlignedBox(
     const Vec4f& min, const Vec4f& max,
     const Vec4f& start, const Vec4f& ray,
     float* outDist, Vec4f* outPoint) {
+  return RayToAlignedBox(min, max, start, ray, outDist, outPoint, NULL /*normal*/);
+}
+
+
+bool PhysicsHelp::RayToAlignedBox(
+    const Vec4f& min, const Vec4f& max,
+    const Vec4f& start, const Vec4f& ray,
+    float* outDist, Vec4f* outPoint, Vec4f* outNormal) {
   // ugh we are going to want a normal also soon
   Vec4f end(start);
   end += ray;
@@ -44,6 +52,7 @@ bool PhysicsHelp::RayToAlignedBox(
 
   float smallestDist = 99999999.0f;
   Vec4f bestPoint;
+  Vec4f bestHitNormal;
   bool foundPoint = false;
       
   float borderThreshold = 0.0001f;
@@ -71,6 +80,7 @@ bool PhysicsHelp::RayToAlignedBox(
       if(collisionDist < smallestDist) {
         smallestDist = collisionDist;
         bestPoint = collisionPoint;
+        bestHitNormal = plane;
         foundPoint = true;
       }
     }
@@ -82,6 +92,9 @@ bool PhysicsHelp::RayToAlignedBox(
     }
     if(outPoint) {
       *outPoint = bestPoint;
+    }
+    if(outNormal) {
+      *outNormal = bestHitNormal;
     }
     return true;
   } else {

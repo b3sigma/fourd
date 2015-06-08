@@ -25,7 +25,6 @@ namespace fd {
     
     Vec4f* m_pOwnerPushVelocity; // optional, may be null
     bool*  m_pOwnerCollidingLastFrame;
-
   public:
 
     PhysicsComponent(Physics* pPhys, RaycastShape* shape)

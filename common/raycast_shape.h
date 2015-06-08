@@ -21,7 +21,8 @@ class PhysicsShape {
 public:
   virtual bool DoesMovementCollide(
       const Mat4f& orientation, const Vec4f& position,
-      const Vec4f& velocity, float deltaTime, Vec4f& outVelocity) {
+      const Vec4f& velocity, float deltaTime,
+      Vec4f& outVelocity, Vec4f& collisionNormal) {
     return false; 
   }
 };
@@ -40,7 +41,8 @@ public:
 
   virtual bool DoesMovementCollide(
       const Mat4f& orientation, const Vec4f& position,
-      const Vec4f& velocity, float deltaTime, Vec4f& outVelocity); 
+      const Vec4f& velocity, float deltaTime,
+      Vec4f& outVelocity, Vec4f& collisionNormal); 
 };
 
 

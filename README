@@ -60,8 +60,11 @@ Game TODOs:
 * quaxol chunking
 * quaxol streaming
 * sphere vs quaxol collision
-* refactor input to be inertial
-* refactor player movement
+* refactor input to have constraints
+* refactor input keys
+* change to glfw in prep for imgui
+* add imgui support
+* add console
 * Add 120 cell
 * Load compressed textures with mipmaps directly
 * Cleanup quaxol size/worldscale

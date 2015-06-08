@@ -17,22 +17,28 @@ void RaycastShape::AddCapsuleRays(float size) {
 
 bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
     const Vec4f& position, const Vec4f& velocity, float deltaTime,
-    Vec4f& outVelocity) {
+    Vec4f& outVelocity, Vec4f& collisionNormal) {
 
   outVelocity = velocity;
   Vec4f frameVelocity = outVelocity * deltaTime;
 
+  Vec4f hitNormal;
+  float closestHit = FLT_MAX;
   bool hitSomething = false;
   for(auto ray : m_rays) {
     Vec4f pushedRay(ray + frameVelocity);
     float dist;
-    if(m_pPhysics->RayCast(position, pushedRay, &dist)) {
+    if(m_pPhysics->RayCast(position, pushedRay, &dist, &hitNormal)) {
       Vec4f collideRay = pushedRay.normalized() * dist;
       Vec4f correctedVel = collideRay - ray;
       if(correctedVel.lengthSq() > frameVelocity.lengthSq()) {
         frameVelocity = correctedVel.normalized() * frameVelocity.length();
       } else {
         frameVelocity = correctedVel;
+      }
+      if(dist < closestHit) {
+        closestHit = dist;
+        collisionNormal = hitNormal;
       }
       hitSomething = true;
     }
