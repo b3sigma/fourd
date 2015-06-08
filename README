@@ -47,6 +47,13 @@ X add bunch of quaxols in a line
 ` lock mouse to window
 Esc quit
 
+Minimal TODOs:
+* Add a basic goal
+* refactor input to have constraints
+* Cleanup min/max rainbow rendering
+* controller?
+* Simple game mode - miegakure style i/k button only + sliced projection?
+
 Game TODOs:
 * more visualization attempts
 ** rainbow but with fixed z writing
@@ -60,7 +67,6 @@ Game TODOs:
 * quaxol chunking
 * quaxol streaming
 * sphere vs quaxol collision
-* refactor input to have constraints
 * refactor input keys
 * change to glfw in prep for imgui
 * add imgui support
@@ -68,7 +74,6 @@ Game TODOs:
 * Add 120 cell
 * Load compressed textures with mipmaps directly
 * Cleanup quaxol size/worldscale
-* Simple game mode - miegakure style i/k button only + sliced projection?
 
 QM/Physics TODOs:
 * Add spin system

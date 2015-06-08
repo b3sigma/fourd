@@ -62,7 +62,7 @@ bool g_captureMouse = false;
 ::fd::VRWrapper* g_vr = NULL;
 Mat4f g_debugHeadPose;
 
-bool LoadShader(const char* shaderName) {
+fd::Shader* LoadShader(const char* shaderName) {
   static std::string g_currentShader;
   std::string shaderDir = "data\\";
   std::string vertPrefix = std::string("vert");
@@ -75,7 +75,7 @@ bool LoadShader(const char* shaderName) {
     const char* currentLevel = (g_currentShader.empty()) ? NULL : g_currentShader.c_str();
     std::string nextNameWithExt;
     if(!::fd::Platform::GetNextFileName(search.c_str(), currentLevel, nextNameWithExt)) {
-      return false;
+      return NULL;
     }
     // muhahaha so robust
     const char* baseStart = &(nextNameWithExt.c_str()[4]); // skip vert
@@ -100,7 +100,7 @@ bool LoadShader(const char* shaderName) {
   pShader->AddDynamicMeshCommonSubShaders();
   if(!pShader->LoadFromFile(baseNameWithExt.c_str(), vertName.c_str(), fragName.c_str())) {
     printf("Failed loading shader!\n");
-    return false;
+    return NULL;
   }
 
   shaderMem.release();
@@ -110,7 +110,7 @@ bool LoadShader(const char* shaderName) {
   g_currentShader = vertPrefix + baseNameWithExt;
   printf("Loaded shader %s\n", vertName.c_str());
 
-  return true;
+  return pShader;
 }
 
 std::string g_levelPath = "data\\levels\\";
@@ -188,6 +188,56 @@ void ToggleCameraMode(Camera::MovementMode mode) {
   }
 }
 
+enum EyeCandyTypes {
+  EyeCandyQuad,
+  EyeCandyCube,
+  EyeCandyTesseract,
+  EyeCandy16Cell,
+};
+typedef std::list<std::unique_ptr<Mesh>> MeshList;
+MeshList g_eyeCandyMeshes;
+
+void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
+  g_eyeCandyMeshes.emplace_back(new Mesh());
+  Mesh* candy = g_eyeCandyMeshes.back().get();
+  const float size = 30.0f;
+  switch(type) {
+    case EyeCandyQuad:
+      candy->buildQuad(size, Vec4f(), Vec4f());
+      break;
+    case EyeCandyCube:
+      candy->buildCube(size, Vec4f(), Vec4f());
+      break;
+    case EyeCandyTesseract:
+      candy->buildTesseract(size, Vec4f(), Vec4f());
+      break;
+    case EyeCandy16Cell:
+      candy->build16cell(size, Vec4f());
+      break;
+  }
+
+  Entity* pEntity = g_scene.AddEntity();
+  // ugh need like a mesh manager and better approach to shader handling
+  pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
+  pEntity->m_position = pos;
+  pEntity->GetComponentBus().AddComponent(
+    new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
+    -20.0f, true));
+}
+
+void AddEyeCandy() {
+  // yeah yeah side effects blah blah
+  Shader* savedShader = g_shader;
+
+  AddEyeCandy(EyeCandyQuad, Vec4f(-50.0f, 00.0f, -50.0f, 0.0f));
+  AddEyeCandy(EyeCandyCube, Vec4f(-50.0f, 00.0f, 00.0f, 0.0f));
+  AddEyeCandy(EyeCandyTesseract, Vec4f(-50.0f, 00.0f, 50.0f, 0.0f));
+  AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 0.0f));
+
+  g_shader = savedShader;
+  g_scene.m_pQuaxolShader = g_shader;
+}
+
 bool Initialize() {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
@@ -260,6 +310,8 @@ bool Initialize() {
 
     WasGLErrorPlusPrint();
   }
+
+  AddEyeCandy();
 
   return true;
 }
@@ -422,6 +474,8 @@ void AddQuaxolUnderCursor() {
   if(g_scene.m_pPhysics->RayCastToOpenQuaxol(
       position, ray, &gridPos, NULL /*hitPos*/)) {
     g_scene.SetQuaxolAt(gridPos, true /*present*/);
+    printf("Added quaxol at x:%d y:%d z:%d w:%d\n",
+        gridPos.x, gridPos.y, gridPos.z, gridPos.w);
   }
 }
 
@@ -434,6 +488,8 @@ void RemoveQuaxolUnderCursor() {
   if(g_scene.m_pPhysics->RayCastToPresentQuaxol(
       position, ray, &gridPos, NULL /*hitPos*/)) {
     g_scene.SetQuaxolAt(gridPos, false /*present*/);
+    printf("Removed quaxol at x:%d y:%d z:%d w:%d\n",
+        gridPos.x, gridPos.y, gridPos.z, gridPos.w);
   }
 }
 
@@ -540,6 +596,9 @@ void Update(int key, int x, int y) {
       } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       }
+    } break;
+    case '=' : {
+      AddEyeCandy();
     } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
