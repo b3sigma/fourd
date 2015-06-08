@@ -10,3 +10,6 @@
 [submodule "OculusSDK"]
 	path = OculusSDK
 	url = https://github.com/b3sigma/OculusSDK
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/b3sigma/imgui
