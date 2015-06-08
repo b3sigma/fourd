@@ -15,13 +15,16 @@ Camera::Camera()
     , _wNear(0.0f)
     , _wFar(40.0f)
     , _wScreenSizeRatio(0.5)
-    , _wProjectionEnabled(true) {
+    , _wProjectionEnabled(true)
+    , _collidingLastFrame(false)
+{
   _cameraMatrix.storeIdentity();
   _cameraPos.storeZero();
   _renderMatrix.storeIdentity();
   _renderPos.storeZero();
   _fourToThree.storeIdentity();
   _yawPitchTrans.storeIdentity();
+  _pushVelocity.storeZero();
 
   bool success = _componentBus.RegisterOwnerData(
       std::string("orientation"), &_cameraMatrix, true);
@@ -33,6 +36,10 @@ Camera::Camera()
       std::string("wFar"), &_wFar, true);
   success &= _componentBus.RegisterOwnerData(
       std::string("wScreenSizeRatio"), &_wScreenSizeRatio, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("pushVelocity"), &_pushVelocity, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("collidingLastFrame"), &_collidingLastFrame, true);
   assert(success == true);
 }
 
@@ -158,6 +165,17 @@ void Camera::RenormalizeCamera(Direction changeBasis) {
       goodCoBasis);
 }
 
+// so options include adding physics to the camera in a more direct way
+//  this is probably simple as we can just make the input write to a velocity
+//  and then make the phys component add that velocity per frame
+//  lets do the simple thing first
+// or making an entity,
+//  then attaching to the entity a physics component
+//  then attaching an input handler thing, which maps commands to velocity?
+//  then adding friction to the movement
+//  then adding a hook at global level that translates app keypresses to
+//    input handler commands
+
 void Camera::ApplyTranslationInput(float amount, Direction direction) {
   if (_movement == ORBIT) {
     static bool angular = false;
@@ -180,7 +198,14 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
       }
     }
   } else if (_movement == WALK) {
-    _cameraPos += _renderMatrix[direction] * amount;
+    const float moveSpeed = 10.0f;
+    float airMoveMultiplier = 0.1f;
+    if(_collidingLastFrame) {
+      airMoveMultiplier = 1.0f;
+    }
+    _pushVelocity += _renderMatrix[direction] * (amount * moveSpeed * airMoveMultiplier);
+
+    //_cameraPos += _renderMatrix[direction] * amount;
   } else {
     _cameraPos += _cameraMatrix[direction] * amount;
   }

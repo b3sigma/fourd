@@ -532,15 +532,15 @@ void Update(int key, int x, int y) {
         g_scene.m_pQuaxolChunk->DebugSwapAxis(2 /*z*/, 1 /*y*/);
       }
     } break;
-    //case '+' : {
-    //  static bool fill = false;
-    //  fill = !fill;
-    //  if (fill) {
-    //    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    //  } else {
-    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    //  }
-    //} break;
+    case '+' : {
+      static bool fill = false;
+      fill = !fill;
+      if (fill) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      }
+    } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
@@ -843,11 +843,11 @@ void OnIdle() {
   g_scene.Step((float)g_renderer.GetFrameTime());
 
   // TODO: do some damn font code
-  //static int framecount = 0;
-  //if(framecount++ > 200) {
-  //  printf("frametime:%f\n", g_renderer.GetFrameTime());
-  //  framecount = 0;
-  //}
+  static int framecount = 0;
+  if(framecount++ > 200) {
+    printf("frametime:%f\n", g_renderer.GetFrameTime());
+    framecount = 0;
+  }
 
   UpdatePointerEntity();
 

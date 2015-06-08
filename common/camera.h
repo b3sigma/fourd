@@ -7,11 +7,6 @@ namespace fd {
 
 class Camera {
 public:
-  float _yaw; // only used in walk mode
-  float _pitch; // only used in walk mode
-  float _inspin; // only used in walk mode
-  Mat4f _yawPitchTrans;
-
   Mat4f _cameraMatrix;
   Vec4f _cameraPos;
 
@@ -41,7 +36,14 @@ public:
   };
 
   MovementMode _movement;
-  Vec4f _cameraLookAt;
+
+  Vec4f _cameraLookAt; // only used in orbit mode
+
+  float _yaw; // only used in walk mode
+  float _pitch; // only used in walk mode
+  Mat4f _yawPitchTrans; // only used in walk mode
+  Vec4f _pushVelocity; // walk mode
+  bool _collidingLastFrame;
 
   ComponentBus _componentBus;
 

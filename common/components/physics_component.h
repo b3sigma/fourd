@@ -22,6 +22,10 @@ namespace fd {
 
     Mat4f* m_pOwnerOrientation; // note as this is 4d we need full 4d matrix for orientation
     Vec4f* m_pOwnerPosition; // also need full vec4 for position.
+    
+    Vec4f* m_pOwnerPushVelocity; // optional, may be null
+    bool*  m_pOwnerCollidingLastFrame;
+
   public:
 
     PhysicsComponent(Physics* pPhys, RaycastShape* shape)
