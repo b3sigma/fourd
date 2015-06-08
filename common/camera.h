@@ -83,9 +83,10 @@ public:
   const Vec4f& getCameraPos() const {
     return _cameraPos;
   }
-  Vec4f getCameraForward() const {
+  Vec4f getLookForward() const {
     // The minus sign here means the author sucks.
-    return -getCameraMatrix()[FORWARD];
+    return -(_renderMatrix[FORWARD]);
+    //return -getCameraMatrix()[FORWARD];
   }
   const Mat4f& getRenderMatrix() const {
     return _renderMatrix;

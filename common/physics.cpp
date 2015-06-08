@@ -20,6 +20,7 @@ bool Physics::RayCast(const Vec4f& position, const Vec4f& ray,
     if(normal) {
       *normal = m_groundNormal;
     }
+    return true;
   }
   return false;
 }

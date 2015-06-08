@@ -415,7 +415,7 @@ void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, cons
 
 void AddQuaxolUnderCursor() {
   Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getCameraForward();
+  Vec4f ray = g_camera.getLookForward();
   ray *= 1000.0f;
 
   QuaxolSpec gridPos;
@@ -427,7 +427,7 @@ void AddQuaxolUnderCursor() {
 
 void RemoveQuaxolUnderCursor() {
   Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getCameraForward();
+  Vec4f ray = g_camera.getLookForward();
   ray *= 1000.0f;
 
   QuaxolSpec gridPos;
@@ -439,7 +439,7 @@ void RemoveQuaxolUnderCursor() {
 
 void AddRaycastEntity() {
   Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getCameraForward();
+  Vec4f ray = g_camera.getLookForward();
   ray *= 1000.0f;
   float dist;
   if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
@@ -462,7 +462,7 @@ void AddRaycastEntity() {
 void AddTesseractLine() {
   Vec4f cameraPos = g_camera.getCameraPos();
   cameraPos *= 1.0f / 10.0f;
-  Vec4f ray = g_camera.getCameraForward();
+  Vec4f ray = g_camera.getLookForward();
   ray *= 10.0f;
   DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> delegate;
   delegate.Bind(AddTesseractLineCallback);
@@ -775,10 +775,10 @@ void Motion(int x, int y) {
 
 void RaycastToOpenQuaxol() {
   Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getCameraForward();
+  Vec4f ray = g_camera.getLookForward();
   ray *= 1000.0f;
 
-  Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
+  Vec4f hitPos(0.0f, -1000.0f, 0.0f, 0.0f);
   static Entity* openEntity = NULL;
   if (g_scene.m_pPhysics->RayCastToOpenQuaxol(
       position, ray, NULL /*quaxolSpec*/, &hitPos)) {
@@ -801,11 +801,11 @@ void RaycastToOpenQuaxol() {
 
 void RaycastToCollsion() {
   Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getCameraForward();
+  Vec4f ray = g_camera.getLookForward();
   ray *= 1000.0f;
   float dist;
 
-  Vec4f hitPos(0.0f, 0.0f, -1000.0f, 0.0f);
+  Vec4f hitPos(0.0f, -1000.0f, 0.0f, 0.0f);
 
   if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
     hitPos = position + ray.normalized() * dist;
@@ -827,7 +827,8 @@ void RaycastToCollsion() {
 }
 
 void UpdatePointerEntity() {
-  if(g_camera.getMovementMode() == Camera::LOOK) {
+  //if(g_camera.getMovementMode() == Camera::LOOK)
+  {
     static bool quaxolMode = true;
     if(quaxolMode) {
       RaycastToOpenQuaxol();
@@ -842,12 +843,12 @@ void OnIdle() {
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
-  // TODO: do some damn font code
-  static int framecount = 0;
-  if(framecount++ > 200) {
-    printf("frametime:%f\n", g_renderer.GetFrameTime());
-    framecount = 0;
-  }
+  //// TODO: do some damn font code
+  //static int framecount = 0;
+  //if(framecount++ > 200) {
+  //  printf("frametime:%f\n", g_renderer.GetFrameTime());
+  //  framecount = 0;
+  //}
 
   UpdatePointerEntity();
 
