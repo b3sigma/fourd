@@ -972,9 +972,9 @@ void RunTests() {
   //Mat4f threeMat;
   //threeMat.eigen().
 
-  Shader::TestShaderHash();
-  Camera::TestComponents();
-  Physics::TestPhysics();
+  Shader::RunTests();
+  Camera::RunTests();
+  Physics::RunTests();
 }
 
 //#define DERP

@@ -109,7 +109,7 @@ public:
   }
 
   ComponentBus& GetComponentBus() { return _componentBus; }
-  static void TestComponents();
+  static void RunTests();
 
 private:
   void RenormalizeCamera(Direction changeBasis);

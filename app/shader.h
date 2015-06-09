@@ -95,7 +95,7 @@ namespace fd {
     void RemoveFromShaderHash();
 
   public:
-    static bool TestShaderHash();
+    static bool RunTests();
   private:
     static int s_test_shader_refs; // Just a silly var for test cases, will probably remove soon.
 

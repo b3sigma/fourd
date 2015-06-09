@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "fourmath.h"
+#include "physics_shape_interface.h"
 
 namespace fd {
 
@@ -14,17 +15,6 @@ class BoundingBox {
 public:
   Vec4f m_min;
   Vec4f m_max;
-};
-
-// shape interface class
-class PhysicsShape {
-public:
-  virtual bool DoesMovementCollide(
-      const Mat4f& orientation, const Vec4f& position,
-      const Vec4f& velocity, float deltaTime,
-      Vec4f& outVelocity, Vec4f& collisionNormal) {
-    return false; 
-  }
 };
 
 class RaycastShape : public PhysicsShape {
@@ -42,7 +32,7 @@ public:
   virtual bool DoesMovementCollide(
       const Mat4f& orientation, const Vec4f& position,
       const Vec4f& velocity, float deltaTime,
-      Vec4f& outVelocity, Vec4f& collisionNormal); 
+      Vec4f& validPos, Vec4f& outVelocity, Vec4f& collisionNormal); 
 };
 
 

@@ -51,14 +51,98 @@ void Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
   }
 }
 
-void Physics::SweepSphereQuaxol(const Vec4f& pos, float radius, const Vec4f& velocity,
-     float deltaTime, Vec4f& outPos, Vec4f& outVelocity) {
-  // establish min and max bb
-  // collect relevant quaxols
-  // for each quaxols
-  //  find closest face
-  //  sphere vs face
+bool Physics::SphereCollide(const Vec4f& position, float radius,
+    Vec4f* hitPos, Vec4f* hitNormal) {
 
+  if(SphereToQuaxols(position, radius, hitPos, hitNormal)) {
+    return true;
+  }
+
+  if(PhysicsHelp::SphereToPlane(position, radius,
+      m_groundNormal, m_groundHeight, hitPos)) {
+    *hitNormal = m_groundNormal;
+    return true;
+  }
+  return false;
+}
+
+bool Physics::SphereToQuaxols(const Vec4f& position, float radius,
+    Vec4f* hitPos, Vec4f* hitNormal) {
+  if(!m_chunk) return false;
+
+  Vec4f localPos(position);
+  localPos -= m_chunk->m_position;
+  localPos /= m_chunk->m_blockSize;
+
+  // to support non-uniform blocksize, need local ellipse or world ellipse
+  assert(m_chunk->m_blockSize.x == m_chunk->m_blockSize.y 
+      && m_chunk->m_blockSize.x == m_chunk->m_blockSize.w
+      && m_chunk->m_blockSize.x == m_chunk->m_blockSize.z);
+  float localRadius = radius / m_chunk->m_blockSize.x; 
+  
+  Vec4f localHitPos;
+  if(!LocalSphereToQuaxolChunk(*m_chunk, localPos, localRadius, 
+      &localHitPos, hitNormal)) {
+    return false;
+  }
+
+  localHitPos *= m_chunk->m_blockSize;
+  localHitPos += m_chunk->m_position;
+  *hitPos = localHitPos;
+
+  return true;
+}
+
+bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk, 
+    const Vec4f& position, float radius,
+    Vec4f* hitPos, Vec4f* hitNormal) {
+
+  Vec4f radiusVec(radius, radius, radius, radius);
+  Vec4f min = position - radiusVec;
+  Vec4f max = position + radiusVec;
+
+  QuaxolSpec gridMin(min);
+  QuaxolSpec gridMax(max);
+
+  bool foundHit = false;
+  float closestHitSq = FLT_MAX;
+  Vec4f bestHit;
+  Vec4f bestNormal;
+
+  Vec4f minBox;
+  Vec4f maxBox;
+  Vec4f currentHit;
+  Vec4f currentNormal;
+  for(int x = gridMin.x; x <= gridMax.x; ++x) {
+    minBox.x = (float)x;
+    maxBox.x = (float)(x + 1);
+    for(int y = gridMin.y; y <= gridMax.y; ++y) {
+      minBox.y = (float)y;
+      maxBox.y = (float)(y + 1);
+      for (int z = gridMin.z; z <= gridMax.z; ++z) {
+        minBox.z = (float)z;
+        maxBox.z = (float)(z + 1);
+        for (int w = gridMin.w; w <= gridMax.w; ++w) {
+          minBox.w = (float)w;
+          maxBox.w = (float)(w + 1);
+          
+          if(PhysicsHelp::SphereToAlignedBox(
+              minBox, maxBox, position, radius, &currentHit, &currentNormal)) {
+            float distSq = (position - currentHit).lengthSq();
+            if(distSq < closestHitSq) {
+              closestHitSq = distSq;
+              bestHit = currentHit;
+              bestNormal = currentNormal;
+              foundHit = true;
+            }
+          }
+
+        } // w
+      } // z
+    } // y
+  } // x
+
+  return foundHit;
 }
 
 bool Physics::RayCastChunk(const QuaxolChunk& chunk,
@@ -361,7 +445,7 @@ void Physics::TestPhysicsCallback(
   assert(w >= -infiniteCheck && w < infiniteCheck);
 }
 
-void Physics::TestPhysics() {
+void Physics::RunTests() {
   Physics physTest;
 
   ////////////////////////

@@ -49,6 +49,14 @@ namespace fd {
         QuaxolSpec* outOpenBlock, Vec4f* outPos);
     bool RayCastToPresentQuaxol(const Vec4f& position, const Vec4f& ray,
         QuaxolSpec* outPresentBlock, Vec4f* outPos);
+    
+    bool SphereCollide(const Vec4f& position, float radius,
+        Vec4f* hitPos, Vec4f* hitNormal);
+    bool SphereToQuaxols(const Vec4f& position, float radius,
+        Vec4f* hitPos, Vec4f* hitNormal);
+    bool LocalSphereToQuaxolChunk(const QuaxolChunk& chunk, 
+        const Vec4f& position, float radius,
+        Vec4f* hitPos, Vec4f* hitNormal);
 
     bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
     void ClampToGround(Vec4f* position, Vec4f* velocity);
@@ -65,10 +73,7 @@ namespace fd {
     void LineDraw4D(const Vec4f& start, const Vec4f& ray,
         DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback);
 
-    void SweepSphereQuaxol(const Vec4f& pos, float radius, const Vec4f& velocity,
-        float deltaTime, Vec4f& outPos, Vec4f& outVelocity);
-
-    static void TestPhysics();
+    static void RunTests();
   protected:
     static TVecQuaxol s_testQuaxols;
     static void TestPhysicsCallback(int x, int y, int z, int w, const Vec4f& position, const Vec4f& ray);

@@ -17,7 +17,7 @@ void RaycastShape::AddCapsuleRays(float size) {
 
 bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
     const Vec4f& position, const Vec4f& velocity, float deltaTime,
-    Vec4f& outVelocity, Vec4f& collisionNormal) {
+    Vec4f& validPos, Vec4f& outVelocity, Vec4f& collisionNormal) {
 
   outVelocity = velocity;
   Vec4f frameVelocity = outVelocity * deltaTime;
@@ -39,6 +39,7 @@ bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
       if(dist < closestHit) {
         closestHit = dist;
         collisionNormal = hitNormal;
+        validPos = (ray.normalized() * dist) + position;
       }
       hitSomething = true;
     }

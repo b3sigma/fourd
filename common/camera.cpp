@@ -310,7 +310,7 @@ class SuicideComponent : public Component {
   }
 };
 
-void Camera::TestComponents() {
+void Camera::RunTests() {
   _internal::TestSignals();
 
   Mat4f identity;

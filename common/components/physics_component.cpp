@@ -64,8 +64,9 @@ void PhysicsComponent::OnStepSignal(float delta) {
   Vec4f possibleVelocity;
   bool hadGroundCollision = false;
   Vec4f hitNormal;
+  Vec4f hitPos;
   if(m_pShape->DoesMovementCollide(*m_pOwnerOrientation, *m_pOwnerPosition,
-      m_velocity, delta, possibleVelocity, hitNormal)) {
+      m_velocity, delta, hitPos, possibleVelocity, hitNormal)) {
     frameVelocity = possibleVelocity * delta;
     m_velocity = possibleVelocity;
     const float groundCollisionThreshold = 0.1f;
@@ -74,8 +75,6 @@ void PhysicsComponent::OnStepSignal(float delta) {
     }
   }
 
-  // not quite right as we should really just be doing friction based on
-  // ground collision
   if(hadGroundCollision) {
     static float frictionCoef = -10.0f;
     m_velocity += (m_velocity * (frictionCoef * delta));

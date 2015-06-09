@@ -78,6 +78,9 @@
     <ClCompile Include="..\common\components\physics_component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\player_capsule_shape.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -159,6 +162,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\raycast_shape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\physics_shape_interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\player_capsule_shape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

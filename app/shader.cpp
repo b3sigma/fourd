@@ -382,7 +382,7 @@ GLint Shader::getUniform(const char* name) const {
 
 int Shader::s_test_shader_refs = 0;
 
-bool Shader::TestShaderHash() {
+bool Shader::RunTests() {
   TShaderHash* pTestHash = shader_hash_create();
 
   int startingShaderRefs = Shader::s_test_shader_refs;

@@ -102,6 +102,7 @@
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />
+    <ClCompile Include="..\common\player_capsule_shape.cpp" />
     <ClCompile Include="..\common\quaxol.cpp" />
     <ClCompile Include="..\common\raycast_shape.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
@@ -128,6 +129,8 @@
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\mesh.h" />
     <ClInclude Include="..\common\physics.h" />
+    <ClInclude Include="..\common\physics_shape_interface.h" />
+    <ClInclude Include="..\common\player_capsule_shape.h" />
     <ClInclude Include="..\common\quaxol.h" />
     <ClInclude Include="..\common\raycast_shape.h" />
     <ClInclude Include="..\common\thirdparty\signals\Delegate.h" />

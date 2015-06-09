@@ -31,6 +31,18 @@ namespace fd {
         const Vec4f& start, const Vec4f& ray,
         float* outDist, Vec4f* outPoint);
 
+    static bool SphereToPlane(
+        const Vec4f& pos, float radius,
+        const Vec4f& planeNormal, float planeOffset,
+        Vec4f* outPoint);
+    static bool SphereToAlignedBox(
+        const Vec4f& min, const Vec4f& max,
+        const Vec4f& pos, float radius,
+        Vec4f* outPoint, Vec4f* outNormal);
+    
+    static bool AlignedBoxToAlignedBox(
+        const Vec4f& minLeft, const Vec4f& maxLeft,
+        const Vec4f& minRight, const Vec4f& maxRight);
 
     inline static bool RayToQuaxol(
         const QuaxolSpec& pos,
@@ -60,6 +72,11 @@ namespace fd {
 
     //  return false;
     //}
+
+  public:
+    static void RunTests();
+  protected:
+
   };
 
 }; //namespace fd
