@@ -13,3 +13,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/b3sigma/imgui
+[submodule "glfw"]
+	path = glfw
+	url = https://github.com/glfw/glfw
