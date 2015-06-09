@@ -26,8 +26,25 @@ void PhysicsComponent::OnConnected() {
   // This is a bad sign... Should we do a typeid system?
   RegisterSignal(std::string("DestroyPhysics"), (Component*)this, &Component::SelfDestruct);
   RegisterSignal(std::string("AddImpulse"), this, &PhysicsComponent::OnImpulse);
+  RegisterSignal(std::string("Jump"), this, &PhysicsComponent::OnJump);
 }
     
+void PhysicsComponent::OnJump(const Vec4f& impulse) {
+  if(m_pOwnerCollidingLastFrame) {
+    if(!(*m_pOwnerCollidingLastFrame)) {
+      return; // don't air jump
+    }
+  }
+
+  if(m_jumpCountdown > 0.0f) {
+    return; // don't double jump
+  }
+
+  const float jumpTime = 1.0f;
+  m_jumpCountdown = jumpTime;
+  m_velocity += impulse;
+}
+
 void PhysicsComponent::OnImpulse(const Vec4f& impulse) {
   m_velocity += impulse;
 }
@@ -65,6 +82,9 @@ void PhysicsComponent::OnStepSignal(float delta) {
   }
   if(m_pOwnerCollidingLastFrame) {
     *m_pOwnerCollidingLastFrame = hadGroundCollision;
+  }
+  if(m_jumpCountdown > 0.0) {
+    m_jumpCountdown -= delta;
   }
 
   *m_pOwnerPosition += frameVelocity;

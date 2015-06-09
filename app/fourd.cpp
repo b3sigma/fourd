@@ -635,7 +635,7 @@ void Update(int key, int x, int y) {
     } break;
     case ' ' : {
       Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 0.75f;
-      g_camera.GetComponentBus().SendSignal("AddImpulse", SignalN<const Vec4f&>(), jumpAmount);
+      g_camera.GetComponentBus().SendSignal("Jump", SignalN<const Vec4f&>(), jumpAmount);
     } break;
     case 'a' : {
       g_camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);
@@ -902,7 +902,6 @@ void OnIdle() {
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
-  //// TODO: do some damn font code
   //static int framecount = 0;
   //if(framecount++ > 200) {
   //  printf("frametime:%f\n", g_renderer.GetFrameTime());

@@ -19,6 +19,7 @@ namespace fd {
     RaycastShape* m_pShape; //owned
 
     Vec4f m_velocity;
+    float m_jumpCountdown;
 
     Mat4f* m_pOwnerOrientation; // note as this is 4d we need full 4d matrix for orientation
     Vec4f* m_pOwnerPosition; // also need full vec4 for position.
@@ -35,6 +36,7 @@ namespace fd {
 
     virtual void OnConnected();
 
+    void OnJump(const Vec4f& impulse); // should not be here, too specific
     void OnImpulse(const Vec4f& impulse);
     
     void OnStepSignal(float delta);
