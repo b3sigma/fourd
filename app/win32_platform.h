@@ -3,6 +3,8 @@
 #include "platform_interface.h"
 #include <string>
 
+struct GLFWwindow;
+
 namespace fd {
 
 class PlatformWindow {
@@ -13,7 +15,8 @@ public:
   int m_height;
   bool m_fullscreen;
   bool m_cursorCaptured;
-
+  GLFWwindow* m_glfwWindow;
+  
   int GetNumDisplays();
   void ToggleFullscreenByMonitorName(const char* name);
   void GetWidthHeight(int* outWidth, int* outHeight);

@@ -3,6 +3,8 @@
 
 #include <assert.h>
 #include <GL/glew.h>
+
+#include <GLFW/glfw3.h>
 //#include <GL/freeglut.h>
 
 namespace fd {
@@ -208,9 +210,11 @@ void PlatformWindow::CaptureCursor(bool capture) {
     // but it doesn't matter as the mouse move wrap handles it.
     BOOL result = ClipCursor(&interiorRect);
 
+    glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     //glutSetCursor(GLUT_CURSOR_NONE);
   } else {
     ClipCursor(NULL);
+    glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     //glutSetCursor(GLUT_CURSOR_INHERIT);
   }
 }

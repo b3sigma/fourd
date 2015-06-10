@@ -80,6 +80,13 @@ void Camera::ApplyYawInput(float radians) {
 
 void Camera::ApplyPitchInput(float radians) {
   _pitch += radians;
+  const float maxPitch = (float)PI * 0.48f;
+  const float minPitch = -maxPitch;
+  if(_pitch > maxPitch) {
+    _pitch = maxPitch;
+  } else if(_pitch < minPitch) {
+    _pitch = minPitch;
+  }
 
   RebuildOrientationFromYawPitch();
 }

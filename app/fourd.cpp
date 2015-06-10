@@ -61,7 +61,8 @@ Mesh tesseract;
 ::fd::Shader* g_shader = NULL;
 ::fd::Entity* g_pointerEntity = NULL;
 bool g_captureMouse = false;
-::fd::PlatformWindow* g_platformWindow;
+::fd::PlatformWindow* g_platformWindow = NULL;
+GLFWwindow* g_glfwWindow = NULL;
 
 ::fd::VRWrapper* g_vr = NULL;
 Mat4f g_debugHeadPose;
@@ -326,7 +327,7 @@ void Deinitialize(void) {
   ::fd::Platform::Shutdown();
 }
 
-#define DERP
+//#define DERP
 #ifndef DERP
 
 void UpdatePerspective() {
@@ -345,7 +346,8 @@ void SetSimpleProjectiveMode() {
 }
 
 
-void ReshapeGL(int width, int height) {
+//void ReshapeGL(int width, int height) {
+void ReshapeGL(GLFWwindow* window, int width, int height) {
   _width = width;
   _height = height;
   glViewport(0, 0, (GLsizei) (_width), (GLsizei) (_height));
@@ -353,7 +355,7 @@ void ReshapeGL(int width, int height) {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glutPostRedisplay();
+  //glutPostRedisplay();
 }
 
 int mouseX = 0;
@@ -361,8 +363,12 @@ int mouseY = 0;
 int accumulatedMouseX = 0;
 int accumulatedMouseY = 0;
 
-void PassiveMotion(int x, int y) {
+
+//void PassiveMotion(int x, int y) {
+void PassiveMotion(GLFWwindow* window, double dX, double dY) {
   int threshold = 20;
+  int x = (int)dX;
+  int y = (int)dY;
   int deltaX = x - mouseX;
   int deltaY = y - mouseY;
   mouseX = x;
@@ -391,7 +397,8 @@ void PassiveMotion(int x, int y) {
     if(newX != mouseX || newY != mouseY) {
       mouseX = newX;
       mouseY = newY;
-      glutWarpPointer(newX, newY);
+      glfwSetCursorPos(g_glfwWindow, newX, newY);
+      //glutWarpPointer(newX, newY);
     }
   }
 }
@@ -536,13 +543,56 @@ void AddTesseractLine() {
   g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);  
 }
 
-void Update(int key, int x, int y) {
+void AsciiKeyUpdate(int key, int x, int y);
+void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+    Deinitialize();
+    glfwSetWindowShouldClose(window, GL_TRUE);
+    return;
+  }
+
+  // hacky glut interface follows until a proper rewrite
+  if(action != GLFW_PRESS && action != GLFW_REPEAT)
+    return;
+
+  int asciiCode = key;
+  if(asciiCode >= GLFW_KEY_A && asciiCode <= GLFW_KEY_Z) {
+    if(!(mods & GLFW_MOD_SHIFT)) {
+      // was actually 'a' not 'A'
+      asciiCode -= 'A' - 'a';
+    }
+  }
+  if(asciiCode >= GLFW_KEY_0 && asciiCode <= GLFW_KEY_9) {
+    if((mods & GLFW_MOD_SHIFT)) {
+      // maybe '!' not '1'
+      switch(asciiCode) {
+        case GLFW_KEY_1: asciiCode = '!'; break;
+        case GLFW_KEY_2: asciiCode = '@'; break;
+        case GLFW_KEY_3: asciiCode = '#'; break;
+        case GLFW_KEY_4: asciiCode = '$'; break;
+        case GLFW_KEY_5: asciiCode = '%'; break;
+        case GLFW_KEY_6: asciiCode = '^'; break;
+        case GLFW_KEY_7: asciiCode = '&'; break;
+        case GLFW_KEY_8: asciiCode = '*'; break;
+        case GLFW_KEY_9: asciiCode = '('; break;
+        case GLFW_KEY_0: asciiCode = ')'; break;
+      }
+    }
+  }
+
+  AsciiKeyUpdate(asciiCode, 0, 0);
+}
+
+
+void AsciiKeyUpdate(int key, int x, int y) {
   UNUSED(x); UNUSED(y); // Required by glut prototype.
   static float moveAmount = 1.0f;
   static float rollAmount = moveAmount * 2 * (float)PI / 100.0f;
 
 
-  bool isShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
+  //bool isShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
+  bool isShift = false;
 
   switch (key) {
     case '`' : {
@@ -799,10 +849,11 @@ void Update(int key, int x, int y) {
       DebugRotateVR(-(float)PI / 32.0f, Camera::RIGHT, Camera::FORWARD);
     } break;
   }
-  glutPostRedisplay();
+  //glutPostRedisplay();
 }
 
-void Draw(void) {
+//void Draw(void) {
+void Draw(GLFWwindow* window) {
   if (!g_shader)
     return;
     
@@ -822,22 +873,8 @@ void Draw(void) {
   }
 
   glFlush();
-  glutSwapBuffers();
-}
-
-void Key(unsigned char key, int x, int y) {
-  Update(key, x, y);
-  return;
-}
-
-void MouseClick(int type, int up, int x, int y) {
-  UNUSED(x); UNUSED(y); UNUSED(type); UNUSED(up);
-  //printf("Click type:%d up:%d x:%d y:%d\n", type, up, x, y);
-}
-
-void Motion(int x, int y) {
-  UNUSED(x); UNUSED(y);
-  //printf("Motion x:%d y:%d\n", x, y);
+  //glutSwapBuffers();
+  glfwSwapBuffers(window);
 }
 
 void RaycastToOpenQuaxol() {
@@ -918,7 +955,7 @@ void OnIdle() {
 
   UpdatePointerEntity();
 
-  glutPostRedisplay();
+  //glutPostRedisplay();
 }
 
 void StaticInitialize() {
@@ -985,36 +1022,54 @@ void RunTests() {
   Physics::RunTests();
 }
 
+void glfwErrorCallback(int error, const char* description) {
+  printf("GLFW Error: %d :  %s\n", error, description);
+}
+
 // Soooo tacky!
 #define RUN_TESTS
 
-  int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 
   StaticInitialize();
 
 #ifdef RUN_TESTS
   RunTests();
 #endif // RUN_TESTS
+  
+  glfwSetErrorCallback(glfwErrorCallback);
 
-  glutInit(&argc, argv);
-  glutInitWindowPosition(0, 0);
+  if(!glfwInit()) {
+    printf("glfw init fail\n");
+    return -1;
+  }
+
   int startWidth = 640;
   int startHeight = 580;
-  glutInitWindowSize(startWidth, startHeight);
-  glutInitDisplayMode(GLUT_RGBA | GLUT_ALPHA | GLUT_DEPTH | GLUT_DOUBLE);
-  //glutInitContextVersion(4, 3);
-  GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
-//#ifdef _DEBUG
-//  contextFlags |= GLUT_DEBUG;
-//#endif // _DEBUG
-  glutInitContextFlags(contextFlags);
-  GLint contextProfile = 0; // GLUT_CORE_PROFILE;
-  glutInitContextProfile(contextProfile);
-    
-  glutCreateWindow(argv[0]);
-  
   char windowTitle[] = "fourd";
+  g_glfwWindow = glfwCreateWindow(startWidth, startHeight, windowTitle, NULL, NULL);
+  if(!g_glfwWindow) {
+    printf("glfwCreateWindow fail\n");
+    return -1;
+  }
+  //glutInit(&argc, argv);
+  //glutInitWindowPosition(0, 0);
+  //glutInitWindowSize(startWidth, startHeight);
+  //glutInitDisplayMode(GLUT_RGBA | GLUT_ALPHA | GLUT_DEPTH | GLUT_DOUBLE);
+  //GLint contextFlags = GLUT_CORE_PROFILE; // GLUT_FORWARD_COMPATIBLE;
+  //glutInitContextFlags(contextFlags);
+  //GLint contextProfile = 0; // GLUT_CORE_PROFILE;
+  //glutInitContextProfile(contextProfile);    
+  //glutCreateWindow(argv[0]);
+
+  glfwMakeContextCurrent(g_glfwWindow);
+  glfwSwapInterval(0); //1);
+
+  //glutReshapeFunc(ReshapeGL);
+  glfwSetFramebufferSizeCallback(g_glfwWindow, ReshapeGL);
+
   g_platformWindow = ::fd::Platform::Init(windowTitle, startWidth, startHeight);
+  g_platformWindow->m_glfwWindow = g_glfwWindow; // some days it's like fuck it, let's do it the wrong way
   
   glewExperimental=TRUE;
   GLenum err;
@@ -1025,16 +1080,36 @@ void RunTests() {
   
   g_vr = VRWrapper::CreateVR(g_platformWindow);
 
-  glutReshapeFunc(ReshapeGL);
-  glutKeyboardFunc(Key);
-  glutMouseFunc(MouseClick);
-  glutPassiveMotionFunc(PassiveMotion);
-  glutMotionFunc(Motion);
+  glfwSetKeyCallback(g_glfwWindow, Key);
+  //glutKeyboardFunc(Key);
+
+  //glutMouseFunc(MouseClick);
+  glfwSetCursorPosCallback(g_glfwWindow, PassiveMotion);
+  //glutPassiveMotionFunc(PassiveMotion);
+  //glutMotionFunc(Motion);
   //glutSpecialFunc(Update);
-  glutDisplayFunc(Draw);
-  glutIdleFunc(OnIdle);
+
+  glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
+  //glutDisplayFunc(Draw);
+
+  //glutIdleFunc(OnIdle);
+
   Initialize();
-  glutMainLoop();
+  ReshapeGL(g_glfwWindow, startWidth, startHeight);
+
+  //glutMainLoop();
+  while(true) {
+    OnIdle();
+    Draw(g_glfwWindow);
+  
+    glfwPollEvents();
+    if(glfwWindowShouldClose(g_glfwWindow)) {
+      break;
+    }
+  }
+
+  glfwTerminate();
+
   return 0;
 }
 
@@ -1042,7 +1117,7 @@ void RunTests() {
 #else // DERP
 
 //void derpReshapeGL(int width, int height) {
-static void derpglfwFramebufferSizeCallback(
+void derpglfwFramebufferSizeCallback(
     GLFWwindow* window, int width, int height)
 {
   _width = width;
@@ -1062,7 +1137,7 @@ static void derpglfwFramebufferSizeCallback(
   //glutPostRedisplay();
 }
 
-static void derpKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+void derpKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
     Deinitialize();
@@ -1078,7 +1153,7 @@ static void derpKey(GLFWwindow* window, int key, int scancode, int action, int m
 //  }
 //}
 
-#define DERP_INLINE_SHADERS
+//#define DERP_INLINE_SHADERS
 #ifdef DERP_INLINE_SHADERS
 GLuint v,f,p;
 void loadInlineShaders() {
@@ -1163,9 +1238,9 @@ void main()
 fd::Shader derpShader;
 #endif // DERP_INLINE_SHADERS
 
-::fd::Texture g_texture;
+::fd::Texture* g_texture;
 //void derpRenderScene(void) {
-static void derpwindowRefreshFun(GLFWwindow* window) {
+void derpwindowRefreshFun(GLFWwindow* window) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   static float timey = 0.0f;
@@ -1190,7 +1265,7 @@ static void derpwindowRefreshFun(GLFWwindow* window) {
     WasGLErrorPlusPrint();
     glActiveTexture(GL_TEXTURE0);
     WasGLErrorPlusPrint();
-    glBindTexture(GL_TEXTURE_2D, g_texture.GetTextureID());
+    glBindTexture(GL_TEXTURE_2D, g_texture->GetTextureID());
     WasGLErrorPlusPrint();    
     glUniform1i(hTex, 0);
   }
@@ -1221,8 +1296,8 @@ static void derpwindowRefreshFun(GLFWwindow* window) {
     WasGLErrorPlusPrint();
     glActiveTexture(GL_TEXTURE0);
     WasGLErrorPlusPrint();
-    glBindTexture(GL_TEXTURE_2D, g_texture.GetTextureID());
-    WasGLErrorPlusPrint();    
+    glBindTexture(GL_TEXTURE_2D, g_texture->GetTextureID());
+    WasGLErrorPlusPrint();
     glUniform1i(hTex, 0);
   }
 #endif //def DERP_INLINE_SHADERS
@@ -1267,7 +1342,7 @@ static void derpwindowRefreshFun(GLFWwindow* window) {
 	//glutSwapBuffers();
 }
 
-static void glfwErrorCallback(int error, const char* description)
+void glfwErrorCallback(int error, const char* description)
 {
     printf("GLFW Error: %s\n", description);
 }
@@ -1320,9 +1395,8 @@ int main(int argc, char *argv[]) {
 
   //Initialize();
   
-  g_texture.LoadFromFile("data\\textures\\orientedTexture.png");
-
-  WasGLErrorPlusPrint();
+  g_texture = new ::fd::Texture();
+  g_texture->LoadFromFile("data\\textures\\orientedTexture.png");
 
 #ifdef DERP_INLINE_SHADERS
   loadInlineShaders();
@@ -1339,11 +1413,14 @@ int main(int argc, char *argv[]) {
   while(true) {
     derpwindowRefreshFun(window);
   
-    glfwWaitEvents();
+    glfwPollEvents();
+    //glfwWaitEvents();
     if(glfwWindowShouldClose(window)) {
       break;
     }
   }
+
+  glfwTerminate();
 
   return 0;
 }
