@@ -3,7 +3,7 @@
 
 #include <assert.h>
 #include <GL/glew.h>
-#include <GL/freeglut.h>
+//#include <GL/freeglut.h>
 
 namespace fd {
 
@@ -27,7 +27,7 @@ PlatformWindow* Platform::Init(
   Win32Platform::s_Platform = new Win32Platform();
 
   PlatformWindow* pWindow = new PlatformWindow();
-  glutSetWindowTitle(windowName);
+  //glutSetWindowTitle(windowName);
   pWindow->m_hWnd = FindWindow(NULL, windowName);
   pWindow->m_width = width;
   pWindow->m_height = height;
@@ -173,9 +173,9 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
     }
     // Mixing of win32 and glut code is... interesting
 
-    glutFullScreen();
+    //glutFullScreen();
   } else {
-    glutLeaveFullScreen();
+    //glutLeaveFullScreen();
     if(foundOther) {
       SetWindowPos(m_hWnd, HWND_TOPMOST,
           otherMonitorRect.left, otherMonitorRect.top, m_width, m_height,
@@ -208,10 +208,10 @@ void PlatformWindow::CaptureCursor(bool capture) {
     // but it doesn't matter as the mouse move wrap handles it.
     BOOL result = ClipCursor(&interiorRect);
 
-    glutSetCursor(GLUT_CURSOR_NONE);
+    //glutSetCursor(GLUT_CURSOR_NONE);
   } else {
     ClipCursor(NULL);
-    glutSetCursor(GLUT_CURSOR_INHERIT);
+    //glutSetCursor(GLUT_CURSOR_INHERIT);
   }
 }
 
