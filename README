@@ -49,10 +49,8 @@ Esc quit
 
 Minimal TODOs:
 * Add a basic goal
-* refactor input to have constraints
+* Add basic ui
 * Cleanup min/max rainbow rendering
-* controller?
-* Simple game mode - miegakure style i/k button only + sliced projection?
 
 Game TODOs:
 * more visualization attempts
@@ -62,6 +60,7 @@ Game TODOs:
 ** multipass 
 ** Alpha test cleaner clipping?
 * cleanup rift positioning
+* refactor keyboard input
 * auto shape gen
 * quaxol bitpacked rendering
 * quaxol chunking

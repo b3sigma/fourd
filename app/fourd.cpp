@@ -47,11 +47,6 @@
 
 using namespace ::fd;
 
-// Setup a render target approach
-// Get multi-view working
-// Get a post effect working
-// Integrate rift
-
 int _width = 800;
 int _height = 600;
 float g_blockSize = 10.0f;
@@ -350,8 +345,6 @@ void SetSimpleProjectiveMode() {
   UpdatePerspective();
 }
 
-
-//void ReshapeGL(int width, int height) {
 void ReshapeGL(GLFWwindow* window, int width, int height) {
   _width = width;
   _height = height;
@@ -368,8 +361,6 @@ int mouseY = 0;
 int accumulatedMouseX = 0;
 int accumulatedMouseY = 0;
 
-
-//void PassiveMotion(int x, int y) {
 void PassiveMotion(GLFWwindow* window, double dX, double dY) {
   int threshold = 20;
   int x = (int)dX;
@@ -548,7 +539,7 @@ void AddTesseractLine() {
   g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);  
 }
 
-void AsciiKeyUpdate(int key, int x, int y);
+void AsciiKeyUpdate(int key, bool isShift);
 void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -586,18 +577,12 @@ void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
   }
 
-  AsciiKeyUpdate(asciiCode, 0, 0);
+  AsciiKeyUpdate(asciiCode, (mods & GLFW_MOD_SHIFT));
 }
 
-
-void AsciiKeyUpdate(int key, int x, int y) {
-  UNUSED(x); UNUSED(y); // Required by glut prototype.
+void AsciiKeyUpdate(int key, bool isShift) {
   static float moveAmount = 1.0f;
   static float rollAmount = moveAmount * 2 * (float)PI / 100.0f;
-
-
-  //bool isShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT) != 0;
-  bool isShift = false;
 
   switch (key) {
     case '`' : {
@@ -947,7 +932,7 @@ void UpdatePointerEntity() {
   }
 }
 
-void OnIdle() {
+void StepFrame() {
   g_renderer.UpdateFrameTime();
 
   g_inputHandler.PollJoysticks();
@@ -1101,14 +1086,14 @@ int main(int argc, char *argv[]) {
   glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
   //glutDisplayFunc(Draw);
 
-  //glutIdleFunc(OnIdle);
+  //glutIdleFunc(StepFrame);
 
   Initialize();
   ReshapeGL(g_glfwWindow, startWidth, startHeight);
 
   //glutMainLoop();
   while(true) {
-    OnIdle();
+    StepFrame();
     Draw(g_glfwWindow);
   
     glfwPollEvents();
