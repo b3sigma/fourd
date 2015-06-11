@@ -697,8 +697,8 @@ void AsciiKeyUpdate(int key, int x, int y) {
       exit(0);
     } break;
     case ' ' : {
-      Vec4f jumpAmount = -(g_scene.m_pPhysics->m_gravity) * 0.75f;
-      g_camera.GetComponentBus().SendSignal("Jump", SignalN<const Vec4f&>(), jumpAmount);
+      g_camera.GetComponentBus().SendSignal("inputJump",
+          SignalN<float>(), (float)g_renderer.GetFrameTime());
     } break;
     case 'a' : {
       g_camera.ApplyTranslationInput(-moveAmount, Camera::RIGHT);

@@ -13,10 +13,13 @@ public:
     //std::string m_joystickType;
     float m_deadzone;
     bool m_isButton;
+    bool m_spamRepeats;
     int m_buttonIndex;
     bool m_isInverted;
-    JoystickBinding() : m_deadzone(0.1f), m_isButton(false),
-        m_buttonIndex(0), m_isInverted(false) {}
+    // sensitivity?
+    // button press/repeat?
+    JoystickBinding() : m_deadzone(0.2f), m_isButton(false),
+        m_buttonIndex(0), m_isInverted(false), m_spamRepeats(false) {}
   };
   typedef std::vector<JoystickBinding> JoyBindingList;
   JoyBindingList m_joyBindings;
@@ -28,6 +31,8 @@ public:
     typedef std::vector<unsigned char> ButtonList;
     typedef std::vector<float> AxisList;
     ButtonList m_buttons;
+    ButtonList m_lastButtons;
+
     AxisList m_axes;
 
     Joystick() : m_isPresent(false) {}

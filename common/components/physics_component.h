@@ -36,7 +36,7 @@ namespace fd {
 
     virtual void OnConnected();
 
-    void OnJump(const Vec4f& impulse); // should not be here, too specific
+    void OnJump(float frameTime); // should not be here, too specific
     void OnImpulse(const Vec4f& impulse);
     
     void OnStepSignal(float delta);

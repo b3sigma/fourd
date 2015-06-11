@@ -17,6 +17,7 @@ Camera::Camera()
     , _wScreenSizeRatio(0.5)
     , _wProjectionEnabled(true)
     , _collidingLastFrame(false)
+    , _nextSimpleSlicePositive(true)
 {
   _cameraMatrix.storeIdentity();
   _cameraPos.storeZero();
@@ -45,6 +46,12 @@ Camera::Camera()
       std::string("inputForward"), this, &Camera::OnInputForward);
   _componentBus.RegisterSignal(
       std::string("inputStrafe"), this, &Camera::OnInputStrafe);
+  _componentBus.RegisterSignal(
+      std::string("inputLookUp"), this, &Camera::OnInputLookUp);
+  _componentBus.RegisterSignal(
+      std::string("inputLookRight"), this, &Camera::OnInputLookRight);
+  _componentBus.RegisterSignal(
+      std::string("inputShiftSlice"), this, &Camera::OnInputShiftSlice);
 
   assert(success == true);
 }
@@ -232,6 +239,30 @@ void Camera::OnInputForward(float fDeltaTime, float amount) {
 void Camera::OnInputStrafe(float fDeltaTime, float amount) {
   const float strafeSpeed = 30.0f;
   ApplyTranslationInput(strafeSpeed * amount * fDeltaTime, Camera::RIGHT);
+}
+
+void Camera::OnInputLookUp(float fDeltaTime, float amount) {
+  const float joySensitivity = 2.0f;
+  ApplyPitchInput(joySensitivity * fDeltaTime * amount);
+}
+
+void Camera::OnInputLookRight(float fDeltaTime, float amount) {
+  const float joySensitivity = 2.0f;
+  ApplyYawInput(joySensitivity * fDeltaTime * amount);
+}
+
+void Camera::OnInputShiftSlice(float fDeltaTime) {
+  float sliceRotateAmount = (float)PI * 0.5f;
+  if(!_nextSimpleSlicePositive) {
+    sliceRotateAmount *= -1.0f;
+  }
+
+  GetComponentBus().AddComponent(
+      new AnimatedRotation(sliceRotateAmount,
+          (int)::fd::Camera::INSIDE, (int)::fd::Camera::RIGHT,
+          2.0f /* duration */, true /* worldSpace */));
+
+  _nextSimpleSlicePositive = !_nextSimpleSlicePositive;
 }
 
 void Camera::SetZProjection(int width, int height, 

@@ -45,6 +45,8 @@ public:
   Vec4f _pushVelocity; // walk mode
   bool _collidingLastFrame;
 
+  bool _nextSimpleSlicePositive;
+
   ComponentBus _componentBus;
 
   Camera();
@@ -77,6 +79,9 @@ public:
 
   void OnInputForward(float fDeltaTime, float amount);
   void OnInputStrafe(float fDeltaTime, float amount);
+  void OnInputLookUp(float fDeltaTime, float amount);
+  void OnInputLookRight(float fDeltaTime, float amount);
+  void OnInputShiftSlice(float fDeltaTime);
 
   void printIt();
 
