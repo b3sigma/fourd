@@ -90,6 +90,7 @@
   <ItemGroup>
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
+    <ClCompile Include="..\app\input_handler.cpp" />
     <ClCompile Include="..\app\meshbuffer.cpp" />
     <ClCompile Include="..\app\render.cpp" />
     <ClCompile Include="..\app\scene.cpp" />
@@ -112,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\entity.h" />
+    <ClInclude Include="..\app\input_handler.h" />
     <ClInclude Include="..\app\meshbuffer.h" />
     <ClInclude Include="..\app\platform_interface.h" />
     <ClInclude Include="..\app\render.h" />

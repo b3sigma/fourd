@@ -40,6 +40,12 @@ Camera::Camera()
       std::string("pushVelocity"), &_pushVelocity, true);
   success &= _componentBus.RegisterOwnerData(
       std::string("collidingLastFrame"), &_collidingLastFrame, true);
+
+  _componentBus.RegisterSignal(
+      std::string("inputForward"), this, &Camera::OnInputForward);
+  _componentBus.RegisterSignal(
+      std::string("inputStrafe"), this, &Camera::OnInputStrafe);
+
   assert(success == true);
 }
 
@@ -216,6 +222,16 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
   } else {
     _cameraPos += _cameraMatrix[direction] * amount;
   }
+}
+
+void Camera::OnInputForward(float fDeltaTime, float amount) {
+  const float runSpeed = 30.0f;
+  ApplyTranslationInput(runSpeed * amount * fDeltaTime, Camera::FORWARD);
+}
+
+void Camera::OnInputStrafe(float fDeltaTime, float amount) {
+  const float strafeSpeed = 30.0f;
+  ApplyTranslationInput(strafeSpeed * amount * fDeltaTime, Camera::RIGHT);
 }
 
 void Camera::SetZProjection(int width, int height, 

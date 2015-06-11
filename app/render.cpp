@@ -5,11 +5,13 @@
 
 namespace fd {
   
-  void Render::Step() {
+  void Render::UpdateFrameTime() {
     double totalTime = GetTotalTime();
     _frameTime = totalTime - _lastTotalTime;
     _lastTotalTime = totalTime;
+  }
 
+  void Render::Step() {
     for(auto pCamera : m_cameras) {
       pCamera->Step((float)_frameTime);
     }

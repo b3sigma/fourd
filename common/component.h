@@ -52,10 +52,7 @@ public:
   template<typename TSlotClass, typename... TVarArgs>
   void RegisterSignal(const std::string& name, TSlotClass* pClass,
       void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
-  //typedef std::vector<SignalN<TVarArgs...>::_Delegate> TDelegateList;
-    // need a way to store this delegate and then unconnect later...
-    // Looking like we need the iterator of the set from the signal?
-    // Plus the hash of the signal on the bus stack?
+    // need to store this delegate and then unconnect later...
     auto signalDelegatePair = m_ownerBus->RegisterSignal(name, pClass, pFunc);
     _registeredSignals.push_back(signalDelegatePair);
   }

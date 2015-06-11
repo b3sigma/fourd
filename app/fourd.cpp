@@ -29,6 +29,7 @@
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
 #include "entity.h"
+#include "input_handler.h"
 #include "render.h"
 #include "scene.h"
 #include "shader.h"
@@ -63,6 +64,7 @@ Mesh tesseract;
 bool g_captureMouse = false;
 ::fd::PlatformWindow* g_platformWindow = NULL;
 GLFWwindow* g_glfwWindow = NULL;
+::fd::InputHandler g_inputHandler;
 
 ::fd::VRWrapper* g_vr = NULL;
 Mat4f g_debugHeadPose;
@@ -261,6 +263,9 @@ bool Initialize() {
   g_debugHeadPose.storeIdentity();
   g_camera._yaw = (float)PI;
   ToggleCameraMode(Camera::MovementMode::WALK);
+
+  g_inputHandler.m_inputTarget = &(g_camera.GetComponentBus());
+  g_inputHandler.AddDefaultBindings();
 
   //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
   static Vec4f clearColor(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
@@ -943,6 +948,10 @@ void UpdatePointerEntity() {
 }
 
 void OnIdle() {
+  g_renderer.UpdateFrameTime();
+
+  g_inputHandler.PollJoysticks();
+  g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());

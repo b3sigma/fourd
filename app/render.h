@@ -58,6 +58,7 @@ class Render {
 public:
   Render() : _frameTime(0.0), _lastTotalTime(0.0) {}
 
+  void UpdateFrameTime();
   void Step();
   double GetFrameTime();
   double GetTotalTime();

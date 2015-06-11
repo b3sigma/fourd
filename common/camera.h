@@ -49,11 +49,11 @@ public:
 
   Camera();
 
-  Camera(MovementMode mode)
-      : _movement(mode) {
-    _cameraMatrix.storeIdentity();
-    _cameraPos.storeZero();
-  }
+  //Camera(MovementMode mode)
+  //    : _movement(mode) {
+  //  _cameraMatrix.storeIdentity();
+  //  _cameraPos.storeZero();
+  //}
 
   void UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset);
   void SetZProjection(int width, int height, 
@@ -74,6 +74,9 @@ public:
   void RebuildOrientationFromYawPitch();
 
   void ApplyTranslationInput(float amount, Direction direction);
+
+  void OnInputForward(float fDeltaTime, float amount);
+  void OnInputStrafe(float fDeltaTime, float amount);
 
   void printIt();
 
