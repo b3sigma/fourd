@@ -5,7 +5,13 @@
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
-//#include <GL/freeglut.h>
+
+#if defined(_MSC_VER) && defined(WIN32)
+#undef APIENTRY
+#define GLFW_EXPOSE_NATIVE_WIN32
+#define GLFW_EXPOSE_NATIVE_WGL
+#include <GLFW/glfw3native.h>
+#endif
 
 namespace fd {
 
@@ -190,6 +196,17 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
     CaptureCursor(true);
   }
 
+}
+
+GLFWmonitor* PlatformWindow::GetRiftMonitorByName(const char* name) {
+  int monitorCount;
+  GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+  for(int m = 0; m < monitorCount; m++) {
+    if(strcmp(glfwGetWin32Monitor(monitors[m]), name) == 0) {
+      return monitors[m];
+    }
+  }
+  return NULL;
 }
 
 void PlatformWindow::CaptureCursor(bool capture) {

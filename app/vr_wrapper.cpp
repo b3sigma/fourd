@@ -49,14 +49,12 @@ public:
     ovr_Shutdown();
   }
 
-  bool Initialize(PlatformWindow* pWindow) {
+  bool Initialize() {
     if (!ovr_Initialize()) {
       printf("Couldn't init ovr\n");
       return false;
     }
 
-    m_pWindow = pWindow;
-    
     int ovrIndex = ovrHmd_Detect();
 
     if (ovrIndex == 0 || (NULL == (m_HMD = ovrHmd_Create(0)))) {
@@ -72,6 +70,20 @@ public:
     }
     WasGLErrorPlusPrint();
 
+    int ovrCaps = ovrHmdCap_DynamicPrediction | ovrHmdCap_LowPersistence;
+    ovrHmd_SetEnabledCaps(m_HMD, ovrCaps);
+
+    int trackingCaps = ovrTrackingCap_Orientation
+        | ovrTrackingCap_MagYawCorrection
+        | ovrTrackingCap_Position;
+    ovrHmd_ConfigureTracking(m_HMD, trackingCaps, 0);
+
+    return true;
+  }
+  
+  virtual bool InitializeWindow(PlatformWindow* pWindow) {
+    m_pWindow = pWindow;
+    
     const float pixelsPerDisplayPixel = 1.0f; //0.25f; // 1.0f;
     bool createSuccess = true;
     for (int e = 0; e < 2; e++) {
@@ -90,12 +102,12 @@ public:
       printf("VR Render/depth target creation failed\n");
       return false;
     }
-
+    
     ovrGLConfig config;
     config.OGL.Header.API = ovrRenderAPI_OpenGL;
     config.OGL.Header.BackBufferSize = m_HMD->Resolution;
     config.OGL.Header.Multisample = 0;
-    config.OGL.Window = pWindow->m_hWnd;
+    config.OGL.Window = m_pWindow->m_hWnd;
 
     int ovrDistortionCaps = ovrDistortionCap_Vignette
         | ovrDistortionCap_Chromatic
@@ -103,17 +115,9 @@ public:
         | ovrDistortionCap_Overdrive;
     ovrHmd_ConfigureRendering(m_HMD, &config.Config, ovrDistortionCaps,
         m_HMD->DefaultEyeFov, m_eyeDesc);
-
-    int ovrCaps = ovrHmdCap_DynamicPrediction | ovrHmdCap_LowPersistence;
-    ovrHmd_SetEnabledCaps(m_HMD, ovrCaps);
-
-    ovrHmd_AttachToWindow(m_HMD, pWindow->m_hWnd,
+    
+    ovrHmd_AttachToWindow(m_HMD, m_pWindow->m_hWnd,
         NULL /*destRect*/, NULL /*srcRect*/);
-
-    int trackingCaps = ovrTrackingCap_Orientation
-        | ovrTrackingCap_MagYawCorrection
-        | ovrTrackingCap_Position;
-    ovrHmd_ConfigureTracking(m_HMD, trackingCaps, 0);
 
     ovrHmd_DismissHSWDisplay(m_HMD);
 
@@ -348,16 +352,14 @@ public:
   }
 };
 
-VRWrapper* VRWrapper::CreateVR(PlatformWindow* pWindow) {
+VRWrapper* VRWrapper::CreateVR() {
   std::unique_ptr<OVRWrapper> vrWrapper(new OVRWrapper);
 
-  if(!vrWrapper->Initialize(pWindow)) {
+  if(!vrWrapper->Initialize()) {
     return NULL;
   }
 
   return vrWrapper.release();
 }
-
-
 
 }; // namespace fd

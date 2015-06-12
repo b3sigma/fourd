@@ -4,6 +4,7 @@
 #include <string>
 
 struct GLFWwindow;
+struct GLFWmonitor;
 
 namespace fd {
 
@@ -19,6 +20,8 @@ public:
   
   int GetNumDisplays();
   void ToggleFullscreenByMonitorName(const char* name);
+  GLFWmonitor* GetRiftMonitorByName(const char* name);
+  void ToggleGlfwFullscreenByMonitorName(const char* name);
   void GetWidthHeight(int* outWidth, int* outHeight);
   void CaptureCursor(bool capture);
 };

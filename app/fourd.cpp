@@ -855,10 +855,10 @@ void Draw(GLFWwindow* window) {
     g_vr->StartFrame();
     g_vr->StartLeftEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
-    ImGuiWrapper::Render();
+    //ImGuiWrapper::Render();
     g_vr->StartRightEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
-    ImGuiWrapper::Render();
+    //ImGuiWrapper::Render();
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
@@ -1036,7 +1036,10 @@ int main(int argc, char *argv[]) {
 #ifdef RUN_TESTS
   RunTests();
 #endif // RUN_TESTS
-  
+
+  // ovr is supposed to preceed glfw
+  g_vr = VRWrapper::CreateVR();
+
   glfwSetErrorCallback(glfwErrorCallback);
 
   if(!glfwInit()) {
@@ -1044,10 +1047,22 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
+  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+  const GLFWvidmode* vidMode = glfwGetVideoMode(monitor);
+  glfwWindowHint(GLFW_RED_BITS, vidMode->redBits);
+  glfwWindowHint(GLFW_GREEN_BITS, vidMode->greenBits);
+  glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
+  glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
+  static bool useFullScreen = false;
+  if(!useFullScreen) {
+    monitor = NULL;
+  }
+
   int startWidth = 640;
   int startHeight = 580;
   char windowTitle[] = "fourd";
-  g_glfwWindow = glfwCreateWindow(startWidth, startHeight, windowTitle, NULL, NULL);
+  g_glfwWindow = glfwCreateWindow(
+      startWidth, startHeight, windowTitle, monitor, NULL /*share*/);
   if(!g_glfwWindow) {
     printf("glfwCreateWindow fail\n");
     return -1;
@@ -1081,7 +1096,7 @@ int main(int argc, char *argv[]) {
   ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/);
   //glfwSetKeyCallback(g_glfwWindow, Key);
   
-  g_vr = VRWrapper::CreateVR(g_platformWindow);
+  g_vr->InitializeWindow(g_platformWindow);
 
   //glutKeyboardFunc(Key);
 
@@ -1112,6 +1127,8 @@ int main(int argc, char *argv[]) {
 
   ImGuiWrapper::Shutdown();
   glfwTerminate();
+
+  delete g_vr;
 
   return 0;
 }

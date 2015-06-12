@@ -13,8 +13,11 @@ class Camera;
 class VRWrapper {
 public:
 
-  static VRWrapper* CreateVR(PlatformWindow* pWindow);
+  static VRWrapper* CreateVR();
   static bool IsUsingVR() { return s_UsingVR; }
+
+  // so with glfw, ovr must happen first, then glfw, then ovr window
+  virtual bool InitializeWindow(PlatformWindow* pWindow) { return false; }
   
   virtual void StartFrame() {}
   virtual void StartLeftEye(Camera* pCamera) {}
@@ -34,7 +37,7 @@ protected:
   static bool s_UsingVR;
 
   VRWrapper() {} // prevent direct construction
-  virtual bool Initialize(PlatformWindow* pWindow) = 0;
+  virtual bool Initialize() = 0;
 };
 
 }; // namespace fd
