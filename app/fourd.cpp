@@ -317,7 +317,7 @@ bool Initialize() {
     WasGLErrorPlusPrint();
   }
 
-  AddEyeCandy();
+  //AddEyeCandy();
 
   return true;
 }

@@ -48,8 +48,10 @@ X add bunch of quaxols in a line
 Esc quit
 
 Minimal TODOs:
+* Check on VR status
 * Add a basic goal
-* Add basic ui
+* VR UI mode?
+* Make separate mouse ui/game modes that steal key input
 * Cleanup min/max rainbow rendering
 
 Game TODOs:

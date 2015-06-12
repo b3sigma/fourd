@@ -359,7 +359,6 @@ void ImGuiWrapper::NewFrame(float deltaTime) {
   glfwSetInputMode(s_glfwWindow, GLFW_CURSOR,
       io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 
-
   ImGui::NewFrame();
 
   // this might need to be broken out into another var
@@ -376,6 +375,11 @@ void ImGuiWrapper::Render() {
     ImGui::End();
   }
 
+  static bool showTestWindow = true;
+  if(showTestWindow) {
+    ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+    ImGui::ShowTestWindow(&showTestWindow);
+  }
 
   ImGui::Render();
 }
