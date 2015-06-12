@@ -84,6 +84,12 @@
     <ClCompile Include="..\app\input_handler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\app\imgui_wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui.cpp">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -175,6 +181,15 @@
     </ClInclude>
     <ClInclude Include="..\app\input_handler.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\imgui_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imconfig.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui.h">
+      <Filter>thirdparty</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

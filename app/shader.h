@@ -79,6 +79,7 @@ namespace fd {
     void StopUsing() const;
     bool GetIsUsing() const;
 
+    GLint getProgramId() const { return m_programId; }
     GLint getAttrib(const char* name) const;
     GLint getUniform(const char* name) const;
 

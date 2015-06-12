@@ -10,3 +10,4 @@ project/*.opensdf
 project/Debug/*
 project/Release/*
 local_scratch/*
+imgui.ini

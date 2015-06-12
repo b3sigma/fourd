@@ -39,12 +39,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -90,6 +90,7 @@
   <ItemGroup>
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
+    <ClCompile Include="..\app\imgui_wrapper.cpp" />
     <ClCompile Include="..\app\input_handler.cpp" />
     <ClCompile Include="..\app\meshbuffer.cpp" />
     <ClCompile Include="..\app\render.cpp" />
@@ -110,9 +111,11 @@
     <ClCompile Include="..\common\quaxol.cpp" />
     <ClCompile Include="..\common\raycast_shape.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
+    <ClCompile Include="..\imgui\imgui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\entity.h" />
+    <ClInclude Include="..\app\imgui_wrapper.h" />
     <ClInclude Include="..\app\input_handler.h" />
     <ClInclude Include="..\app\meshbuffer.h" />
     <ClInclude Include="..\app\platform_interface.h" />
@@ -142,6 +145,8 @@
     <ClInclude Include="..\common\thirdparty\signals\Signal.h" />
     <ClInclude Include="..\common\timer.h" />
     <ClInclude Include="..\common\types.h" />
+    <ClInclude Include="..\imgui\imconfig.h" />
+    <ClInclude Include="..\imgui\imgui.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg" />

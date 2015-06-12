@@ -29,6 +29,7 @@
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
 #include "entity.h"
+#include "imgui_wrapper.h"
 #include "input_handler.h"
 #include "render.h"
 #include "scene.h"
@@ -854,12 +855,15 @@ void Draw(GLFWwindow* window) {
     g_vr->StartFrame();
     g_vr->StartLeftEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
+    ImGuiWrapper::Render();
     g_vr->StartRightEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
+    ImGuiWrapper::Render();
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
     g_renderer.RenderAllScenesPerCamera();
+    ImGuiWrapper::Render();
   }
 
   glFlush();
@@ -934,10 +938,12 @@ void UpdatePointerEntity() {
 
 void StepFrame() {
   g_renderer.UpdateFrameTime();
-
+  
+  ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime());
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
+  
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
@@ -1071,10 +1077,12 @@ int main(int argc, char *argv[]) {
     printf("Glew init fail: Error: %s\n", glewGetErrorString(err));
     return false;
   }
+
+  ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/);
+  //glfwSetKeyCallback(g_glfwWindow, Key);
   
   g_vr = VRWrapper::CreateVR(g_platformWindow);
 
-  glfwSetKeyCallback(g_glfwWindow, Key);
   //glutKeyboardFunc(Key);
 
   //glutMouseFunc(MouseClick);
@@ -1102,6 +1110,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  ImGuiWrapper::Shutdown();
   glfwTerminate();
 
   return 0;
