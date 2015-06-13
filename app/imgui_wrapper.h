@@ -20,7 +20,7 @@ public:
   static bool Init(GLFWwindow* glfwWindow,
       GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback);
   static void Shutdown();
-  static void NewFrame(float deltaTime);
+  static void NewFrame(float deltaTime, int renderWidth, int renderHeight);
   static void Render();
   
 protected:

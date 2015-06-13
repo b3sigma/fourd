@@ -32,10 +32,15 @@ public:
 
   ovrEyeRenderDesc m_eyeDesc[2];
   ovrPosef m_eyeRenderPose[2];
+  
+  int m_renderWidth;
+  int m_renderHeight;
+  virtual int GetRenderWidth() const { return m_renderWidth; }
+  virtual int GetRenderHeight() const { return m_renderHeight; }
 
   const Mat4f* m_debugHeadPose;
 
-  OVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL) {
+  OVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL), m_renderWidth(0), m_renderHeight(0) {
     for(int e = 0; e < 2; e++) {
       m_eyeRenderTex[e] = NULL;
       m_eyeDepthTex[e] = NULL;
@@ -90,6 +95,8 @@ public:
       ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(
           m_HMD, (ovrEyeType)e, m_HMD->DefaultEyeFov[e],
           pixelsPerDisplayPixel);
+      m_renderWidth = recommendedFovTexSize.w;
+      m_renderHeight = recommendedFovTexSize.h;
       WasGLErrorPlusPrint();
       m_eyeRenderTex[e] = new Texture();
       createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(

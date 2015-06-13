@@ -855,10 +855,10 @@ void Draw(GLFWwindow* window) {
     g_vr->StartFrame();
     g_vr->StartLeftEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
-    //ImGuiWrapper::Render();
+    ImGuiWrapper::Render();
     g_vr->StartRightEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
-    //ImGuiWrapper::Render();
+    ImGuiWrapper::Render();
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
@@ -939,7 +939,13 @@ void UpdatePointerEntity() {
 void StepFrame() {
   g_renderer.UpdateFrameTime();
   
-  ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime());
+  if(g_vr && g_vr->IsUsingVR()) {
+    ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(),
+        g_vr->GetRenderWidth(), g_vr->GetRenderHeight());    
+  } else {
+    // 0 will let imgui figure it out
+    ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(), 0 /*width*/, 0 /*height*/);
+  }
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();

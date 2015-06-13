@@ -330,13 +330,19 @@ void ImGuiWrapper::Shutdown() {
 
 }
 
-void ImGuiWrapper::NewFrame(float deltaTime) {
+void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) {
   ImGuiIO& io = ImGui::GetIO();
 
   int w, h;
-  int display_w, display_h;
   glfwGetWindowSize(s_glfwWindow, &w, &h);
-  glfwGetFramebufferSize(s_glfwWindow, &display_w, &display_h);
+
+  int display_w, display_h;
+  if(renderWidth == 0 || renderHeight == 0) {
+    glfwGetFramebufferSize(s_glfwWindow, &display_w, &display_h);
+  } else {
+    display_w = renderWidth;
+    display_h = renderHeight;
+  }
   io.DisplaySize = ImVec2((float)display_w, (float)display_h);
 
   io.DeltaTime = deltaTime;

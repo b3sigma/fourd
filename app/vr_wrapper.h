@@ -28,6 +28,9 @@ public:
   virtual void ToggleFullscreen() {}
   virtual void Recenter() {}
 
+  virtual int GetRenderWidth() const { return 0; }
+  virtual int GetRenderHeight() const { return 0; }
+
   virtual void SetDebugHeadOrientation(const Mat4f* matrix) {}
 
   virtual ~VRWrapper() {}
