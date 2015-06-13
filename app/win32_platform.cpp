@@ -172,23 +172,35 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
   }
 
   if(m_fullscreen) {
-    if(foundPrimary) {
-      int width = bestMonitorRect.right - bestMonitorRect.left;
-      int height = bestMonitorRect.bottom - bestMonitorRect.top;
-      SetWindowPos(m_hWnd, HWND_TOPMOST,
-          bestMonitorRect.left, bestMonitorRect.top, width, height,
-          SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
-    }
+    //if(foundPrimary) {
+    //  int width = bestMonitorRect.right - bestMonitorRect.left;
+    //  int height = bestMonitorRect.bottom - bestMonitorRect.top;
+    //  SetWindowPos(m_hWnd, HWND_TOPMOST,
+    //      bestMonitorRect.left, bestMonitorRect.top, width, height,
+    //      SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
+    //}
     // Mixing of win32 and glut code is... interesting
-
     //glutFullScreen();
-  } else {
-    //glutLeaveFullScreen();
-    if(foundOther) {
-      SetWindowPos(m_hWnd, HWND_TOPMOST,
-          otherMonitorRect.left, otherMonitorRect.top, m_width, m_height,
-          SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+    GLFWmonitor* monitor = GetRiftMonitorByName(name);
+    if(!monitor) {
+      monitor = glfwGetPrimaryMonitor();
     }
+    if(monitor) {
+      const GLFWvidmode* vidMode = glfwGetVideoMode(monitor);
+      glfwSetWindowMonitor(m_glfwWindow, monitor,
+          vidMode->width, vidMode->height, GLFW_DONT_CARE);        
+    }
+  } else {
+    glfwSetWindowMonitor(m_glfwWindow, NULL /*monitor*/,
+        m_width, m_height, GLFW_DONT_CARE);   
+
+    //glutLeaveFullScreen();    
+    //if(foundOther) {
+    //  SetWindowPos(m_hWnd, HWND_TOPMOST,
+    //      otherMonitorRect.left, otherMonitorRect.top, m_width, m_height,
+    //      SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
+    //}
   } 
 
   // recapture with new size/pos
