@@ -349,19 +349,16 @@ void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) 
 
   // Setup inputs
   // (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-  if (glfwGetWindowAttrib(s_glfwWindow, GLFW_FOCUSED))
-  {
+  if (glfwGetWindowAttrib(s_glfwWindow, GLFW_FOCUSED)) {
     double mouse_x, mouse_y;
     glfwGetCursorPos(s_glfwWindow, &mouse_x, &mouse_y);
     mouse_x *= (float)display_w / w;                        // Convert mouse coordinates to pixels
     mouse_y *= (float)display_h / h;
     io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
-  }
-  else
-  {
+  } else {
     io.MousePos = ImVec2(-1, -1);
   }
-
+  
   glfwSetInputMode(s_glfwWindow, GLFW_CURSOR,
       io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 

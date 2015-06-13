@@ -26,21 +26,22 @@ class OVRWrapper : public VRWrapper {
 public:
   PlatformWindow* m_pWindow;
   ovrHmd m_HMD; // actually a pointer...
-
+  bool m_isDebugDevice;
+  
   Texture* m_eyeRenderTex[2];
   Texture* m_eyeDepthTex[2];
 
   ovrEyeRenderDesc m_eyeDesc[2];
   ovrPosef m_eyeRenderPose[2];
   
-  int m_renderWidth;
-  int m_renderHeight;
-  virtual int GetRenderWidth() const { return m_renderWidth; }
-  virtual int GetRenderHeight() const { return m_renderHeight; }
+  int m_eyeRenderWidth;
+  int m_eyeRenderHeight;
 
   const Mat4f* m_debugHeadPose;
 
-  OVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL), m_renderWidth(0), m_renderHeight(0) {
+  OVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL)
+      , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
+      , m_isDebugDevice(true) {
     for(int e = 0; e < 2; e++) {
       m_eyeRenderTex[e] = NULL;
       m_eyeDepthTex[e] = NULL;
@@ -62,11 +63,13 @@ public:
 
     int ovrIndex = ovrHmd_Detect();
 
+    m_isDebugDevice = false;
     if (ovrIndex == 0 || (NULL == (m_HMD = ovrHmd_Create(0)))) {
       printf("Oculus device not found\n"
           "Trying to create debug oculus device...\n");
       // do we want to #ifdef DEBUG this?
       m_HMD = ovrHmd_CreateDebug(ovrHmd_DK2);
+      m_isDebugDevice = true;
     }
 
     if (m_HMD == NULL) {
@@ -95,8 +98,8 @@ public:
       ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(
           m_HMD, (ovrEyeType)e, m_HMD->DefaultEyeFov[e],
           pixelsPerDisplayPixel);
-      m_renderWidth = recommendedFovTexSize.w;
-      m_renderHeight = recommendedFovTexSize.h;
+      m_eyeRenderWidth = recommendedFovTexSize.w;
+      m_eyeRenderHeight = recommendedFovTexSize.h;
       WasGLErrorPlusPrint();
       m_eyeRenderTex[e] = new Texture();
       createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(
@@ -346,12 +349,34 @@ public:
     }
   }
 
+  virtual std::string GetDeviceName() {
+    if(!m_HMD) return std::string("");
+    return std::string(m_HMD->DisplayDeviceName);
+  }
+
+  virtual bool GetIsDebugDevice() { return m_isDebugDevice; }
+
   virtual void ToggleFullscreen() {
     if(!m_HMD) return;
     //if(!(m_HMD->HmdCaps & ovrHmdCap_ExtendDesktop)) return;
 
     m_pWindow->ToggleFullscreenByMonitorName(m_HMD->DisplayDeviceName);
   }
+
+  virtual bool GetPerEyeRenderSize(int& width, int& height) const {
+    width = m_eyeRenderWidth;
+    height = m_eyeRenderHeight;
+    return true;
+  }
+
+  virtual bool GetTotalRenderSize(int& width, int& height) const { 
+    if(!m_HMD) return false;
+    width = m_HMD->Resolution.w;
+    height = m_HMD->Resolution.h;
+    return true;
+  }
+
+
 
   virtual void Recenter() {
     if(!m_HMD) return;

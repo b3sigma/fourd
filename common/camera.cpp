@@ -68,7 +68,8 @@ void Camera::setMovementMode(MovementMode mode) {
 
 void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
   if(lookOffset && posOffset) {
-    _renderMatrix = (*lookOffset) * _yawPitchTrans * _cameraMatrix;
+    //_renderMatrix = (*lookOffset) * (_yawPitchTrans * _cameraMatrix);
+    _renderMatrix = (*lookOffset) * (_yawTrans * _cameraMatrix);
     _renderPos = _cameraPos + *posOffset;
   } else {
     _renderMatrix = _yawPitchTrans * _cameraMatrix;
@@ -77,12 +78,11 @@ void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
 }
 
 void Camera::RebuildOrientationFromYawPitch() {
-  Mat4f yawRot;
-  yawRot.storeRotation(_yaw, (int)Camera::FORWARD, (int)Camera::RIGHT);
+  _yawTrans.storeRotation(_yaw, (int)Camera::FORWARD, (int)Camera::RIGHT);
   Mat4f pitchRot;
   pitchRot.storeRotation(_pitch,  (int)Camera::FORWARD, (int)Camera::UP);
 
-  _yawPitchTrans = pitchRot * yawRot;
+  _yawPitchTrans = pitchRot * _yawTrans;
 }
 
 void Camera::ApplyYawInput(float radians) {

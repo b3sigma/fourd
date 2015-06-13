@@ -851,14 +851,18 @@ void Draw(GLFWwindow* window) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
+  static bool renderVRUI = false;
+
   if(VRWrapper::IsUsingVR() && g_vr) {
     g_vr->StartFrame();
     g_vr->StartLeftEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
-    ImGuiWrapper::Render();
+    if(renderVRUI)
+      ImGuiWrapper::Render();
     g_vr->StartRightEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
-    ImGuiWrapper::Render();
+    if(renderVRUI)
+      ImGuiWrapper::Render();
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
@@ -939,13 +943,13 @@ void UpdatePointerEntity() {
 void StepFrame() {
   g_renderer.UpdateFrameTime();
   
+  int guiWidth = 0; // 0 means ImGui will figure it out
+  int guiHeight = 0; 
   if(g_vr && g_vr->IsUsingVR()) {
-    ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(),
-        g_vr->GetRenderWidth(), g_vr->GetRenderHeight());    
-  } else {
-    // 0 will let imgui figure it out
-    ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(), 0 /*width*/, 0 /*height*/);
+    g_vr->GetPerEyeRenderSize(guiWidth, guiHeight);
   }
+  ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(), guiWidth, guiHeight);
+  
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
@@ -1053,19 +1057,34 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  const GLFWvidmode* vidMode = glfwGetVideoMode(monitor);
+  int startWidth = 640;
+  int startHeight = 580;
+  GLFWmonitor* monitor = NULL;
+  const GLFWvidmode* vidMode;
+  static bool startFullscreen = true;
+  if(startFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
+    std::string deviceName = g_vr->GetDeviceName();
+    monitor = PlatformWindow::GetRiftMonitorByName(deviceName.c_str());
+    vidMode = glfwGetVideoMode(monitor);
+    g_vr->GetTotalRenderSize(startWidth, startHeight);
+  } else if(startFullscreen) {
+    monitor = glfwGetPrimaryMonitor();
+    vidMode = glfwGetVideoMode(monitor);
+    startWidth = vidMode->width;
+    startHeight = vidMode->height;
+  } else {
+    monitor = glfwGetPrimaryMonitor();
+    vidMode = glfwGetVideoMode(monitor);
+  }
+
   glfwWindowHint(GLFW_RED_BITS, vidMode->redBits);
   glfwWindowHint(GLFW_GREEN_BITS, vidMode->greenBits);
   glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
   glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
-  static bool useFullScreen = false;
-  if(!useFullScreen) {
+  if(!startFullscreen) {
     monitor = NULL;
   }
 
-  int startWidth = 640;
-  int startHeight = 580;
   char windowTitle[] = "fourd";
   g_glfwWindow = glfwCreateWindow(
       startWidth, startHeight, windowTitle, monitor, NULL /*share*/);
@@ -1117,6 +1136,11 @@ int main(int argc, char *argv[]) {
 
   //glutIdleFunc(StepFrame);
 
+  if(g_vr) {
+    g_vr->SetIsUsingVR(startFullscreen);
+  }
+
+  
   Initialize();
   ReshapeGL(g_glfwWindow, startWidth, startHeight);
 

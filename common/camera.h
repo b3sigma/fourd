@@ -42,6 +42,7 @@ public:
   float _yaw; // only used in walk mode
   float _pitch; // only used in walk mode
   Mat4f _yawPitchTrans; // only used in walk mode
+  Mat4f _yawTrans; // only used in vr walk mode
   Vec4f _pushVelocity; // walk mode
   bool _collidingLastFrame;
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "platform_interface.h"
 #include "..\common\fourmath.h"
 
@@ -23,13 +24,16 @@ public:
   virtual void StartLeftEye(Camera* pCamera) {}
   virtual void StartRightEye(Camera* pCamera) {}
   virtual void FinishFrame() {}
+  
+  virtual std::string GetDeviceName() { return std::string(""); }
+  virtual bool GetIsDebugDevice() { return true; }
 
   virtual void SetIsUsingVR(bool usingVR) {}
   virtual void ToggleFullscreen() {}
   virtual void Recenter() {}
 
-  virtual int GetRenderWidth() const { return 0; }
-  virtual int GetRenderHeight() const { return 0; }
+  virtual bool GetPerEyeRenderSize(int& width, int& height) const { return false; }
+  virtual bool GetTotalRenderSize(int& width, int& height) const { return false; }
 
   virtual void SetDebugHeadOrientation(const Mat4f* matrix) {}
 
