@@ -19,6 +19,7 @@ namespace fd {
 
 class Camera;
 class Scene;
+class Shader;
 class Texture;
 
 // Render should contain all the GL code
@@ -35,7 +36,8 @@ class Input {
 class View {
   Camera* m_camera;
   Scene* m_scene;
-  Texture* m_renderTarget; // may be null to indicate backbuffer
+  Texture* m_renderTargetColor; // may be null to indicate backbuffer
+  Texture* m_renderTargetDepth; // may be null to indicate backbuffer
 };
 
 class Render {
@@ -49,6 +51,9 @@ class Render {
   typedef std::vector<Scene*> TSceneList;
   TSceneList m_scenes; // not owned
 
+  Shader* m_pOverdrawQuaxol;
+  Shader* m_pSlicedQuaxol;
+
   // shouldn't be here..
   // should be in a scene or something?
   ::fd::Timer timer_;
@@ -57,6 +62,8 @@ class Render {
   
 public:
   Render() : _frameTime(0.0), _lastTotalTime(0.0) {}
+
+  bool Initialize();
 
   void UpdateFrameTime();
   void Step();
@@ -67,6 +74,7 @@ public:
   void AddScene(Scene* pScene);
 
   void RenderAllScenesPerCamera();
+  void RenderScene(Camera* pCamera, Scene* pScene);
 
   // Right now this is convenient, but separate calls are fine too.
   enum EAlphaDepthModes {

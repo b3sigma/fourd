@@ -72,6 +72,7 @@ namespace fd {
 
     bool AddDynamicMeshCommonSubShaders();
     bool AddSubShader(const char* filename, GLenum shaderType);
+    bool LoadFromFileDerivedNames(const char* refName);
     bool LoadFromFile(const char* refName, const char* vertexFile, const char* pixelFile);
     void Release();
 

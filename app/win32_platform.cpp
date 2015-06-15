@@ -35,7 +35,6 @@ PlatformWindow* Platform::Init(
   Win32Platform::s_Platform = new Win32Platform();
 
   PlatformWindow* pWindow = new PlatformWindow();
-  //glutSetWindowTitle(windowName);
   pWindow->m_hWnd = FindWindow(NULL, windowName);
   pWindow->m_width = width;
   pWindow->m_height = height;
@@ -240,11 +239,9 @@ void PlatformWindow::CaptureCursor(bool capture) {
     BOOL result = ClipCursor(&interiorRect);
 
     glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //glutSetCursor(GLUT_CURSOR_NONE);
   } else {
     ClipCursor(NULL);
     glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    //glutSetCursor(GLUT_CURSOR_INHERIT);
   }
 }
 

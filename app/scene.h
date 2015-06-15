@@ -15,7 +15,7 @@ class Physics;
 class QuaxolChunk;
 class Shader;
 class Texture;
-
+class Render;
 
 class Scene {
 protected:
@@ -37,6 +37,7 @@ public:
   Physics* m_pPhysics; //owned
 
   TVecQuaxol m_quaxols;
+  // shaders should not be here really, turning this class into dumping grounds
   Shader* m_pQuaxolShader; //not owned
   Mesh* m_pQuaxolMesh; //not owned
   Texture* m_pQuaxolAtlas;
@@ -56,10 +57,13 @@ public:
   void TakeLoadedChunk(QuaxolChunk* pChunk);
 
   void SetQuaxolAt(const QuaxolSpec& pos, bool present);
+  void RenderQuaxols(Render* pRender, Camera* pCamera);
+  void RenderQuaxolChunk(Camera* pCamera, Shader* pShader);
+  void RenderQuaxolsIndividually(Camera* pCamera, Shader* pShader); // deprecated
 
   // ugh this is all wrong, not going to be shader sorted, etc
   // but let's just do the stupid thing first
-  void RenderEntitiesStupidly(Camera* pCamera);
+  void RenderEverything(Render* pRender, Camera* pCamera);
   void Step(float fDelta);
   
   // Let the scene do the allocation to allow for mem opt
@@ -68,6 +72,7 @@ public:
   Entity* AddEntity();
   void RemoveEntity(Entity* pEntity);
   void OnDeleteEntity(Entity* pEntity);
+  void RenderDynamicEntities(Camera* pCamera);
 
   // Hacky garbage, should be on the mesh/quaxol
   void BuildColorArray();

@@ -140,6 +140,19 @@ void Shader::RemoveFromShaderHash() {
   }
 }
 
+bool Shader::LoadFromFileDerivedNames(const char* refName) {
+  const static std::string shaderDir = "data\\";
+  const static std::string vertPrefix = std::string("vert");
+  const static std::string fragPrefix = std::string("frag");
+  const static std::string ext = std::string(".glsl");
+
+  std::string baseName(refName);
+  std::string vertName = shaderDir + vertPrefix + baseName + ext;
+  std::string fragName = shaderDir + fragPrefix + baseName + ext;
+
+  return LoadFromFile(refName, vertName.c_str(), fragName.c_str());
+}
+
 bool Shader::LoadFromFile(const char* refName, 
     const char* vertexFile, const char* pixelFile) {
   if(!AddSubShader(vertexFile, GL_VERTEX_SHADER))

@@ -9,8 +9,6 @@
 #include "OVR_CAPI.h"
 #include "OVR_CAPI_GL.h"
 
-//#include <GL/freeglut.h>
-
 #include "glhelper.h"
 #include "win32_platform.h"
 #include "../common/fourmath.h"
