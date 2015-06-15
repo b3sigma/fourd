@@ -851,6 +851,7 @@ void Draw(GLFWwindow* window) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
+  float frameTime = (float)g_renderer.GetFrameTime();
   static bool renderVRUI = false;
 
   if(VRWrapper::IsUsingVR() && g_vr) {
@@ -858,16 +859,16 @@ void Draw(GLFWwindow* window) {
     g_vr->StartLeftEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
     if(renderVRUI)
-      ImGuiWrapper::Render();
+      ImGuiWrapper::Render(frameTime);
     g_vr->StartRightEye(&g_camera);
     g_renderer.RenderAllScenesPerCamera();
     if(renderVRUI)
-      ImGuiWrapper::Render();
+      ImGuiWrapper::Render(frameTime);
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
     g_renderer.RenderAllScenesPerCamera();
-    ImGuiWrapper::Render();
+    ImGuiWrapper::Render(frameTime);
   }
 
   glFlush();
@@ -1061,7 +1062,7 @@ int main(int argc, char *argv[]) {
   int startHeight = 580;
   GLFWmonitor* monitor = NULL;
   const GLFWvidmode* vidMode;
-  static bool startFullscreen = true;
+  static bool startFullscreen = false;
   if(startFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
     std::string deviceName = g_vr->GetDeviceName();
     monitor = PlatformWindow::GetRiftMonitorByName(deviceName.c_str());
@@ -1137,7 +1138,7 @@ int main(int argc, char *argv[]) {
   //glutIdleFunc(StepFrame);
 
   if(g_vr) {
-    g_vr->SetIsUsingVR(startFullscreen);
+    g_vr->SetIsUsingVR(startFullscreen && g_vr->GetIsDebugDevice());
   }
 
   

@@ -21,7 +21,7 @@ public:
       GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback);
   static void Shutdown();
   static void NewFrame(float deltaTime, int renderWidth, int renderHeight);
-  static void Render();
+  static void Render(float frameTime);
   
 protected:
   static bool InitOpenGL();

@@ -368,21 +368,35 @@ void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) 
   io.MouseWheel = 0.0f;
 }
 
-void ImGuiWrapper::Render() {
-  
+void RenderFpsOverlay(float frameTime) {
   static bool opened = true;
-  if(opened) {
-    ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiSetCond_FirstUseEver);
-    ImGui::Begin("Another Window", &opened);
-    ImGui::Text("Hello");
-    ImGui::End();
+  ImGui::SetNextWindowPos(ImVec2(10,10));
+  if (!ImGui::Begin("fps overlay", &opened, ImVec2(0,0), 0.3f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
+  {
+      ImGui::End();
+      return;
   }
+  ImGui::Text("Frametime: %f \t(fps:%f)", frameTime, (frameTime > 0.0f) ? 1.0f / frameTime : 0.0f);
+  ImGui::End();
+}
 
-  static bool showTestWindow = true;
-  if(showTestWindow) {
-    ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-    ImGui::ShowTestWindow(&showTestWindow);
-  }
+
+void ImGuiWrapper::Render(float frameTime) {
+  RenderFpsOverlay(frameTime);
+
+  //static bool opened = true;
+  //if(opened) {
+  //  ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiSetCond_FirstUseEver);
+  //  ImGui::Begin("Another Window", &opened);
+  //  ImGui::Text("Hello");
+  //  ImGui::End();
+  //}
+
+  //static bool showTestWindow = true;
+  //if(showTestWindow) {
+  //  ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+  //  ImGui::ShowTestWindow(&showTestWindow);
+  //}
 
   ImGui::Render();
 }
