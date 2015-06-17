@@ -57,13 +57,13 @@ public:
   void TakeLoadedChunk(QuaxolChunk* pChunk);
 
   void SetQuaxolAt(const QuaxolSpec& pos, bool present);
-  void RenderQuaxols(Render* pRender, Camera* pCamera);
+  void RenderQuaxols(Camera* pCamera, Shader* pShader);
   void RenderQuaxolChunk(Camera* pCamera, Shader* pShader);
   void RenderQuaxolsIndividually(Camera* pCamera, Shader* pShader); // deprecated
 
   // ugh this is all wrong, not going to be shader sorted, etc
   // but let's just do the stupid thing first
-  void RenderEverything(Render* pRender, Camera* pCamera);
+  void RenderEverything(Camera* pCamera);
   void Step(float fDelta);
   
   // Let the scene do the allocation to allow for mem opt

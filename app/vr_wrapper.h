@@ -7,6 +7,7 @@
 namespace fd {
 
 class Camera;
+class Texture;
   
 // Interface class for actual vr.
 // Probably silly as ovr is only game in town currently, which means the 2nd
@@ -21,8 +22,8 @@ public:
   virtual bool InitializeWindow(PlatformWindow* pWindow) { return false; }
   
   virtual void StartFrame() {}
-  virtual void StartLeftEye(Camera* pCamera) {}
-  virtual void StartRightEye(Camera* pCamera) {}
+  virtual void StartLeftEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
+  virtual void StartRightEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
   virtual void FinishFrame() {}
   
   virtual std::string GetDeviceName() { return std::string(""); }
@@ -31,6 +32,9 @@ public:
   virtual void SetIsUsingVR(bool usingVR) {}
   virtual void ToggleFullscreen() {}
   virtual void Recenter() {}
+
+  virtual Texture* GetCurrentRenderColor() { return NULL; }
+  virtual Texture* GetCurrentRenderDepth() { return NULL; }
 
   virtual bool GetPerEyeRenderSize(int& width, int& height) const { return false; }
   virtual bool GetTotalRenderSize(int& width, int& height) const { return false; }

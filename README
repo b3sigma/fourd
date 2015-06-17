@@ -1,5 +1,5 @@
-Four dimensional minecraft thing!
-OpenGL, GLSL and C++11ish.
+Four dimensional VR minecraft thing!
+OpenGL, Oculus and C++11ish.
 
 Getting:
 * Make sure you use --recursive on your clone command as this project uses submodules.
@@ -50,10 +50,10 @@ Esc quit
 Minimal TODOs:
 * Cleanup min/max rainbow rendering
 * Add a basic goal
-* VR UI mode?
-* Make separate mouse ui/game modes that steal key input
 
 Game TODOs:
+* VR UI mode?
+* Make separate mouse ui/game modes that steal key input
 * more visualization attempts
 ** rainbow but with fixed z writing
 ** textured solid prepass, then clamped alpha w+ w- overdraw

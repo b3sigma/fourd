@@ -74,7 +74,6 @@ public:
       printf("Oculus device not created:\n");
       return false;
     }
-    WasGLErrorPlusPrint();
 
     int ovrCaps = ovrHmdCap_DynamicPrediction | ovrHmdCap_LowPersistence;
     ovrHmd_SetEnabledCaps(m_HMD, ovrCaps);
@@ -146,12 +145,19 @@ public:
         NULL /*trackingState*/);
   }
 
-  void StartEye(int eye) {
+  void StartEye(int eye, Texture** outRenderColor, Texture** outRenderDepth) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_eyeRenderTex[eye]->m_framebuffer_id);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
         GL_TEXTURE_2D, m_eyeRenderTex[eye]->m_texture_id, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
         GL_TEXTURE_2D, m_eyeDepthTex[eye]->m_texture_id, 0);
+
+    if(outRenderColor) {
+      *outRenderColor = m_eyeRenderTex[eye];
+    }
+    if(outRenderDepth) {
+      *outRenderDepth = m_eyeDepthTex[eye];
+    }
 
     glViewport(0, 0,
         m_eyeRenderTex[eye]->m_width, m_eyeRenderTex[eye]->m_height);
@@ -301,15 +307,15 @@ public:
     pCamera->_zProjectionMatrix.storeFromTransposedArray(&ovrProj.M[0][0]);
   }
 
-  virtual void StartLeftEye(Camera* pCamera) {
+  virtual void StartLeftEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
     const int eye = 0;
-    StartEye(eye);
+    StartEye(eye, outRenderColor, outRenderDepth);
     UpdateCameraRenderMatrix(eye, pCamera);
   }
 
-  virtual void StartRightEye(Camera* pCamera) {
+  virtual void StartRightEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
     const int eye = 1;
-    StartEye(eye);
+    StartEye(eye, outRenderColor, outRenderDepth);
     UpdateCameraRenderMatrix(eye, pCamera);
   }
 

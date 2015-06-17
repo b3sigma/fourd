@@ -223,11 +223,13 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
   pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
   pEntity->m_position = pos;
   pEntity->GetComponentBus().AddComponent(
-    new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
-    -20.0f, true));
+      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
+      -20.0f, true));
 }
 
 void AddEyeCandy() {
+  return;
+
   // yeah yeah side effects blah blah
   Shader* savedShader = g_shader;
 
@@ -240,7 +242,7 @@ void AddEyeCandy() {
   g_scene.m_pQuaxolShader = g_shader;
 }
 
-bool Initialize() {
+bool Initialize(int width, int height) {
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
@@ -273,7 +275,7 @@ bool Initialize() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //GL_FILL); //GL_LINE);
   //glDisable(GL_MIPMAP);
 
-  if(!g_renderer.Initialize())
+  if(!g_renderer.Initialize(width, height))
     return false;
 
   g_renderer.ToggleAlphaDepthModes(Render::AlphaOnDepthOffSrcDest);
@@ -320,7 +322,7 @@ bool Initialize() {
     WasGLErrorPlusPrint();
   }
 
-  //AddEyeCandy();
+  AddEyeCandy();
 
   return true;
 }
@@ -353,6 +355,7 @@ void ReshapeGL(GLFWwindow* window, int width, int height) {
   _width = width;
   _height = height;
   glViewport(0, 0, (GLsizei) (_width), (GLsizei) (_height));
+  g_renderer.ResizeRenderTargets(width, height);
   UpdatePerspective();
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -854,18 +857,20 @@ void Draw(GLFWwindow* window) {
 
   if(VRWrapper::IsUsingVR() && g_vr) {
     g_vr->StartFrame();
-    g_vr->StartLeftEye(&g_camera);
-    g_renderer.RenderAllScenesPerCamera();
+    Texture* renderColor;
+    Texture* renderDepth;
+    g_vr->StartLeftEye(&g_camera, &renderColor, &renderDepth);
+    g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime);
-    g_vr->StartRightEye(&g_camera);
-    g_renderer.RenderAllScenesPerCamera();
+    g_vr->StartRightEye(&g_camera, &renderColor, &renderDepth);
+    g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime);
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
-    g_renderer.RenderAllScenesPerCamera();
+    g_renderer.RenderAllScenesPerCamera(NULL /*renderColor*/, NULL /*renderDepth*/);
     ImGuiWrapper::Render(frameTime);
   }
 
@@ -1110,8 +1115,8 @@ int main(int argc, char *argv[]) {
   if(g_vr) {
     g_vr->SetIsUsingVR(startFullscreen && g_vr->GetIsDebugDevice());
   }
-
-  if(!Initialize()) {
+  
+  if(!Initialize(startWidth, startHeight)) {
     printf("Initialized failed\n");
     return -1;
   }

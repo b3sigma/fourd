@@ -101,8 +101,8 @@ void Scene::SetTexture(int index, GLint hTex) {
   WasGLErrorPlusPrint();
   glBindTexture(GL_TEXTURE_2D, pTex->GetTextureID());
   WasGLErrorPlusPrint();
-  glUniform1i(hTex, 0);
-  WasGLErrorPlusPrint();
+  //glUniform1i(hTex, 0);
+  //WasGLErrorPlusPrint();
 }
 
 // Let the scene do the allocation to allow for mem opt
@@ -179,12 +179,12 @@ void Scene::RenderGroundPlane(Camera* pCamera) {
 // ugh this is all wrong, not going to be shader sorted, etc
 // but let's just do the stupid thing first
 // Also, shouldn't this be in a render class instead of scene?
-void Scene::RenderEverything(Render* pRender, Camera* pCamera) {
+void Scene::RenderEverything(Camera* pCamera) {
   RenderGroundPlane(pCamera);
 
   RenderDynamicEntities(pCamera);
 
-  RenderQuaxols(pRender, pCamera);
+  RenderQuaxols(pCamera, m_pQuaxolShader);
 }
 
 // TODO: if this gets used more, will probably need split between alpha/non
@@ -199,18 +199,24 @@ void Scene::RenderDynamicEntities(Camera* pCamera) {
 void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
   if(!m_pQuaxolChunk) return;
 
+    WasGLErrorPlusPrint();
+
   pShader->StartUsing();
   pShader->SetCameraParams(pCamera);
   Mat4f worldMatrix;
   worldMatrix.storeIdentity();
   pShader->SetOrientation(&worldMatrix);
 
+  WasGLErrorPlusPrint();
+
   if (m_pQuaxolAtlas) {
     GLint hTex0 = pShader->getUniform("texDiffuse0");
     if (hTex0 != -1) {
       glActiveTexture(GL_TEXTURE0);
+  WasGLErrorPlusPrint();
       glBindTexture(GL_TEXTURE_2D, m_pQuaxolAtlas->GetTextureID());
-      glUniform1i(hTex0, 0);
+  //WasGLErrorPlusPrint();
+  //    glUniform1i(hTex0, 0);
     }
   }
 
@@ -338,21 +344,15 @@ void Scene::RenderQuaxolsIndividually(Camera* pCamera, Shader* pShader) {
   pShader->StopUsing();
 }
 
-void Scene::RenderQuaxols(Render* pRender, Camera* pCamera) {
-  if(!m_pQuaxolShader)
+void Scene::RenderQuaxols(Camera* pCamera, Shader* pShader) {
+  if(!pShader)
     return;
 
   static bool renderChunk = true; // vs blocks individually
-  static bool multiDepthPass = false; // vs single pass with whatever depth/alpha
-  if(multiDepthPass) {
-    RenderQuaxolChunk(pCamera, m_pQuaxolShader);
-
+  if(renderChunk) {
+    RenderQuaxolChunk(pCamera, pShader);
   } else {
-    if(renderChunk) {
-      RenderQuaxolChunk(pCamera, m_pQuaxolShader);
-    } else {
-      RenderQuaxolsIndividually(pCamera, m_pQuaxolShader);
-    }
+    RenderQuaxolsIndividually(pCamera, pShader);
   }
 }
 
