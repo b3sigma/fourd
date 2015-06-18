@@ -277,7 +277,6 @@ void Camera::SetZProjection(int width, int height,
   _zProjectionMatrix.store3dProjection(_zFov, aspect, _zNear, _zFar);
 }
 
-
 void Camera::SetWProjection(float wNear, float wFar, float wScreenSizeRatio, float animateTime) {
   if(animateTime > 0.0f) {
     GetComponentBus().AddComponent(new AnimatedCameraParams(wNear, wFar, wScreenSizeRatio, animateTime));
@@ -287,7 +286,6 @@ void Camera::SetWProjection(float wNear, float wFar, float wScreenSizeRatio, flo
     _wScreenSizeRatio = wScreenSizeRatio;
   }
 }
-
 
 void Camera::printIt() {
   printf("Camera pos:");

@@ -51,22 +51,27 @@ class Render {
   typedef std::vector<Scene*> TSceneList;
   TSceneList m_scenes; // not owned
 
-  bool m_multiPass;
   Shader* m_pOverdrawQuaxol;
   Shader* m_pSlicedQuaxol;
   Shader* m_pComposeRenderTargets;
 
   // should roll this stuff into view?
-  Texture* m_colorOverdraw;
+  Texture* m_overdrawColor;
+  Texture* m_overdrawDepth; // dunno why this is needed
   Texture* m_renderColor;
   Texture* m_renderDepth;
-
+  
   // shouldn't be here..
   // should be in a scene or something?
   ::fd::Timer timer_;
   double _lastTotalTime;
   double _frameTime;
   
+public:  
+  Vec4f m_clearColor;
+  bool m_multiPass;
+
+
 public:
   Render();
   ~Render();
@@ -101,7 +106,7 @@ public:
 
   struct ComposeVert {
     float x, y;
-    float u, v;
+    //float u, v;
   };
   ComposeVert m_composeVerts[6];
   bool InitializeComposeVerts();

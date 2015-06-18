@@ -17,14 +17,16 @@ Render::Render()
     , m_pOverdrawQuaxol(NULL)
     , m_pSlicedQuaxol(NULL)
     , m_pComposeRenderTargets(NULL)
-    , m_colorOverdraw(NULL)
+    , m_overdrawColor(NULL)
+    //, m_overdrawDepth(NULL)
     , m_renderColor(NULL)
     , m_renderDepth(NULL)
 {
 }
 
 Render::~Render() {
-  delete m_colorOverdraw;
+  delete m_overdrawColor;
+  //delete m_overdrawDepth;
   delete m_renderColor;
   delete m_renderDepth;
   delete m_pOverdrawQuaxol;
@@ -61,25 +63,28 @@ bool Render::Initialize(int width, int height) {
   if(!InitializeComposeVerts())
     return false;
 
-  m_multiPass = false && (m_pSlicedQuaxol && m_pOverdrawQuaxol);
-
   return true;
 }
 
 bool Render::ResizeRenderTargets(int width, int height) {
-  if(m_colorOverdraw) {
-    if(m_colorOverdraw->m_width == width && m_colorOverdraw->m_height == height) {
+  if(m_overdrawColor) {
+    if(m_overdrawColor->m_width == width && m_overdrawColor->m_height == height) {
       return true; // success but nothing is true I guess
     }
   }
 
-  delete m_colorOverdraw;
+  delete m_overdrawColor;
+  //delete m_overdrawDepth;
   delete m_renderColor;
   delete m_renderDepth;
   
   std::unique_ptr<Texture> colorOverdraw(new Texture());
   if(!colorOverdraw->CreateRenderTarget(width, height))
     return false;
+
+  //std::unique_ptr<Texture> depthOverdraw(new Texture());
+  //if(!depthOverdraw->CreateDepthTarget(width, height))
+  //  return false;
 
   std::unique_ptr<Texture> renderColor(new Texture());
   if(!renderColor->CreateRenderTarget(width, height))
@@ -89,7 +94,8 @@ bool Render::ResizeRenderTargets(int width, int height) {
   if(!renderDepth->CreateDepthTarget(width, height))
     return false;
 
-  m_colorOverdraw = colorOverdraw.release();
+  m_overdrawColor = colorOverdraw.release();
+  //m_overdrawDepth = depthOverdraw.release();
   m_renderColor = renderColor.release();
   m_renderDepth = renderDepth.release();
   return true;
@@ -128,51 +134,71 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
   if(m_multiPass && m_pSlicedQuaxol && m_pOverdrawQuaxol
       && pRenderDepth && pRenderColor) {
     // 1st pass of color, depth to ([eyefbo,colorfbo], [eyedepth,depthfbo])
+    
     glDisable(GL_BLEND);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GEQUAL, 0.2f);
-    WasGLErrorPlusPrint();
-  
+    
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
+    WasGLErrorPlusPrint();
+
+    //static Vec4f sliceRange(0.4f, 0.64f, 0.0f, 0.0f);
+
+    float savedWnear = pCamera->_wNear;
+    float savedWfar = pCamera->_wFar;
+    float savedWratio = pCamera->_wScreenSizeRatio;
+    static float sliceAmount = 0.334f;
+    float wRange = pCamera->_wFar - pCamera->_wNear;
+    float wPreNear = (1.0f - sliceAmount) * 0.5f * wRange;
+    pCamera->SetWProjection(savedWnear + wPreNear, savedWfar - wPreNear, 1.0f /*ratio*/);
     
     pScene->RenderQuaxols(pCamera, m_pSlicedQuaxol);
     pScene->RenderGroundPlane(pCamera);
 
-    //// 2nd pass of depth - offset <= color blend to (overdrawfbo)
-    //glBindFramebuffer(GL_FRAMEBUFFER, m_colorOverdraw->m_framebuffer_id);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-    //    GL_TEXTURE_2D, m_colorOverdraw->m_texture_id, 0);
+    pCamera->SetWProjection(savedWnear, savedWfar, savedWratio);
 
-    //// good opportunity to do order independent alpha
-    //// but first the stupid way
-    //glEnable(GL_BLEND);
-    //glDisable(GL_DEPTH_TEST);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //WasGLErrorPlusPrint();
+    // 2nd pass of depth - offset <= color blend to (overdrawfbo)
+    glBindFramebuffer(GL_FRAMEBUFFER, m_overdrawColor->m_framebuffer_id);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_TEXTURE_2D, m_overdrawColor->m_texture_id, 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+    //    GL_TEXTURE_2D, m_overdrawDepth->m_texture_id, 0); // waste?
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    //// right now we are assuming these are all alpha, no depthy
-    //pScene->RenderDynamicEntities(pCamera);
-    //WasGLErrorPlusPrint();
+    // good opportunity to do order independent alpha
+    // but first the stupid way
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glDepthFunc(GL_ALWAYS);
+    glDepthMask(GL_FALSE);
+    WasGLErrorPlusPrint();
 
-    //GLint hDepthTex = m_pOverdrawQuaxol->getUniform("texDepth");
-    //if(hDepthTex != -1) {
-    //  glActiveTexture(GL_TEXTURE1);
-    //  WasGLErrorPlusPrint();
-    //  glBindTexture(GL_TEXTURE_2D, pRenderDepth->GetTextureID());
-    //  WasGLErrorPlusPrint();
-    //  //glUniform1i(hDepthTex, 1);
-    //  //WasGLErrorPlusPrint();
-    //}
-    //pScene->RenderQuaxols(pCamera, m_pOverdrawQuaxol);
+    // right now we are assuming these are all alpha, no depthy
+    pScene->RenderDynamicEntities(pCamera);
+    WasGLErrorPlusPrint();
+
+    GLint hDepthTex = m_pOverdrawQuaxol->getUniform("texDepth");
+    if(hDepthTex != -1) {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, pRenderDepth->GetTextureID());
+      WasGLErrorPlusPrint();
+      //glUniform1i(hDepthTex, 1);
+      //WasGLErrorPlusPrint();
+    }
+    pScene->RenderQuaxols(pCamera, m_pOverdrawQuaxol);
 
     //// 3rd additive fullscreen render overlay
     ////   with capped blending to ([eyefbo,bb])
-    //RenderCompose(pCamera, pRenderColor, m_colorOverdraw);
+    //RenderCompose(pCamera, pRenderColor, m_overdrawColor);
 
-    // restore previous settings
-    ToggleAlphaDepthModes(m_alphaDepthMode);
+    // restore depth mask
+    glDepthMask(GL_TRUE);
+
   } else {
     pScene->RenderEverything(pCamera);
   }
@@ -209,23 +235,25 @@ void Render::RenderAllScenesPerCamera(
 
     if(clearFlags != 0) {
       glViewport(0, 0, pRenderDepth->m_width, pRenderDepth->m_height);
-      glClearColor(1.0f, 0.5f, 0.0f, 1.0f);
+      //glClearColor(1.0f, 0.5f, 0.0f, 1.0f);
+      glClearColor(m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w);
+      //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
       glClear(clearFlags);
       WasGLErrorPlusPrint();
     }
   }
 
-  // just for debug
-  if(!m_multiPass) {
-    for(const auto pCamera : m_cameras) {
-      for(auto pScene : m_scenes) {
-        RenderScene(pCamera, pScene, pRenderColor, pRenderDepth);
-      }
+  for(const auto pCamera : m_cameras) {
+    for(auto pScene : m_scenes) {
+      RenderScene(pCamera, pScene, pRenderColor, pRenderDepth);
     }
   }
 
   if(m_multiPass) {
-    RenderCompose(NULL /*dest*/, pRenderColor, m_colorOverdraw); 
+    RenderCompose(NULL /*dest*/, pRenderColor, m_overdrawColor); 
+
+    // restore previous settings
+    ToggleAlphaDepthModes(m_alphaDepthMode);
   }
 }
   
@@ -246,6 +274,7 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
 
       glDepthFunc(GL_ALWAYS);
       glDisable(GL_DEPTH_TEST);
+      //glDepthMask(GL_FALSE);
     } break;
     case AlphaOnDepthOffAdditive: {
       modeName = "AlphaOnDepthOffAdditive";
@@ -257,6 +286,7 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
 
       glDepthFunc(GL_ALWAYS);
       glDisable(GL_DEPTH_TEST);
+      //glDepthMask(GL_FALSE);
     } break;
     case AlphaTestDepthOffSrcDest: {
       modeName = "AlphaTestDepthOffSrcDest";
@@ -268,6 +298,7 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
 
       glDepthFunc(GL_ALWAYS);
       glDisable(GL_DEPTH_TEST);
+      //glDepthMask(GL_FALSE);
     } break;
     case AlphaTestDepthOnSrcDest: {
       modeName = "AlphaTestDepthOnSrcDest";
@@ -279,6 +310,7 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
 
       glDepthFunc(GL_LESS);
       glEnable(GL_DEPTH_TEST);
+      //glDepthMask(GL_TRUE);
     } break;
     case AlphaOffDepthOn: {
       modeName = "AlphaOffDepthOn";
@@ -288,25 +320,21 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
 
       glDepthFunc(GL_LESS);
       glEnable(GL_DEPTH_TEST);
+      //glDepthMask(GL_TRUE);
     } break;
   }
 
-  printf("switched to %s\n", modeName.c_str());
+  //printf("switched to %s\n", modeName.c_str());
 }
 
-struct ComposeVert {
-  float x, y;
-  float u, v;
-};
-
 bool Render::InitializeComposeVerts() {
-  m_composeVerts[0] = {-1.0f, -1.0f, 0.0f, 0.0f};
-  m_composeVerts[1] = {+1.0f, -1.0f, 1.0f, 0.0f};
-  m_composeVerts[2] = {-1.0f, +1.0f, 0.0f, 1.0f};
+  m_composeVerts[0] = {-1.0f, -1.0f}; //, 0.0f, 0.0f};
+  m_composeVerts[1] = {+1.0f, -1.0f}; //, 1.0f, 0.0f};
+  m_composeVerts[2] = {-1.0f, +1.0f}; //, 0.0f, 1.0f};
 
-  m_composeVerts[3] = {-1.0f, +1.0f, 0.0f, 1.0f};
-  m_composeVerts[4] = {+1.0f, -1.0f, 1.0f, 0.0f};
-  m_composeVerts[5] = {+1.0f, +1.0f, 1.0f, 1.0f};
+  m_composeVerts[3] = {-1.0f, +1.0f}; //, 0.0f, 1.0f};
+  m_composeVerts[4] = {+1.0f, -1.0f}; //, 1.0f, 0.0f};
+  m_composeVerts[5] = {+1.0f, +1.0f}; //, 1.0f, 1.0f};
 
   return true;
 }
@@ -323,19 +351,19 @@ void Render::RenderCompose(Texture* pDestination,
 
   m_pComposeRenderTargets->StartUsing();
   
-  GLint texCoordIndex = glGetAttribLocation(
-      m_pComposeRenderTargets->getProgramId(), "vertCoord");
+  //GLint texCoordIndex = glGetAttribLocation(
+  //    m_pComposeRenderTargets->getProgramId(), "vertCoord");
   GLint hSolid = m_pComposeRenderTargets->getUniform("texSolid");
   if(hSolid != -1) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, pRenderColor->GetTextureID());
-    //glUniform1i(hOverdraw, 0);
+    glUniform1i(hSolid, 0);
   }
   GLint hOverdraw = m_pComposeRenderTargets->getUniform("texOverdraw");
   if(hOverdraw != -1) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, pOverdrawSource->GetTextureID());
-    //glUniform1i(hOverdraw, 1);
+    glUniform1i(hOverdraw, 1);
   }
 
   glDisable(GL_CULL_FACE);

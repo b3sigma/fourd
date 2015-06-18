@@ -220,7 +220,8 @@ void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
     }
   }
 
-  GLint hTexCoord = pShader->getAttrib("vertCoord");
+  GLint hTexCoord = glGetAttribLocation(pShader->getProgramId(), "vertCoord");
+  //GLint hTexCoord = pShader->getAttrib("vertCoord");
 
   pShader->SetPosition(&Vec4f(0, 0, 0, 0));
   GLuint colorHandle = pShader->GetColorHandle();

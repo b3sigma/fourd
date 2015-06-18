@@ -251,10 +251,18 @@ bool Initialize(int width, int height) {
   // Set up some reasonable defaults
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
-  g_camera.SetWProjection(
-      0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
 
-  g_camera.SetCameraPosition(Vec4f(1.5f, 20.5f, 1.5f, 4.5f));
+  g_renderer.m_multiPass = false;
+  if(g_renderer.m_multiPass) {
+    g_camera.SetWProjection(
+        -20.0f /* wNear */, 20.0f /* wFar */, 0.5f /* wScreenRatio */);
+  } else {
+    g_camera.SetWProjection(
+        0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
+  }
+
+
+  g_camera.SetCameraPosition(Vec4f(1.5f, 20.5f, 1.5f, 1.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   //g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
   g_debugHeadPose.storeIdentity();
@@ -554,15 +562,16 @@ void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
   if(action != GLFW_PRESS && action != GLFW_REPEAT)
     return;
 
+  bool isShift = (mods & GLFW_MOD_SHIFT);
   int asciiCode = key;
   if(asciiCode >= GLFW_KEY_A && asciiCode <= GLFW_KEY_Z) {
-    if(!(mods & GLFW_MOD_SHIFT)) {
+    if(!isShift) {
       // was actually 'a' not 'A'
       asciiCode -= 'A' - 'a';
     }
   }
   if(asciiCode >= GLFW_KEY_0 && asciiCode <= GLFW_KEY_9) {
-    if((mods & GLFW_MOD_SHIFT)) {
+    if(isShift) {
       // maybe '!' not '1'
       switch(asciiCode) {
         case GLFW_KEY_1: asciiCode = '!'; break;
@@ -578,6 +587,16 @@ void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
       }
     }
   }
+
+
+  switch(asciiCode) {
+    case '=' : asciiCode = (isShift) ? '+' : '='; break;
+    case '-' : asciiCode = (isShift) ? '_' : '-'; break;
+    case '/' : asciiCode = (isShift) ? '?' : '/'; break;
+    case '[' : asciiCode = (isShift) ? '{' : '['; break;
+    case ']' : asciiCode = (isShift) ? '}' : ']'; break;
+  }
+
 
   AsciiKeyUpdate(asciiCode, (mods & GLFW_MOD_SHIFT));
 }
@@ -847,8 +866,8 @@ void Draw(GLFWwindow* window) {
   if (!g_shader)
     return;
 
-  static Vec4f clearColor(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
-  glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+  g_renderer.m_clearColor = Vec4f(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
+  glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 

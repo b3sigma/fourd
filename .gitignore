@@ -1,13 +1,24 @@
 .git/
-*.o
-fourd
-temp*
-build/*
-bin/*
+
+# just a place to put untracked files
+local_scratch/*
+
+# msvc spam
 project/*.sdf
 project/*.suo
 project/*.opensdf
 project/Debug/*
 project/Release/*
-local_scratch/*
+
+# linux build spam
+temp*
+*.o
+fourd
+build/*
+bin/*
+
+# imgui writes this to keep window positions
 imgui.ini
+
+# using apitrace for opengl debugging, which leaves these around
+*.trace
