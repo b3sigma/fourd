@@ -61,7 +61,7 @@ bool Render::Initialize(int width, int height) {
   if(!InitializeComposeVerts())
     return false;
 
-  m_multiPass = false; //(m_pSlicedQuaxol && m_pOverdrawQuaxol);
+  m_multiPass = false && (m_pSlicedQuaxol && m_pOverdrawQuaxol);
 
   return true;
 }
@@ -140,36 +140,36 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     pScene->RenderQuaxols(pCamera, m_pSlicedQuaxol);
     pScene->RenderGroundPlane(pCamera);
 
-    // 2nd pass of depth - offset <= color blend to (overdrawfbo)
-    glBindFramebuffer(GL_FRAMEBUFFER, m_colorOverdraw->m_framebuffer_id);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-        GL_TEXTURE_2D, m_colorOverdraw->m_texture_id, 0);
+    //// 2nd pass of depth - offset <= color blend to (overdrawfbo)
+    //glBindFramebuffer(GL_FRAMEBUFFER, m_colorOverdraw->m_framebuffer_id);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    //    GL_TEXTURE_2D, m_colorOverdraw->m_texture_id, 0);
 
-    // good opportunity to do order independent alpha
-    // but first the stupid way
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  WasGLErrorPlusPrint();
+    //// good opportunity to do order independent alpha
+    //// but first the stupid way
+    //glEnable(GL_BLEND);
+    //glDisable(GL_DEPTH_TEST);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //WasGLErrorPlusPrint();
 
-    // right now we are assuming these are all alpha, no depthy
-    pScene->RenderDynamicEntities(pCamera);
-  WasGLErrorPlusPrint();
+    //// right now we are assuming these are all alpha, no depthy
+    //pScene->RenderDynamicEntities(pCamera);
+    //WasGLErrorPlusPrint();
 
-    GLint hDepthTex = m_pOverdrawQuaxol->getUniform("texDepth");
-    if(hDepthTex != -1) {
-      glActiveTexture(GL_TEXTURE1);
-  WasGLErrorPlusPrint();
-      glBindTexture(GL_TEXTURE_2D, pRenderDepth->GetTextureID());
-  WasGLErrorPlusPrint();
-  //    glUniform1i(hDepthTex, 1);
-  //WasGLErrorPlusPrint();
-    }
-    pScene->RenderQuaxols(pCamera, m_pOverdrawQuaxol);
+    //GLint hDepthTex = m_pOverdrawQuaxol->getUniform("texDepth");
+    //if(hDepthTex != -1) {
+    //  glActiveTexture(GL_TEXTURE1);
+    //  WasGLErrorPlusPrint();
+    //  glBindTexture(GL_TEXTURE_2D, pRenderDepth->GetTextureID());
+    //  WasGLErrorPlusPrint();
+    //  //glUniform1i(hDepthTex, 1);
+    //  //WasGLErrorPlusPrint();
+    //}
+    //pScene->RenderQuaxols(pCamera, m_pOverdrawQuaxol);
 
-    // 3rd additive fullscreen render overlay
-    //   with capped blending to ([eyefbo,bb])
-    RenderCompose(pCamera, pRenderColor, m_colorOverdraw);
+    //// 3rd additive fullscreen render overlay
+    ////   with capped blending to ([eyefbo,bb])
+    //RenderCompose(pCamera, pRenderColor, m_colorOverdraw);
 
     // restore previous settings
     ToggleAlphaDepthModes(m_alphaDepthMode);
@@ -185,39 +185,47 @@ void Render::RenderAllScenesPerCamera(
 
   if(m_multiPass) {
     GLuint clearFlags = 0;
-    if(pRenderColor) {
-      // this happens when we switch to vr, as the vr rendertarget is different
-      ResizeRenderTargets(pRenderColor->m_width, pRenderColor->m_height);
-      WasGLErrorPlusPrint();
-    } else {
+    //if(pRenderColor) {
+    //  // this happens when we switch to vr, as the vr rendertarget is different
+    //  ResizeRenderTargets(pRenderColor->m_width, pRenderColor->m_height);
+    //  WasGLErrorPlusPrint();
+    //} else {
       pRenderColor = m_renderColor;
       glBindFramebuffer(GL_FRAMEBUFFER, pRenderColor->m_framebuffer_id);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
           GL_TEXTURE_2D, pRenderColor->m_texture_id, 0);
       clearFlags |= GL_COLOR_BUFFER_BIT;
       WasGLErrorPlusPrint();
-    }
+    //}
 
-    // setup render depth if it wasn't passed in
-    if(pRenderDepth == NULL) {
+    //// setup render depth if it wasn't passed in
+    //if(pRenderDepth == NULL) {
       pRenderDepth = m_renderDepth;
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
           GL_TEXTURE_2D, pRenderDepth->m_texture_id, 0);
       clearFlags |= GL_DEPTH_BUFFER_BIT;
       WasGLErrorPlusPrint();
-    }
+    //}
 
     if(clearFlags != 0) {
       glViewport(0, 0, pRenderDepth->m_width, pRenderDepth->m_height);
+      glClearColor(1.0f, 0.5f, 0.0f, 1.0f);
       glClear(clearFlags);
       WasGLErrorPlusPrint();
     }
   }
 
-  for(const auto pCamera : m_cameras) {
-    for(auto pScene : m_scenes) {
-      RenderScene(pCamera, pScene, pRenderColor, pRenderDepth);
+  // just for debug
+  if(!m_multiPass) {
+    for(const auto pCamera : m_cameras) {
+      for(auto pScene : m_scenes) {
+        RenderScene(pCamera, pScene, pRenderColor, pRenderDepth);
+      }
     }
+  }
+
+  if(m_multiPass) {
+    RenderCompose(NULL /*dest*/, pRenderColor, m_colorOverdraw); 
   }
 }
   
@@ -292,51 +300,57 @@ struct ComposeVert {
 };
 
 bool Render::InitializeComposeVerts() {
-  m_composeVerts[0] = {0.0f, 0.0f, 0.0f, 0.0f};
-  m_composeVerts[1] = {1.0f, 0.0f, 1.0f, 0.0f};
-  m_composeVerts[2] = {0.0f, 1.0f, 0.0f, 1.0f};
+  m_composeVerts[0] = {-1.0f, -1.0f, 0.0f, 0.0f};
+  m_composeVerts[1] = {+1.0f, -1.0f, 1.0f, 0.0f};
+  m_composeVerts[2] = {-1.0f, +1.0f, 0.0f, 1.0f};
 
-  m_composeVerts[3] = {0.0f, 1.0f, 0.0f, 1.0f};
-  m_composeVerts[4] = {1.0f, 0.0f, 1.0f, 0.0f};
-  m_composeVerts[5] = {1.0f, 1.0f, 1.0f, 1.0f};
+  m_composeVerts[3] = {-1.0f, +1.0f, 0.0f, 1.0f};
+  m_composeVerts[4] = {+1.0f, -1.0f, 1.0f, 0.0f};
+  m_composeVerts[5] = {+1.0f, +1.0f, 1.0f, 1.0f};
 
   return true;
 }
 
-void Render::RenderCompose(Camera* pCamera, 
+void Render::RenderCompose(Texture* pDestination,
     Texture* pRenderColor, Texture* pOverdrawSource) {
-  if(pRenderColor == NULL) {
+  if(pDestination == NULL) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   } else {
-    glBindFramebuffer(GL_FRAMEBUFFER, pRenderColor->m_framebuffer_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, pDestination->m_framebuffer_id);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-        GL_TEXTURE_2D, pRenderColor->m_texture_id, 0);
+        GL_TEXTURE_2D, pDestination->m_texture_id, 0);
   }
 
   m_pComposeRenderTargets->StartUsing();
-  m_pComposeRenderTargets->SetCameraParams(pCamera);
   
-  GLint hTexCoord = m_pComposeRenderTargets->getAttrib("vertCoord");
-  GLint hOverdraw = m_pComposeRenderTargets->getUniform("texOverdraw");
-  if(hOverdraw != -1) {
+  GLint texCoordIndex = glGetAttribLocation(
+      m_pComposeRenderTargets->getProgramId(), "vertCoord");
+  GLint hSolid = m_pComposeRenderTargets->getUniform("texSolid");
+  if(hSolid != -1) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, pOverdrawSource->GetTextureID());
+    glBindTexture(GL_TEXTURE_2D, pRenderColor->GetTextureID());
     //glUniform1i(hOverdraw, 0);
   }
+  GLint hOverdraw = m_pComposeRenderTargets->getUniform("texOverdraw");
+  if(hOverdraw != -1) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, pOverdrawSource->GetTextureID());
+    //glUniform1i(hOverdraw, 1);
+  }
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_BLEND);
   glDisable(GL_DEPTH_TEST);
 
   glBegin(GL_TRIANGLES);
   for(int t = 0; t < 2; t++) {
     int v = t * 3;
-    glVertexAttrib2f(hTexCoord, m_composeVerts[v+0].u, m_composeVerts[v+0].v);
-    glVertex2f(                 m_composeVerts[v+0].x, m_composeVerts[v+0].y);
-    glVertexAttrib2f(hTexCoord, m_composeVerts[v+1].u, m_composeVerts[v+1].v);
-    glVertex2f(                 m_composeVerts[v+1].x, m_composeVerts[v+1].y);
-    glVertexAttrib2f(hTexCoord, m_composeVerts[v+2].u, m_composeVerts[v+2].v);
-    glVertex2f(                 m_composeVerts[v+2].x, m_composeVerts[v+2].y);
+    //glVertexAttrib2f(texCoordIndex, m_composeVerts[v+0].u, m_composeVerts[v+0].v);
+    glVertex2f(                     m_composeVerts[v+0].x, m_composeVerts[v+0].y);
+    //glVertexAttrib2f(texCoordIndex, m_composeVerts[v+1].u, m_composeVerts[v+1].v);
+    glVertex2f(                     m_composeVerts[v+1].x, m_composeVerts[v+1].y);
+    //glVertexAttrib2f(texCoordIndex, m_composeVerts[v+2].u, m_composeVerts[v+2].v);
+    glVertex2f(                     m_composeVerts[v+2].x, m_composeVerts[v+2].y);
   }
   glEnd();
 

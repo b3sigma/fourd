@@ -199,7 +199,7 @@ void Scene::RenderDynamicEntities(Camera* pCamera) {
 void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
   if(!m_pQuaxolChunk) return;
 
-    WasGLErrorPlusPrint();
+  WasGLErrorPlusPrint();
 
   pShader->StartUsing();
   pShader->SetCameraParams(pCamera);
@@ -213,7 +213,7 @@ void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
     GLint hTex0 = pShader->getUniform("texDiffuse0");
     if (hTex0 != -1) {
       glActiveTexture(GL_TEXTURE0);
-  WasGLErrorPlusPrint();
+      WasGLErrorPlusPrint();
       glBindTexture(GL_TEXTURE_2D, m_pQuaxolAtlas->GetTextureID());
   //WasGLErrorPlusPrint();
   //    glUniform1i(hTex0, 0);

@@ -256,13 +256,13 @@ bool ImGuiWrapper::InitOpenGL() {
   }
   s_UIRender = shader.release();
 
-  std::unique_ptr<Shader> shaderVR(new Shader());
-  shaderVR->AddDynamicMeshCommonSubShaders();
-  if(!shaderVR->LoadFromFile(
-      "ImguiVR", "data\\uivImguiVR.glsl", "data\\uifImguiVR.glsl")) {
-    return false;
-  }
-  s_UIRenderVR = shaderVR.release();
+  //std::unique_ptr<Shader> shaderVR(new Shader());
+  //shaderVR->AddDynamicMeshCommonSubShaders();
+  //if(!shaderVR->LoadFromFile(
+  //    "ImguiVR", "data\\uivImguiVR.glsl", "data\\uifImguiVR.glsl")) {
+  //  return false;
+  //}
+  //s_UIRenderVR = shaderVR.release();
 
   // wholesale ganked from imgui example to start
   g_AttribLocationTex = glGetUniformLocation(s_UIRender->getProgramId(), "texDiffuse0");

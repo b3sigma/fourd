@@ -265,8 +265,6 @@ bool Initialize(int width, int height) {
   g_inputHandler.AddDefaultBindings();
 
   //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  static Vec4f clearColor(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
-  glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
   glClearDepth(1.0f);
   glDisable(GL_CULL_FACE); // no backface culling for 4d
   glShadeModel(GL_FLAT);
@@ -848,7 +846,9 @@ void AsciiKeyUpdate(int key, bool isShift) {
 void Draw(GLFWwindow* window) {
   if (!g_shader)
     return;
-    
+
+  static Vec4f clearColor(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
+  glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 

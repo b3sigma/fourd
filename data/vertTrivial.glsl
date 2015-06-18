@@ -1,3 +1,5 @@
+// vertTrivial
+
 varying vec3 normal;
 varying vec4 blarg;
 uniform vec4 worldPosition;

@@ -1,3 +1,4 @@
+// vertAlphaTest
 
 uniform mat4 projectionMatrix;
 
@@ -13,7 +14,7 @@ void main() {
  	vec4 threeSpace = getThreeSpace(vertPosition); 
 
   float savedW = threeSpace.w;
-	threeSpace.w = 1;
+	threeSpace.w = 1.0;
 	//threeSpace = cameraSpace;
 	
 	vec4 homogenousCoords = projectionMatrix * threeSpace; // homogenous clip space position
@@ -36,7 +37,7 @@ void main() {
   fragCol0.g = vertColor.y;
   //fragCol0.r = abs(worldSpace.z / 10);
   //fragCol0.b = abs(worldSpace.w / 10);
-  fragCol0.r = 1.0 - abs((savedW - 0.5) * 2);
+  fragCol0.r = 1.0 - abs((savedW - 0.5) * 2.0);
   fragCol0.b = 1.0;
   //fragCol0.b = homogenousCoords.z / 100;
   //fragCol0.b = abs(threeSpace.x / 10);

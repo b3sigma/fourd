@@ -1,3 +1,5 @@
+// basic
+
 struct Vertex 
 {
 	float4 position : POSITION;

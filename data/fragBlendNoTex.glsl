@@ -1,6 +1,4 @@
-// # verasion 150
-// OpenGL 3.2 apparently
-
+// fragBlendNoTex
 
 uniform sampler2D texDiffuse0;
 

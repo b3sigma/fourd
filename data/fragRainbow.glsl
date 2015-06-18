@@ -1,3 +1,4 @@
+// fragRainbow
 
 uniform sampler2D texDiffuse0;
 

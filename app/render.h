@@ -105,7 +105,7 @@ public:
   };
   ComposeVert m_composeVerts[6];
   bool InitializeComposeVerts();
-  void RenderCompose(Camera* pCamera, 
+  void RenderCompose(Texture* pDestination, 
       Texture* pColorTarget, Texture* pOverdrawSource);
 };
 

@@ -1,3 +1,4 @@
+// vertBlendNoTex
 
 uniform mat4 projectionMatrix;
 
@@ -12,7 +13,7 @@ vec4 getThreeSpace(vec4);
 void main() {
 	vec4 threeSpace = getThreeSpace(vertPosition); 
   float savedW = threeSpace.w;
-	threeSpace.w = 1;
+	threeSpace.w = 1.0;
 	//threeSpace = cameraSpace;
 	
 	vec4 homogenousCoords = projectionMatrix * threeSpace; // homogenous clip space position

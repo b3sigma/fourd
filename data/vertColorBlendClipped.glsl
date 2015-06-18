@@ -1,3 +1,4 @@
+//vertColorBlendClipped
 
 uniform mat4 projectionMatrix;
 
@@ -12,7 +13,7 @@ vec4 getThreeSpace(vec4);
 void main() {
 	vec4 threeSpace = getThreeSpace(vertPosition); 
   float savedW = threeSpace.w;
-	threeSpace.w = 1;
+	threeSpace.w = 1.0;
 	//threeSpace = cameraSpace;
 	
 	vec4 homogenousCoords = projectionMatrix * threeSpace; // homogenous clip space position
@@ -30,11 +31,11 @@ void main() {
   
   //fragCol0.rgb = vertColor.xyz;
   
-  fragCol0.r = 1.0 - abs((savedW - 0.5) * 2);
+  fragCol0.r = 1.0 - abs((savedW - 0.5) * 2.0);
   //fragCol0.b = mod(abs(threeSpace.x / 10), 1.0);
-	fragCol0.r = mod(abs(vertPosition.x / 10), 2.0);
-	fragCol0.g = mod(abs(vertPosition.z / 10), 2.0);
-	fragCol0.b = mod(abs(vertPosition.w / 10), 2.0);
+	fragCol0.r = mod(abs(vertPosition.x / 10.0), 2.0);
+	fragCol0.g = mod(abs(vertPosition.z / 10.0), 2.0);
+	fragCol0.b = mod(abs(vertPosition.w / 10.0), 2.0);
 	//fragCol0.g = vertColor.y;
   //fragCol0.r = abs(worldSpace.z / 10);
   //fragCol0.b = abs(worldSpace.w / 10);

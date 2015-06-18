@@ -1,3 +1,4 @@
+// vertRainbow
 
 uniform mat4 projectionMatrix;
 
@@ -18,12 +19,12 @@ void main() {
   fragTex0.xy = vertCoord.xy;
 
   float savedW = 1.0 - threeSpace.w;
-  threeSpace.w = 1;
+  threeSpace.w = 1.0;
 
   vec3 rainbow;
-  rainbow.r = mod(abs(vertPosition.x / 10), 2.0);
-	rainbow.g = mod(abs(vertPosition.z / 10), 2.0);
-	rainbow.b = mod(abs(vertPosition.w / 10), 2.0);
+  rainbow.r = mod(abs(vertPosition.x / 10.0), 2.0);
+	rainbow.g = mod(abs(vertPosition.z / 10.0), 2.0);
+	rainbow.b = mod(abs(vertPosition.w / 10.0), 2.0);
   
   vec4 homogenousCoords = projectionMatrix * threeSpace;
 
