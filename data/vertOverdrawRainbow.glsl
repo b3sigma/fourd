@@ -1,6 +1,7 @@
 // vertOverdrawRainbow
 
 uniform mat4 projectionMatrix;
+uniform vec4 sliceRange;
 
 in vec4 vertPosition;
 //in vec2 vertCoord;
@@ -42,15 +43,27 @@ void main() {
     
   if (savedW < 0.0) { // clip near
     fragCol0.a = 0.0;
-  //} else if (savedW <= 0.33) {
-  //  fragCol0.a = 1.0;
-  //} else if (savedW <= 0.66) {
-  //  fragCol0.a = 0.0;
+  } else if (savedW <= sliceRange.x) {
+    fragCol0.a = 1.0;
+  } else if (savedW <= sliceRange.y) {
+    fragCol0.a = 0.0;
   } else if(savedW <= 1.0) { // rainbow
     fragCol0.a = 1.0;
   } else { // clip far
     fragCol0.a = 0.0;
   }
+
+  //if (savedW < 0.0) { // clip near
+  //  fragCol0.a = 0.0;
+  ////} else if (savedW <= 0.33) {
+  ////  fragCol0.a = 1.0;
+  ////} else if (savedW <= 0.66) {
+  ////  fragCol0.a = 0.0;
+  //} else if(savedW <= 1.0) { // rainbow
+  //  fragCol0.a = 1.0;
+  //} else { // clip far
+  //  fragCol0.a = 0.0;
+  //}
 
   //fragCol0.r = depthTexel.r;
 }

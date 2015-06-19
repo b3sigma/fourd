@@ -252,15 +252,14 @@ bool Initialize(int width, int height) {
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
 
-  g_renderer.m_multiPass = false;
+  g_renderer.m_multiPass = true; //false;
   if(g_renderer.m_multiPass) {
     g_camera.SetWProjection(
-        -20.0f /* wNear */, 20.0f /* wFar */, 0.5f /* wScreenRatio */);
+        -50.0f /* wNear */, 50.0f /* wFar */, 0.5f /* wScreenRatio */);
   } else {
     g_camera.SetWProjection(
         0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   }
-
 
   g_camera.SetCameraPosition(Vec4f(1.5f, 20.5f, 1.5f, 1.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));

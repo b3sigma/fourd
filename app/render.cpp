@@ -77,6 +77,9 @@ bool Render::ResizeRenderTargets(int width, int height) {
   //delete m_overdrawDepth;
   delete m_renderColor;
   delete m_renderDepth;
+
+  if(!m_multiPass)
+    return true; // don't need any of these unless it's multipass
   
   std::unique_ptr<Texture> colorOverdraw(new Texture());
   if(!colorOverdraw->CreateRenderTarget(width, height))
@@ -144,20 +147,27 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     glDepthMask(GL_TRUE);
     WasGLErrorPlusPrint();
 
-    //static Vec4f sliceRange(0.4f, 0.64f, 0.0f, 0.0f);
+    m_pSlicedQuaxol->StartUsing();
+    static Vec4f sliceRange(0.45f, 0.55f, 0.0f, 0.0f);
+    GLuint hSliceShaderRange = m_pSlicedQuaxol->getUniform("sliceRange");
+    if(hSliceShaderRange != -1) {
+      glUniform4fv(hSliceShaderRange, 1, sliceRange.raw());
+      WasGLErrorPlusPrint();
+    }
+    m_pSlicedQuaxol->StopUsing();
 
-    float savedWnear = pCamera->_wNear;
-    float savedWfar = pCamera->_wFar;
-    float savedWratio = pCamera->_wScreenSizeRatio;
-    static float sliceAmount = 0.334f;
-    float wRange = pCamera->_wFar - pCamera->_wNear;
-    float wPreNear = (1.0f - sliceAmount) * 0.5f * wRange;
-    pCamera->SetWProjection(savedWnear + wPreNear, savedWfar - wPreNear, 1.0f /*ratio*/);
+    //float savedWnear = pCamera->_wNear;
+    //float savedWfar = pCamera->_wFar;
+    //float savedWratio = pCamera->_wScreenSizeRatio;
+    //static float sliceAmount = 0.334f;
+    //float wRange = pCamera->_wFar - pCamera->_wNear;
+    //float wPreNear = (1.0f - sliceAmount) * 0.5f * wRange;
+    //pCamera->SetWProjection(savedWnear + wPreNear, savedWfar - wPreNear, 1.0f /*ratio*/);
     
     pScene->RenderQuaxols(pCamera, m_pSlicedQuaxol);
     pScene->RenderGroundPlane(pCamera);
 
-    pCamera->SetWProjection(savedWnear, savedWfar, savedWratio);
+    //pCamera->SetWProjection(savedWnear, savedWfar, savedWratio);
 
     // 2nd pass of depth - offset <= color blend to (overdrawfbo)
     glBindFramebuffer(GL_FRAMEBUFFER, m_overdrawColor->m_framebuffer_id);
@@ -181,6 +191,13 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     // right now we are assuming these are all alpha, no depthy
     pScene->RenderDynamicEntities(pCamera);
     WasGLErrorPlusPrint();
+
+    m_pOverdrawQuaxol->StartUsing();
+    GLuint hOverdrawShaderRange = m_pOverdrawQuaxol->getUniform("sliceRange");
+    if(hOverdrawShaderRange != -1) {
+      glUniform4fv(hOverdrawShaderRange, 1, sliceRange.raw());
+    }
+    m_pOverdrawQuaxol->StopUsing();
 
     GLint hDepthTex = m_pOverdrawQuaxol->getUniform("texDepth");
     if(hDepthTex != -1) {

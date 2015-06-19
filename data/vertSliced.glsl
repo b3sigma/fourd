@@ -1,6 +1,7 @@
 // vertSliced
 
 uniform mat4 projectionMatrix;
+uniform vec4 sliceRange;
 
 in vec4 vertPosition;
 in vec2 vertCoord;
@@ -34,16 +35,24 @@ void main() {
   gl_Position = fragHPos;
   
   //fragCol0.rgb = rainbow;
-    
-  if (savedW < 0.0) { // clip near
+
+  if (savedW < sliceRange.x) { // clip near
     fragTexBlend = 0.0;
-  //} else if (savedW <= 0.33) {
-  //  fragTexBlend = 1.0;
-  //} else if (savedW <= 0.66) {
-  //  fragTexBlend = 0.0;
-  } else if(savedW <= 1.0) { // solid slice
+  } else if(savedW <= sliceRange.y) { // solid slice
     fragTexBlend = 1.0;
   } else { // clip far
     fragTexBlend = 0.0;
   }
+    
+  //if (savedW < 0.0) { // clip near
+  //  fragTexBlend = 0.0;
+  ////} else if (savedW <= 0.33) {
+  ////  fragTexBlend = 1.0;
+  ////} else if (savedW <= 0.66) {
+  ////  fragTexBlend = 0.0;
+  //} else if(savedW <= 1.0) { // solid slice
+  //  fragTexBlend = 1.0;
+  //} else { // clip far
+  //  fragTexBlend = 0.0;
+  //}
 }
