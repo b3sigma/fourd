@@ -219,7 +219,7 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
     }
   } else if (_movement == WALK) {
     const float moveSpeed = 10.0f;
-    float airMoveMultiplier = 0.1f;
+    float airMoveMultiplier = 0.2f;
     if(_collidingLastFrame) {
       airMoveMultiplier = 1.0f;
     }

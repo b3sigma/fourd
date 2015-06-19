@@ -22,8 +22,8 @@ void main() {
   float savedW = 1.0 - threeSpace.w;
   threeSpace.w = 1.0;
 
- // vec3 rainbow;
- // rainbow.r = mod(abs(vertPosition.x / 10.0), 2.0);
+  //vec3 rainbow;
+  //rainbow.r = mod(abs(vertPosition.x / 10.0), 2.0);
 	//rainbow.g = mod(abs(vertPosition.z / 10.0), 2.0);
 	//rainbow.b = mod(abs(vertPosition.w / 10.0), 2.0);
   
@@ -43,7 +43,7 @@ void main() {
   } else { // clip far
     fragTexBlend = 0.0;
   }
-    
+
   //if (savedW < 0.0) { // clip near
   //  fragTexBlend = 0.0;
   ////} else if (savedW <= 0.33) {

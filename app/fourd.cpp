@@ -220,7 +220,8 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
 
   Entity* pEntity = g_scene.AddEntity();
   // ugh need like a mesh manager and better approach to shader handling
-  pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
+  //pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
+  pEntity->Initialize(candy, LoadShader("ColorBlendClipped"), NULL);
   pEntity->m_position = pos;
   pEntity->GetComponentBus().AddComponent(
       new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
@@ -228,7 +229,6 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
 }
 
 void AddEyeCandy() {
-  return;
 
   // yeah yeah side effects blah blah
   Shader* savedShader = g_shader;
@@ -587,15 +587,14 @@ void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
   }
 
-
   switch(asciiCode) {
     case '=' : asciiCode = (isShift) ? '+' : '='; break;
     case '-' : asciiCode = (isShift) ? '_' : '-'; break;
     case '/' : asciiCode = (isShift) ? '?' : '/'; break;
     case '[' : asciiCode = (isShift) ? '{' : '['; break;
     case ']' : asciiCode = (isShift) ? '}' : ']'; break;
+    case '\\' : asciiCode = (isShift) ? '|' : '\\'; break;
   }
-
 
   AsciiKeyUpdate(asciiCode, (mods & GLFW_MOD_SHIFT));
 }
@@ -652,9 +651,17 @@ void AsciiKeyUpdate(int key, bool isShift) {
       SaveLevel("current");
     } break;
     case '|' : {
-      if(g_scene.m_pQuaxolChunk) {
-        g_scene.m_pQuaxolChunk->DebugSwapAxis(2 /*z*/, 1 /*y*/);
+      g_renderer.m_multiPass = !g_renderer.m_multiPass;
+      if(!g_renderer.m_multiPass) {
+        g_camera.SetWProjection(0.0f /*near*/, g_camera._wFar, 
+            g_camera._wScreenSizeRatio, 1.0f /*animTime*/);
+      } else {
+        g_camera.SetWProjection(-1.0f * g_camera._wFar, g_camera._wFar, 
+            g_camera._wScreenSizeRatio, 1.0f /*animTime*/);
       }
+      //if(g_scene.m_pQuaxolChunk) {
+      //  g_scene.m_pQuaxolChunk->DebugSwapAxis(2 /*z*/, 1 /*y*/);
+      //}
     } break;
     case '+' : {
       static bool fill = false;
@@ -871,16 +878,18 @@ void Draw(GLFWwindow* window) {
   glLoadIdentity();
 
   float frameTime = (float)g_renderer.GetFrameTime();
-  static bool renderVRUI = false;
+  static bool renderVRUI = true;
 
   if(VRWrapper::IsUsingVR() && g_vr) {
     g_vr->StartFrame();
     Texture* renderColor;
     Texture* renderDepth;
+    glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartLeftEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime);
+    glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartRightEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
@@ -888,6 +897,7 @@ void Draw(GLFWwindow* window) {
     g_vr->FinishFrame();
   } else {
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
+    glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_renderer.RenderAllScenesPerCamera(NULL /*renderColor*/, NULL /*renderDepth*/);
     ImGuiWrapper::Render(frameTime);
   }

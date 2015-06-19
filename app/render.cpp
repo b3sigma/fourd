@@ -78,9 +78,10 @@ bool Render::ResizeRenderTargets(int width, int height) {
   delete m_renderColor;
   delete m_renderDepth;
 
+
   if(!m_multiPass)
     return true; // don't need any of these unless it's multipass
-  
+
   std::unique_ptr<Texture> colorOverdraw(new Texture());
   if(!colorOverdraw->CreateRenderTarget(width, height))
     return false;
@@ -188,10 +189,6 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     glDepthMask(GL_FALSE);
     WasGLErrorPlusPrint();
 
-    // right now we are assuming these are all alpha, no depthy
-    pScene->RenderDynamicEntities(pCamera);
-    WasGLErrorPlusPrint();
-
     m_pOverdrawQuaxol->StartUsing();
     GLuint hOverdrawShaderRange = m_pOverdrawQuaxol->getUniform("sliceRange");
     if(hOverdrawShaderRange != -1) {
@@ -226,35 +223,35 @@ void Render::RenderAllScenesPerCamera(
 
   WasGLErrorPlusPrint();
 
+  Texture* pColorDestination = pRenderColor;
   if(m_multiPass) {
     GLuint clearFlags = 0;
-    //if(pRenderColor) {
-    //  // this happens when we switch to vr, as the vr rendertarget is different
-    //  ResizeRenderTargets(pRenderColor->m_width, pRenderColor->m_height);
-    //  WasGLErrorPlusPrint();
-    //} else {
+    if(pRenderColor) {
+      // this happens when we switch to vr, as the vr rendertarget is different
+      ResizeRenderTargets(pRenderColor->m_width, pRenderColor->m_height);
+      WasGLErrorPlusPrint();
+    } else {
       pRenderColor = m_renderColor;
       glBindFramebuffer(GL_FRAMEBUFFER, pRenderColor->m_framebuffer_id);
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
           GL_TEXTURE_2D, pRenderColor->m_texture_id, 0);
       clearFlags |= GL_COLOR_BUFFER_BIT;
       WasGLErrorPlusPrint();
-    //}
+    }
 
-    //// setup render depth if it wasn't passed in
-    //if(pRenderDepth == NULL) {
+    // setup render depth if it wasn't passed in
+    if(pRenderDepth == NULL) {
       pRenderDepth = m_renderDepth;
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
           GL_TEXTURE_2D, pRenderDepth->m_texture_id, 0);
       clearFlags |= GL_DEPTH_BUFFER_BIT;
       WasGLErrorPlusPrint();
-    //}
+    }
 
     if(clearFlags != 0) {
       glViewport(0, 0, pRenderDepth->m_width, pRenderDepth->m_height);
       //glClearColor(1.0f, 0.5f, 0.0f, 1.0f);
       glClearColor(m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w);
-      //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
       glClear(clearFlags);
       WasGLErrorPlusPrint();
     }
@@ -267,10 +264,16 @@ void Render::RenderAllScenesPerCamera(
   }
 
   if(m_multiPass) {
-    RenderCompose(NULL /*dest*/, pRenderColor, m_overdrawColor); 
+    RenderCompose(pColorDestination, pRenderColor, m_overdrawColor); 
 
     // restore previous settings
     ToggleAlphaDepthModes(m_alphaDepthMode);
+
+    for(const auto pCamera : m_cameras) {
+      for(auto pScene : m_scenes) {
+        pScene->RenderDynamicEntities(pCamera);
+      }
+    }
   }
 }
   
