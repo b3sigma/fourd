@@ -368,9 +368,12 @@ void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) 
   io.MouseWheel = 0.0f;
 }
 
-void RenderFpsOverlay(float frameTime) {
+void RenderFpsOverlay(float frameTime, const Vec2f& offset) {
   static bool opened = true;
-  ImGui::SetNextWindowPos(ImVec2(10,10));
+  ImVec2 startPos(10.0f, 10.0f);
+  startPos.x += offset.x();
+  startPos.y += offset.y();
+  ImGui::SetNextWindowPos(startPos);
   if (!ImGui::Begin("fps overlay", &opened, ImVec2(0,0), 0.3f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
   {
       ImGui::End();
@@ -380,9 +383,10 @@ void RenderFpsOverlay(float frameTime) {
   ImGui::End();
 }
 
-
-void ImGuiWrapper::Render(float frameTime) {
-  RenderFpsOverlay(frameTime);
+void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, bool doUpdate) {
+  if(doUpdate) {
+    RenderFpsOverlay(frameTime, offset);
+  }
 
   //static bool opened = true;
   //if(opened) {

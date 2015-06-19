@@ -112,6 +112,7 @@ public:
   bool InitializeComposeVerts();
   void RenderCompose(Texture* pDestination, 
       Texture* pColorTarget, Texture* pOverdrawSource);
+  void ToggleMultipassMode(bool multiPass, int width, int height);
 };
 
 }  // namespace fd

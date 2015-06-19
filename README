@@ -48,17 +48,15 @@ X add bunch of quaxols in a line
 Esc quit
 
 Minimal TODOs:
-* Cleanup min/max rainbow rendering
 * Add a basic goal
+* Iterate on multipass shader in VR
+* Improve multipass fillrate performance (overdraw is overboard)
 
 Game TODOs:
-* VR UI mode?
+* Add VR UI input?
 * Make separate mouse ui/game modes that steal key input
 * more visualization attempts
-** rainbow but with fixed z writing
-** textured solid prepass, then clamped alpha w+ w- overdraw
 ** sub-surface w mode?
-** multipass 
 ** Alpha test cleaner clipping?
 * cleanup rift positioning
 * refactor keyboard input
@@ -68,8 +66,6 @@ Game TODOs:
 * quaxol streaming
 * sphere vs quaxol collision
 * refactor input keys
-* change to glfw in prep for imgui
-* add imgui support
 * add console
 * Add 120 cell
 * Load compressed textures with mipmaps directly

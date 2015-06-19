@@ -2,6 +2,7 @@
 
 // needed for callback defs
 #include <GLFW/glfw3.h>
+#include "..\common\fourmath.h"
 
 namespace fd {
 
@@ -21,7 +22,7 @@ public:
       GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback);
   static void Shutdown();
   static void NewFrame(float deltaTime, int renderWidth, int renderHeight);
-  static void Render(float frameTime);
+  static void Render(float frameTime, const Vec2f& offset, bool doUpdate);
   
 protected:
   static bool InitOpenGL();

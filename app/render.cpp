@@ -3,6 +3,7 @@
 #include "render.h"
 
 #include "..\common\camera.h"
+#include "..\common\misc_defs.h"
 #include "glhelper.h"
 #include "scene.h"
 #include "shader.h"
@@ -73,13 +74,13 @@ bool Render::ResizeRenderTargets(int width, int height) {
     }
   }
 
-  delete m_overdrawColor;
-  //delete m_overdrawDepth;
-  delete m_renderColor;
-  delete m_renderDepth;
+  DEL_NULL(m_overdrawColor);
+  //DEL_NULL(m_overdrawDepth);
+  DEL_NULL(m_renderColor);
+  DEL_NULL(m_renderDepth);
 
 
-  if(!m_multiPass)
+  if(!m_multiPass || width == 0 || height == 0)
     return true; // don't need any of these unless it's multipass
 
   std::unique_ptr<Texture> colorOverdraw(new Texture());
@@ -403,6 +404,17 @@ void Render::RenderCompose(Texture* pDestination,
   glEnd();
 
   m_pComposeRenderTargets->StopUsing();
+}
+
+void Render::ToggleMultipassMode(bool multiPass, int width, int height) {
+  m_multiPass = multiPass;
+  
+  if(m_multiPass) {
+    ResizeRenderTargets(width, height);
+  } else {
+    ResizeRenderTargets(0, 0);
+  }
+
 }
 
 } // namespace fd

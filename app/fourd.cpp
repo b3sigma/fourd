@@ -651,7 +651,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       SaveLevel("current");
     } break;
     case '|' : {
-      g_renderer.m_multiPass = !g_renderer.m_multiPass;
+      g_renderer.ToggleMultipassMode(!g_renderer.m_multiPass, _width, _height);
       if(!g_renderer.m_multiPass) {
         g_camera.SetWProjection(0.0f /*near*/, g_camera._wFar, 
             g_camera._wScreenSizeRatio, 1.0f /*animTime*/);
@@ -881,6 +881,7 @@ void Draw(GLFWwindow* window) {
   static bool renderVRUI = true;
 
   if(VRWrapper::IsUsingVR() && g_vr) {
+    Vec2f uiOffset(150.0f, 300.0f);
     g_vr->StartFrame();
     Texture* renderColor;
     Texture* renderDepth;
@@ -888,18 +889,19 @@ void Draw(GLFWwindow* window) {
     g_vr->StartLeftEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
-      ImGuiWrapper::Render(frameTime);
+      ImGuiWrapper::Render(frameTime, uiOffset, true /*doUpdate*/);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartRightEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
-      ImGuiWrapper::Render(frameTime);
+      ImGuiWrapper::Render(frameTime, uiOffset, false /*doUpdate*/);
     g_vr->FinishFrame();
   } else {
+    Vec2f uiOffset(0, 0);
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_renderer.RenderAllScenesPerCamera(NULL /*renderColor*/, NULL /*renderDepth*/);
-    ImGuiWrapper::Render(frameTime);
+    ImGuiWrapper::Render(frameTime, uiOffset, true /*doUpdate*/);
   }
 
   glFlush();
