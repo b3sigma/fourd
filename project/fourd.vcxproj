@@ -115,6 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\entity.h" />
+    <ClInclude Include="..\app\glhelper.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
     <ClInclude Include="..\app\input_handler.h" />
     <ClInclude Include="..\app\meshbuffer.h" />
@@ -136,6 +137,7 @@
     <ClInclude Include="..\common\filedata.h" />
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\mesh.h" />
+    <ClInclude Include="..\common\misc_defs.h" />
     <ClInclude Include="..\common\physics.h" />
     <ClInclude Include="..\common\physics_shape_interface.h" />
     <ClInclude Include="..\common\player_capsule_shape.h" />

@@ -191,6 +191,12 @@
     <ClInclude Include="..\imgui\imgui.h">
       <Filter>thirdparty</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\misc_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\glhelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">
