@@ -252,7 +252,7 @@ bool Initialize(int width, int height) {
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
 
-  g_renderer.m_multiPass = true; //false;
+  g_renderer.m_multiPass = false; //true; //false;
   if(g_renderer.m_multiPass) {
     g_camera.SetWProjection(
         -50.0f /* wNear */, 50.0f /* wFar */, 0.5f /* wScreenRatio */);
