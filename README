@@ -48,14 +48,22 @@ X add bunch of quaxols in a line
 Esc quit
 
 Minimal TODOs:
-* Add a basic goal
+* Make a ui directive
+* Make a glowy
+* Create an escape level
 * Iterate on multipass shader in VR
 * Improve multipass fillrate performance (overdraw is overboard)
+** Lower resolution blendy?
+** Try blend vs compose for VR final pass
 
 Game TODOs:
 * Add VR UI input?
 * Make separate mouse ui/game modes that steal key input
 * more visualization attempts
+** Multi-texture render target?
+*** Depthy to 0, alpha to 1
+*** would still need compose pass
+** Single pass conditional depth writes?
 ** sub-surface w mode?
 ** Alpha test cleaner clipping?
 * cleanup rift positioning
@@ -84,3 +92,5 @@ General TODOs:
 * Fix portability, CMake
 
 Using a Makefile from Michael Crawford. Thanks!
+
+Scratch:
