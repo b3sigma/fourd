@@ -103,6 +103,8 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
 
   QuaxolSpec gridMin(min);
   QuaxolSpec gridMax(max);
+  chunk.ClipToValid(gridMin);
+  chunk.ClipToValid(gridMax);
 
   bool foundHit = false;
   float closestHitSq = FLT_MAX;
@@ -141,6 +143,11 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
       } // z
     } // y
   } // x
+
+  if(foundHit) {
+    *hitPos = bestHit;
+    *hitNormal = bestNormal;
+  }
 
   return foundHit;
 }

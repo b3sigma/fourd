@@ -102,28 +102,6 @@ bool PhysicsHelp::RayToAlignedBox(
   }
 }
 
-//                     *         *
-// .     .              .     .
-//              
-//     *     *
-// .     .              .     .
-//                     *         *
-//     *     *
-// Thus, the solution is to convert the floats to ascii
-// and count the number of spaces minus linewrapping
-bool PhysicsHelp::AlignedBoxToAlignedBox(
-    const Vec4f& minLeft, const Vec4f& maxLeft,
-    const Vec4f& minRight, const Vec4f& maxRight) {
-
-  // derping today
-  // the obvious solution seems horrible
-  // (build the 16 edges from each min/max pair,
-  // then check whether any of the 16 r is within l, or inverse)
-  // so derp
- 
-  return false;
-}
-
 bool PhysicsHelp::SphereToPlane(
     const Vec4f& pos, float radius,
     const Vec4f& planeNormal, float planeOffset,
@@ -135,11 +113,10 @@ bool PhysicsHelp::SphereToPlane(
   
   Vec4f hitPoint(pos);
   hitPoint -= planeNormal * (dotToPlane - planeOffset);
-  *outPoint = pos;
+  *outPoint = hitPoint;
   return true;
 }
 
-// derping out today
 bool PhysicsHelp::SphereToAlignedBox(
     const Vec4f& min, const Vec4f& max,
     const Vec4f& pos, float radius,
@@ -152,6 +129,13 @@ bool PhysicsHelp::SphereToAlignedBox(
     *outNormal = (pos - ((min + max) * 0.5f)).normalized();
     return true;
   }
+
+  // kinda broad phase?
+  Vec4f boxMid = (min + max) * 0.5f;
+  float boxRadius = (max - min).length() * 0.5f;
+  float distSpehereToBoxMid = (boxMid - pos).length();
+  if(distSpehereToBoxMid - boxRadius - radius > 0.0f)
+    return false;
 
   float smallestDist = FLT_MAX;
   Vec4f bestPoint;
@@ -183,24 +167,30 @@ bool PhysicsHelp::SphereToAlignedBox(
       }
     }
 
-    Vec4f planarPosition = pos;
-    planarPosition[compIndex] = 0.0f;
-    // sphere vs box,
+    Vec4f hitPos;
+    if(SphereToPlane(pos, radius, plane, planeOffset, &hitPos)) {
+      // check that the non-plane components are within the box range
+      bool validHit = true;
+      for(int c = 0; c < 4; c++) {
+        if(c == compIndex) continue;
 
-    //Vec4f collisionPoint;
-    //float collisionDist;
-    //if(!RayToPlane(start, ray, plane, planeOffset,
-    //    &collisionPoint, &collisionDist)) {
-    //  continue;
-    //}
-    //if(WithinBox(toleranceMin, toleranceMax, collisionPoint)) {
-    //  if(collisionDist < smallestDist) {
-    //    smallestDist = collisionDist;
-    //    bestPoint = collisionPoint;
-    //    bestHitNormal = plane;
-    //    foundPoint = true;
-    //  }
-    //}
+        if(hitPos[c] < min[c] || hitPos[c] > max[c]) {
+          validHit = false;
+          break;
+        }
+      }
+
+      if(!validHit)
+        continue;
+
+      float collisionDist = (pos - hitPos).length();
+      if(collisionDist < smallestDist) {
+        smallestDist = collisionDist;
+        bestPoint = hitPos;
+        bestHitNormal = plane;
+        foundPoint = true;      
+      }
+    }
   }
 
   return false;

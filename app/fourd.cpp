@@ -22,6 +22,7 @@
 #include "../common/chunkloader.h"
 #include "../common/physics.h"
 #include "../common/physics_help.h"
+#include "../common/player_capsule_shape.h"
 #include "../common/raycast_shape.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/periodic_motion.h"
@@ -179,9 +180,17 @@ void ToggleCameraMode(Camera::MovementMode mode) {
   g_camera.setMovementMode(mode);
 
   if (g_camera.getMovementMode() == Camera::WALK) {
-    g_camera.GetComponentBus().SendSignal(std::string("DestroyPhysics"), SignalN<>());
-    RaycastShape* shape = new RaycastShape(g_scene.m_pPhysics);
-    shape->AddCapsuleRays(g_blockSize);
+    g_camera.GetComponentBus().SendSignal(
+        std::string("DestroyPhysics"), SignalN<>());
+    static bool usePlayerShape = false;
+    PhysicsShape* shape = NULL;
+    if(usePlayerShape) {
+      shape = new PlayerCapsuleShape(g_scene.m_pPhysics, g_blockSize);
+    } else {
+      RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
+      rayshape->AddCapsuleRays(g_blockSize);
+      shape = rayshape;
+    }
     PhysicsComponent* physicsComp =
         new PhysicsComponent(g_scene.m_pPhysics, shape);
     g_camera.GetComponentBus().AddComponent(physicsComp);

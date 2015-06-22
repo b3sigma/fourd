@@ -40,10 +40,6 @@ namespace fd {
         const Vec4f& pos, float radius,
         Vec4f* outPoint, Vec4f* outNormal);
     
-    static bool AlignedBoxToAlignedBox(
-        const Vec4f& minLeft, const Vec4f& maxLeft,
-        const Vec4f& minRight, const Vec4f& maxRight);
-
     inline static bool RayToQuaxol(
         const QuaxolSpec& pos,
         const Vec4f& start, const Vec4f& ray,

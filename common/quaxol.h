@@ -171,6 +171,12 @@ namespace fd {
         && z >= 0 && z < c_mxSz && w >= 0 && w < c_mxSz);
     }
 
+    void ClipToValid(QuaxolSpec& pos) const {
+      for(int c = 0; c < 4; c++) {
+        pos[c] = (::std::min)((::std::max)(0, pos[c]), c_mxSz - 1);
+      }
+    }
+
     // for now, always populate chunk edges
     inline int SetConnect(RenderBlock& rBlock, RenderBlock::Dir dir,
         int x, int y, int z, int w) {

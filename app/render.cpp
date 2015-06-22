@@ -110,6 +110,10 @@ void Render::UpdateFrameTime() {
   double totalTime = GetTotalTime();
   _frameTime = totalTime - _lastTotalTime;
   _lastTotalTime = totalTime;
+
+  if(_frameTime > 0.1f) {
+    _frameTime = 0.1f; // below 10fps, leak real time
+  }
 }
 
 void Render::Step() {

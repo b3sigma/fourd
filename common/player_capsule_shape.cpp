@@ -23,9 +23,23 @@ bool PlayerCapsuleShape::DoesMovementCollide(
   Vec4f hitPos;
   if(m_pPhysics->SphereCollide(testPosition, m_radius,
       &hitPos, &collisionNormal)) {
-    validPos = hitPos;
-    Vec4f effectiveVel = hitPos - position;
-    outVelocity = effectiveVel * (1.0f / deltaTime);
+
+    float velScalar = collisionNormal.dot(velocity);
+    if(velScalar < -1.0f) {
+      Vec4f negatedNormalVel = velocity * (1.0f / fabs(velScalar));
+      outVelocity = outVelocity + negatedNormalVel;
+    } else {
+      outVelocity = Vec4f(0,0,0,0);
+    }
+    //outVelocity = Vec4f(0,0,0,0);
+    //validPos = position; //hitPos;
+    //float frameVelLen = frameVelocity.length();
+    //float interpenetrateDist = (hitPos - position).length() - m_radius;
+
+
+    //Vec4f effectiveVel = hitPos - position;
+    //outVelocity = effectiveVel * (1.0f / deltaTime);
+    return true;
   }
   return false;
 }

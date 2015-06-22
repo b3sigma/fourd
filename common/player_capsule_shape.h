@@ -12,7 +12,8 @@ public:
   Physics* m_pPhysics;
   float m_radius;
 
-  PlayerCapsuleShape(Physics* phys) : m_pPhysics(phys), m_radius(1.0f) {}
+  PlayerCapsuleShape(Physics* phys, float radius) 
+      : m_pPhysics(phys), m_radius(radius) {}
 
   virtual bool DoesMovementCollide(
       const Mat4f& orientation, const Vec4f& position,

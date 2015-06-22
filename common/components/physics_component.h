@@ -3,7 +3,7 @@
 #include "../component.h"
 #include "../fourmath.h"
 #include "../physics.h"
-#include "../raycast_shape.h"
+#include "../physics_shape_interface.h"
 
 namespace fd {
 
@@ -16,7 +16,7 @@ namespace fd {
   class PhysicsComponent : public Component {
   public:
     Physics* m_pPhysics; // not owned
-    RaycastShape* m_pShape; //owned
+    PhysicsShape* m_pShape; //owned
 
     Vec4f m_velocity;
     float m_jumpCountdown;
@@ -28,7 +28,7 @@ namespace fd {
     bool*  m_pOwnerCollidingLastFrame;
   public:
 
-    PhysicsComponent(Physics* pPhys, RaycastShape* shape)
+    PhysicsComponent(Physics* pPhys, PhysicsShape* shape)
         : m_pPhysics(pPhys), m_pShape(shape) {}
     virtual ~PhysicsComponent() {
       delete m_pShape;
