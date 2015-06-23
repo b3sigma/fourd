@@ -4,16 +4,22 @@
 
 namespace fd {
 
+bool PlayerCapsuleShape::DoesCollide(
+    float& deltaTime, const Mat4f& orientation, const Vec4f& position,
+    Vec4f& hitPos, Vec4f& hitNormal) {
+  
+  if(m_pPhysics->SphereCollide(position, m_radius,
+      &hitPos, &hitNormal)) {
+    return true;
+  }
+  return false;
+}
  
 bool PlayerCapsuleShape::DoesMovementCollide(
     const Mat4f& orientation, const Vec4f& position,
-    const Vec4f& velocity, float deltaTime,
+    const Vec4f& velocity, float& deltaTime,
     Vec4f& validPos, Vec4f& outVelocity, Vec4f& collisionNormal) {
   
-  Vec4f radiusVec(m_radius, m_radius, m_radius, m_radius);
-  Vec4f min = position - radiusVec;
-  Vec4f max = position + radiusVec;
-
   outVelocity = velocity;
   Vec4f frameVelocity = outVelocity * deltaTime;
 
@@ -29,7 +35,7 @@ bool PlayerCapsuleShape::DoesMovementCollide(
       Vec4f negatedNormalVel = velocity * (1.0f / fabs(velScalar));
       outVelocity = outVelocity + negatedNormalVel;
     } else {
-      outVelocity = Vec4f(0,0,0,0);
+      //outVelocity = outVelocity * 0.1f;
     }
     //outVelocity = Vec4f(0,0,0,0);
     //validPos = position; //hitPos;

@@ -39,7 +39,7 @@ bool Physics::RayCastGround(
       NULL /* outCollisionPoint */, outDistance);
 }
 
-void Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
+bool Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
   float dotGround = m_groundNormal.dot(*position);
   if(dotGround < 0.0f) {
     *position -= (m_groundNormal * dotGround);
@@ -48,7 +48,9 @@ void Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
     if(velDot < 0.0f) {
       *velocity -= (m_groundNormal * velDot);
     }
+    return true;
   }
+  return false;
 }
 
 bool Physics::SphereCollide(const Vec4f& position, float radius,

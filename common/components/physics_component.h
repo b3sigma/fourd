@@ -40,6 +40,10 @@ namespace fd {
     void OnImpulse(const Vec4f& impulse);
     
     void OnStepSignal(float delta);
+
+  protected:
+    void SingleStepMovement(float deltatime, bool& hadGroundCollision);
+    void MultiStepMovement(float deltatime, bool& hadGroundCollision);
   };
 
 }; //namespace fd

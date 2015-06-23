@@ -59,7 +59,7 @@ namespace fd {
         Vec4f* hitPos, Vec4f* hitNormal);
 
     bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
-    void ClampToGround(Vec4f* position, Vec4f* velocity);
+    bool ClampToGround(Vec4f* position, Vec4f* velocity);
 
     bool RayCastChunk(const QuaxolChunk& chunk,
         const Vec4f& position, const Vec4f& ray, float* outDistance);

@@ -29,9 +29,14 @@ public:
 
   void AddCapsuleRays(float size);
 
+  virtual bool DoesCollide(
+      float& deltaTime,
+      const Mat4f& orientation, const Vec4f& position,
+      Vec4f& hitPos, Vec4f& hitNormal);
+
   virtual bool DoesMovementCollide(
       const Mat4f& orientation, const Vec4f& position,
-      const Vec4f& velocity, float deltaTime,
+      const Vec4f& velocity, float& deltaTime,
       Vec4f& validPos, Vec4f& outVelocity, Vec4f& collisionNormal); 
 };
 

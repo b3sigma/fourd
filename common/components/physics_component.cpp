@@ -51,7 +51,71 @@ void PhysicsComponent::OnJump(float frameTime) {
 void PhysicsComponent::OnImpulse(const Vec4f& impulse) {
   m_velocity += impulse;
 }
-    
+
+
+// so the supposition is that we start out not colliding
+// then add velocity to position to get test position
+// while collision
+//   backup to collision point,
+//   use up that amount of delta time
+//   reproject remaining frame velocity along collision normal
+//   get new test position
+// store off position as real
+void PhysicsComponent::MultiStepMovement(
+    float deltatime, bool& hadGroundCollision) {
+  float remainingDelta = deltatime;
+  Vec4f remainingVelocity = m_velocity * remainingDelta;
+  Vec4f currentPosition = *m_pOwnerPosition; 
+  Mat4f& testOrientation = *m_pOwnerOrientation;
+  
+  Vec4f testPosition = currentPosition;
+  for(int s = 0; s < 4; s++) { // only allow 4 substeps
+    testPosition = testPosition + remainingVelocity;
+
+    Vec4f hitNormal;
+    Vec4f hitPos;
+    float attemptDeltatime = remainingDelta;
+    if(m_pShape->DoesCollide(attemptDeltatime, testOrientation, testPosition,
+        hitPos, hitNormal)) {
+      float velAmount = remainingVelocity.length();
+      float usedAmount = (hitPos - testPosition).length();
+
+
+
+    } else {
+      break;
+    }
+  }  
+  *m_pOwnerPosition = testPosition;
+}
+
+void PhysicsComponent::SingleStepMovement(
+    float deltatime, bool& hadGroundCollision) {
+
+  Vec4f frameVelocity = m_velocity * deltatime;
+
+  // yeah it's becoming quickly clear that a slow progression of physics bits
+  // is the wrong way to proceed. Should just do a proper decoupled system
+  // where there are rigidbody + shape things in a physics scene.
+  Vec4f possibleVelocity;
+  hadGroundCollision = false;
+  Vec4f hitNormal;
+  Vec4f hitPos;
+  if(m_pShape->DoesMovementCollide(*m_pOwnerOrientation, *m_pOwnerPosition,
+      m_velocity, deltatime, hitPos, possibleVelocity, hitNormal)) {
+    frameVelocity = possibleVelocity * deltatime;
+    m_velocity = possibleVelocity;
+    const float groundCollisionThreshold = 0.1f;
+    if(hitNormal.dot(m_pPhysics->m_groundNormal) > groundCollisionThreshold) {
+      hadGroundCollision = true;
+    }
+  }
+  *m_pOwnerPosition += frameVelocity;
+}
+
+// yeah it's becoming quickly clear that a slow progression of physics bits
+// is the wrong way to proceed. Should just do a proper decoupled system
+// where there are rigidbody + shape things in a physics scene.    
 void PhysicsComponent::OnStepSignal(float delta) {
   m_velocity += m_pPhysics->m_gravity * delta;
   if(m_pOwnerPushVelocity) {
@@ -59,51 +123,30 @@ void PhysicsComponent::OnStepSignal(float delta) {
     *m_pOwnerPushVelocity = Vec4f(0,0,0,0);
   }
 
-  Vec4f frameVelocity = m_velocity * delta;
-
-  // yeah it's becoming quickly clear that a slow progression of physics bits
-  // is the wrong way to proceed. Should just do a proper decoupled system
-  // where there are rigidbody + shape things in a physics scene.
-  Vec4f possibleVelocity;
+  static bool singleStep = true;
   bool hadGroundCollision = false;
-  Vec4f hitNormal;
-  Vec4f hitPos;
-  if(m_pShape->DoesMovementCollide(*m_pOwnerOrientation, *m_pOwnerPosition,
-      m_velocity, delta, hitPos, possibleVelocity, hitNormal)) {
-    frameVelocity = possibleVelocity * delta;
-    m_velocity = possibleVelocity;
-    const float groundCollisionThreshold = 0.1f;
-    if(hitNormal.dot(m_pPhysics->m_groundNormal) > groundCollisionThreshold) {
-      hadGroundCollision = true;
-    }
+  if(singleStep) {
+    SingleStepMovement(delta, hadGroundCollision);
+  } else {
+    MultiStepMovement(delta, hadGroundCollision);
+  }
+
+  if(m_jumpCountdown > 0.0) {
+    m_jumpCountdown -= delta;
+  }
+      
+  // the abundance of physics issues makes this a nice thing
+  if(m_pPhysics->ClampToGround(m_pOwnerPosition, &m_velocity)) {
+    hadGroundCollision = true;
+  }
+  if(m_pOwnerCollidingLastFrame) {
+    *m_pOwnerCollidingLastFrame = hadGroundCollision;
   }
 
   if(hadGroundCollision) {
     static float frictionCoef = -10.0f;
     m_velocity += (m_velocity * (frictionCoef * delta));
   }
-  if(m_pOwnerCollidingLastFrame) {
-    *m_pOwnerCollidingLastFrame = hadGroundCollision;
-  }
-  if(m_jumpCountdown > 0.0) {
-    m_jumpCountdown -= delta;
-  }
-
-  *m_pOwnerPosition += frameVelocity;
-
-  //float distance = 0.0f; 
-
-  //if(m_pPhysics->RayCast(*m_pOwnerPosition, m_velocity, &distance)) {
-  //  if(deltaPos.lengthSq() > (distance*distance)) {
-  //    deltaPos = m_velocity.normalized() * (distance - m_pPhysics->m_cushion);
-  //  }
-  //} 
-  //
-  //*m_pOwnerPosition += deltaPos;
-      
-  // right now movement can mess things up since we're doing direct set
-  // so clamp to ground
-  m_pPhysics->ClampToGround(m_pOwnerPosition, &m_velocity);
 }
 
 } // namespace fd
