@@ -6,10 +6,21 @@ namespace fd {
 
 bool PlayerCapsuleShape::DoesCollide(
     float& deltaTime, const Mat4f& orientation, const Vec4f& position,
-    Vec4f& hitPos, Vec4f& hitNormal) {
+    Vec4f& safePos, Vec4f& collidePos, Vec4f& collideNormal) {
   
   if(m_pPhysics->SphereCollide(position, m_radius,
-      &hitPos, &hitNormal)) {
+      &collidePos, &collideNormal)) {
+    Vec4f collideDir = position - collidePos;
+    safePos = collidePos + (collideDir.normalized() * m_radius);
+
+    if(m_pPhysics->SphereCollide(safePos, m_radius,
+        NULL /*pos*/, NULL /*normal*/)) {
+      Vec4f garbage = safePos;
+
+      return true;
+    }
+
+
     return true;
   }
   return false;

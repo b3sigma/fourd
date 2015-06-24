@@ -18,7 +18,7 @@ public:
   virtual bool DoesCollide(
       float& deltaTime,
       const Mat4f& orientation, const Vec4f& position,
-      Vec4f& hitPos, Vec4f& hitNormal);
+      Vec4f& betterPos, Vec4f& collidePos, Vec4f& collideNormal);
 
   virtual bool DoesMovementCollide(
       const Mat4f& orientation, const Vec4f& position,

@@ -50,9 +50,12 @@ namespace fd {
     bool RayCastToPresentQuaxol(const Vec4f& position, const Vec4f& ray,
         QuaxolSpec* outPresentBlock, Vec4f* outPos);
     
+    // these are terrible as they are actually doing sphere vs whatever
+    // in retrospect, should have done the minkowski sums approach vs point
     bool SphereCollide(const Vec4f& position, float radius,
         Vec4f* hitPos, Vec4f* hitNormal);
-    bool SphereToQuaxols(const Vec4f& position, float radius,
+    bool SphereToQuaxols(const QuaxolChunk& chunk, 
+        const Vec4f& position, float radius,
         Vec4f* hitPos, Vec4f* hitNormal);
     bool LocalSphereToQuaxolChunk(const QuaxolChunk& chunk, 
         const Vec4f& position, float radius,

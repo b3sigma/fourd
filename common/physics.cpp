@@ -56,41 +56,44 @@ bool Physics::ClampToGround(Vec4f* position, Vec4f* velocity) {
 bool Physics::SphereCollide(const Vec4f& position, float radius,
     Vec4f* hitPos, Vec4f* hitNormal) {
 
-  if(SphereToQuaxols(position, radius, hitPos, hitNormal)) {
+  if(m_chunk && SphereToQuaxols(*m_chunk, position, radius, hitPos, hitNormal)) {
     return true;
   }
 
   if(PhysicsHelp::SphereToPlane(position, radius,
       m_groundNormal, m_groundHeight, hitPos)) {
-    *hitNormal = m_groundNormal;
+    if(hitNormal) {
+      *hitNormal = m_groundNormal;
+    }
     return true;
   }
   return false;
 }
 
-bool Physics::SphereToQuaxols(const Vec4f& position, float radius,
+bool Physics::SphereToQuaxols(const QuaxolChunk& chunk,
+    const Vec4f& position, float radius,
     Vec4f* hitPos, Vec4f* hitNormal) {
-  if(!m_chunk) return false;
 
   Vec4f localPos(position);
-  localPos -= m_chunk->m_position;
-  localPos /= m_chunk->m_blockSize;
+  localPos -= chunk.m_position;
+  localPos /= chunk.m_blockSize;
 
   // to support non-uniform blocksize, need local ellipse or world ellipse
-  assert(m_chunk->m_blockSize.x == m_chunk->m_blockSize.y 
-      && m_chunk->m_blockSize.x == m_chunk->m_blockSize.w
-      && m_chunk->m_blockSize.x == m_chunk->m_blockSize.z);
-  float localRadius = radius / m_chunk->m_blockSize.x; 
+  assert(chunk.m_blockSize.x == chunk.m_blockSize.y 
+      && chunk.m_blockSize.x == chunk.m_blockSize.w
+      && chunk.m_blockSize.x == chunk.m_blockSize.z);
+  float localRadius = radius / chunk.m_blockSize.x; 
   
   Vec4f localHitPos;
-  if(!LocalSphereToQuaxolChunk(*m_chunk, localPos, localRadius, 
+  if(!LocalSphereToQuaxolChunk(chunk, localPos, localRadius, 
       &localHitPos, hitNormal)) {
     return false;
   }
 
-  localHitPos *= m_chunk->m_blockSize;
-  localHitPos += m_chunk->m_position;
-  *hitPos = localHitPos;
+  localHitPos *= chunk.m_blockSize;
+  localHitPos += chunk.m_position;
+  if(hitPos)
+    *hitPos = localHitPos;
 
   return true;
 }
@@ -109,7 +112,7 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
   chunk.ClipToValid(gridMax);
 
   bool foundHit = false;
-  float closestHitSq = FLT_MAX;
+  float smallestHitSq = FLT_MAX;
   Vec4f bestHit;
   Vec4f bestNormal;
 
@@ -129,12 +132,15 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
         for (int w = gridMin.w; w <= gridMax.w; ++w) {
           minBox.w = (float)w;
           maxBox.w = (float)(w + 1);
+
+          if(!chunk.IsPresent(x, y, z, w))
+            continue;
           
           if(PhysicsHelp::SphereToAlignedBox(
               minBox, maxBox, position, radius, &currentHit, &currentNormal)) {
             float distSq = (position - currentHit).lengthSq();
-            if(distSq < closestHitSq) {
-              closestHitSq = distSq;
+            if(distSq < smallestHitSq) {
+              smallestHitSq = distSq;
               bestHit = currentHit;
               bestNormal = currentNormal;
               foundHit = true;
@@ -147,8 +153,10 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
   } // x
 
   if(foundHit) {
-    *hitPos = bestHit;
-    *hitNormal = bestNormal;
+    if(hitPos)
+      *hitPos = bestHit;
+    if(hitNormal)
+      *hitNormal = bestNormal;
   }
 
   return foundHit;
@@ -550,6 +558,8 @@ void Physics::RunTests() {
   physTest.LineDraw4D(pos, ray, stepCallback);
   // just need to make sure it terminates
 
+  /////////// chunk raycasting //////////
+
   Vec4f chunkPos(0.0f, 0.0f, 0.0f, 0.0f);
   Vec4f chunkBlockSize(10.0f, 10.0f, 10.0f, 10.0f); //dumb to even support
   QuaxolChunk testChunk(chunkPos, chunkBlockSize);
@@ -643,6 +653,25 @@ void Physics::RunTests() {
   ray.set(-4.76829791e-006f, 0.000000000f, 9.53674316e-007f, 10.0000000f);
   physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
 
+  /////////// sphere //////////////
+  quaxols.clear();
+  quaxols.emplace_back(1, 1, 1, 1);
+  quaxols.emplace_back(1, 2, 1, 1);
+  quaxols.emplace_back(2, 1, 1, 1);
+  quaxols.emplace_back(2, 2, 1, 1);
+  assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
+  
+  pos.set(15.0f, 15.0f, 20.0f, 15.0f);
+  float radius = 20.0f;
+  Vec4f hitPos;
+  Vec4f hitNormal;
+  assert(true == physTest.SphereToQuaxols(testChunk, pos, radius, &hitPos, &hitNormal));
+
+  pos.set(15.0f, 15.0f, 30.0f, 15.0f);
+  assert(true == physTest.SphereToQuaxols(testChunk, pos, radius, &hitPos, &hitNormal));
+
+  pos.set(15.0f, 15.0f, 40.0f, 15.0f);
+  assert(false == physTest.SphereToQuaxols(testChunk, pos, radius, &hitPos, &hitNormal));
 }
 
 } // namespace fd

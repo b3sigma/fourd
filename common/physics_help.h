@@ -51,24 +51,6 @@ namespace fd {
           outDist, outPoint, outNormal);
     }
 
-    ////returns true if any part was clipped
-    //inline static bool ClipRayToBox(const Vec4f& min, const Vec4f& max,
-    //    const Vec4f& start, const Vec4f& ray,
-    //    Vec4f* clippedStart, Vec4f* clippedEnd) {
-    //  if(WithinBox(min, max, start)) 
-    //    return true;
-
-    //  Vec4f localMax(max);
-    //  localMax -= min;
-    //  // localmin = 0
-    //  Vec4f localStart(start);
-    //  localStart -= min;
-    //  Vec4f localEnd(start + ray);
-    //  localEnd -= min;
-
-    //  return false;
-    //}
-
   public:
     static void RunTests();
   protected:

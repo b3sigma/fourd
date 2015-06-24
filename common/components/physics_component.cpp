@@ -74,11 +74,22 @@ void PhysicsComponent::MultiStepMovement(
 
     Vec4f hitNormal;
     Vec4f hitPos;
+    Vec4f safePos;
     float attemptDeltatime = remainingDelta;
     if(m_pShape->DoesCollide(attemptDeltatime, testOrientation, testPosition,
-        hitPos, hitNormal)) {
+        safePos, hitPos, hitNormal)) {
       float velAmount = remainingVelocity.length();
-      float usedAmount = (hitPos - testPosition).length();
+      Vec4f usedVector = (safePos - testPosition);
+      float usedAmount = usedVector.length();
+      testPosition = safePos;
+
+      float velDotNormal = remainingVelocity.dot(hitNormal);
+      // -1 as we expect
+      Vec4f velAlongNormal = hitNormal * (-1.0f * velDotNormal);
+      //Vec4f slideDir = remainingVelocity + 
+
+      testPosition = safePos;
+      break;
 
 
 

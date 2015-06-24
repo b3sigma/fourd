@@ -270,7 +270,7 @@ bool Initialize(int width, int height) {
         0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   }
 
-  g_camera.SetCameraPosition(Vec4f(1.5f, 20.5f, 1.5f, 1.5f));
+  g_camera.SetCameraPosition(Vec4f(1.5f, 19.5f, 1.5f, 1.5f));
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   //g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
   g_debugHeadPose.storeIdentity();
@@ -1064,6 +1064,7 @@ void RunTests() {
   Shader::RunTests();
   Camera::RunTests();
   Physics::RunTests();
+  PhysicsHelp::RunTests();
 }
 
 void glfwErrorCallback(int error, const char* description) {

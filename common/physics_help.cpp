@@ -113,7 +113,9 @@ bool PhysicsHelp::SphereToPlane(
   
   Vec4f hitPoint(pos);
   hitPoint -= planeNormal * (dotToPlane - planeOffset);
-  *outPoint = hitPoint;
+  if(outPoint) {
+    *outPoint = hitPoint;
+  }
   return true;
 }
 
@@ -125,8 +127,10 @@ bool PhysicsHelp::SphereToAlignedBox(
   if(WithinBox(min, max, pos)) {
     // might be better to return a point in the direction of the box
     // center to facilitate pushing out
-    *outPoint = pos;
-    *outNormal = (pos - ((min + max) * 0.5f)).normalized();
+    if(outPoint)
+      *outPoint = pos;
+    if(outNormal)
+      *outNormal = (pos - ((min + max) * 0.5f)).normalized();
     return true;
   }
 
@@ -137,11 +141,11 @@ bool PhysicsHelp::SphereToAlignedBox(
   if(distSpehereToBoxMid - boxRadius - radius > 0.0f)
     return false;
 
-  float smallestDist = FLT_MAX;
+  float smallestDistSq = FLT_MAX;
   Vec4f bestPoint;
   Vec4f bestHitNormal;
   bool foundPoint = false;
-      
+
   // these are all over the place and all different
   // yet another ticking death bomb
   float borderThreshold = 0.0001f; 
@@ -150,18 +154,20 @@ bool PhysicsHelp::SphereToAlignedBox(
   Vec4f toleranceMin(min - toleranceVect);
   Vec4f toleranceMax(max + toleranceVect);
 
+  // seems like we should be able to cut down the number of plane checks to
+  // 4(dim), but this is fine for now
   for(int whichPlane = 0; whichPlane < 8; ++whichPlane) {
     Vec4f plane(0.0f, 0.0f, 0.0f, 0.0f);
     int compIndex = whichPlane % 4;
     plane[compIndex] = (whichPlane < 4) ? 1.0f : -1.0f;
     float planeOffset;
     if(whichPlane < 4) {
-      planeOffset = max[whichPlane];
+      planeOffset = max[compIndex];
       if((pos[compIndex] - radius) > planeOffset) {
         continue; // too high to possibly intersect with this edge
       }
     } else {
-      planeOffset = -min[whichPlane % 4];
+      planeOffset = min[compIndex];
       if((pos[compIndex] + radius) < planeOffset) {
         continue; // to low to possibly intersect with this edge
       }
@@ -169,37 +175,97 @@ bool PhysicsHelp::SphereToAlignedBox(
 
     Vec4f hitPos;
     if(SphereToPlane(pos, radius, plane, planeOffset, &hitPos)) {
-      // check that the non-plane components are within the box range
-      bool validHit = true;
-      for(int c = 0; c < 4; c++) {
-        if(c == compIndex) continue;
-
-        if(hitPos[c] < min[c] || hitPos[c] > max[c]) {
-          validHit = false;
-          break;
-        }
+      Vec4f planeOrigin(boxMid);
+      float planeOriginToCornerDist = 0.0f;
+      if(whichPlane < 4) {
+        planeOrigin[compIndex] = max[compIndex];
+        planeOriginToCornerDist = (planeOrigin - max).length();
+      } else {
+        planeOrigin[compIndex] = min[compIndex];
+        planeOriginToCornerDist = (planeOrigin - min).length();
       }
 
-      if(!validHit)
-        continue;
+      //// find the closest point on the sphere (or circle in 3d)
+      //// in the plane of intersection
+      //// then we will do the box test against just that point
+      //Vec4f closes
 
-      float collisionDist = (pos - hitPos).length();
-      if(collisionDist < smallestDist) {
-        smallestDist = collisionDist;
+      //  
+      // bool validHit = true;
+      //for(int c = 0; c < 4; c++) {
+      //  if(c == compIndex) continue;
+
+      //  if(hitPos[c] < min[c] || hitPos[c] > max[c]) {
+      //    validHit = false;
+      //    break;
+      //  }
+      //}
+
+      //if(!validHit)
+
+
+      float originToHitDist = (hitPos - planeOrigin).length();
+      float distToBox = originToHitDist - radius - planeOriginToCornerDist; 
+      if(distToBox > 0.0f) {
+        continue;
+      }
+
+      //Vec4f boxHitPos = 
+
+      float collisionDistSq = (pos - hitPos).lengthSq();
+      if(collisionDistSq < smallestDistSq) {
+        smallestDistSq = collisionDistSq;
         bestPoint = hitPos;
         bestHitNormal = plane;
         foundPoint = true;      
       }
+
     }
   }
 
-  return false;
+  if(foundPoint) {
+    if(outPoint)
+      *outPoint = bestPoint;
+    if(outNormal)
+      *outNormal = bestHitNormal;
+  }
 
+  return foundPoint;
 }
 
 void PhysicsHelp::RunTests() {
-  // all tests passed, well done!
+  Vec4f pos(1.5f, 1.5f, 5.0f, 1.5f);
+  float radius = 10.0f;
+  Vec4f planeNormal(0.0f, 0.0f, 1.0f, 0.0f);
+  float planeOffset = 0.5f;
 
+  Vec4f hitPoint;
+  assert(true == SphereToPlane(pos, radius, planeNormal, planeOffset, &hitPoint));
+  
+  pos = Vec4f(1.5f, 1.5f, 20.0f, 1.5f);
+  assert(false == SphereToPlane(pos, radius, planeNormal, planeOffset, &hitPoint));
+
+  Vec4f min(1.0f, 1.0f, 1.0f, 1.0f);
+  Vec4f max(2.0f, 2.0f, 2.0f, 2.0f);
+  radius = 1.5f;
+  pos = Vec4f(2.5f, 2.5f, 2.5f, 2.5f);
+  Vec4f hitNormal;
+  assert(true == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+
+  pos = Vec4f(2.5f, 2.5f, 20.5f, 2.5f);
+  assert(false == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+
+  //min.set(1.0f, 1.0f, 1.0f, 0.0f);
+  //max.set(2.0f, 2.0f, 2.0f, 0.0f);
+  //pos = Vec4f(2.5f, 2.0f, 2.5f, 0.0f);
+  //radius = 0.70f;
+  //assert(false == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+
+  //min.set(1.0f, 1.0f, 1.0f, 1.0f);
+  //max.set(2.0f, 2.0f, 2.0f, 2.0f);
+  //pos = Vec4f(2.5f, 2.0f, 2.5f, 2.0f);
+  //radius = 0.70f;
+  //assert(false == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
 }
 
 

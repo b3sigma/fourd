@@ -17,10 +17,11 @@ void RaycastShape::AddCapsuleRays(float size) {
 
 bool RaycastShape::DoesCollide(
     float& deltaTime, const Mat4f& orientation, const Vec4f& position,
-    Vec4f& hitPos, Vec4f& hitNormal) {
+    Vec4f& safePos, Vec4f& collidePos, Vec4f& collideNormal) {
 
   Vec4f bestHitPos;
   Vec4f bestHitNormal;
+  Vec4f bestHitRay;
   float closestHitSq = FLT_MAX;
   bool hitSomething = false;
   for(auto ray : m_rays) {
@@ -34,13 +35,15 @@ bool RaycastShape::DoesCollide(
         hitSomething = true;
         bestHitNormal = localHitNormal;
         bestHitPos = collidePos;
+        bestHitRay = ray;
       }
     }
   }
 
   if(hitSomething) {
-    hitPos = bestHitPos;
-    hitNormal = bestHitNormal;
+    collidePos = bestHitPos;
+    collideNormal = bestHitNormal;
+    safePos = collidePos + bestHitRay;
   }
 
   return hitSomething;
