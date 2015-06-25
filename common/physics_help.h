@@ -35,6 +35,10 @@ namespace fd {
         const Vec4f& pos, float radius,
         const Vec4f& planeNormal, float planeOffset,
         Vec4f* outPoint);
+    static bool SphereToAlignedBoxMinkowski(
+        const Vec4f& min, const Vec4f& max,
+        const Vec4f& pos, float radius,
+        Vec4f* outPoint, Vec4f* outNormal);
     static bool SphereToAlignedBox(
         const Vec4f& min, const Vec4f& max,
         const Vec4f& pos, float radius,

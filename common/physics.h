@@ -60,6 +60,9 @@ namespace fd {
     bool LocalSphereToQuaxolChunk(const QuaxolChunk& chunk, 
         const Vec4f& position, float radius,
         Vec4f* hitPos, Vec4f* hitNormal);
+    bool LocalSphereToQuaxolChunkMinkowski(const QuaxolChunk& chunk, 
+        const Vec4f& position, float radius,
+        Vec4f* hitPos, Vec4f* hitNormal);
 
     bool RayCastGround(const Vec4f& position, const Vec4f& direction, float* outDistance);
     bool ClampToGround(Vec4f* position, Vec4f* velocity);

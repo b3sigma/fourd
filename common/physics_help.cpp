@@ -119,6 +119,72 @@ bool PhysicsHelp::SphereToPlane(
   return true;
 }
 
+// expand everything else by radius, treat sphere like a point
+bool PhysicsHelp::SphereToAlignedBoxMinkowski(
+    const Vec4f& min, const Vec4f& max,
+    const Vec4f& pos, float radius,
+    Vec4f* outPoint, Vec4f* outNormal) {
+
+  Vec4f radiusVec(radius, radius, radius, radius);
+
+  if(!WithinBox(pos - radiusVec, pos + radiusVec, pos)) {
+    return false;
+  }
+
+  // so enlarge in each di
+  for(int c = 0; c < 4; c++) {
+    Vec4f kowMin(min);
+    Vec4f kowMax(max);
+    kowMin[c] -= radius;
+    kowMax[c] += radius;
+
+    if(WithinBox(kowMin, kowMax, pos)) {
+      // now to guess at collision point, find closest wall
+      int closest;
+      float smallestDist = FLT_MAX;
+      for(int w = 0; w < 4; ++w) {
+        float distToMin = fabs(pos[w] - min[w]);
+        if(distToMin < smallestDist) {
+          closest = w;
+          smallestDist = distToMin;
+        }
+        float distToMax = fabs(pos[w] - max[w]);
+        if(distToMax < smallestDist) {
+          closest = w + 4;
+          smallestDist = distToMax;
+        }
+      }
+
+      if(outNormal) {
+        Vec4f hitNormal(0,0,0,0);
+        hitNormal[closest % 4] = (closest > 4) ? 1.0f : -1.0f;
+        *outNormal = hitNormal;
+      }
+
+      if(outPoint) {
+        // um, shrink the point down inversely to how the box was enlarged
+        // and then do ray between start point and shrunk point to associated plane
+        Vec4f boxMid = (min + max) * 0.5f;
+      }
+
+
+      return true;
+    }
+  }
+
+  // not hitting above means we are in an edge or corner case (heh)
+  // for corners, find the closest unenlarged corner (out of 16)
+  //   and then do a simple radius against that
+  // for 2-edges and 3-edges...?
+  // 
+  // maybe in general we can classify a point as to how many dimensions
+  //  it isn't within the unenlarged bounds of, and then get distances
+  //  per component.
+  // for each component outside, accum dist^2, then sqrt, then < radius
+
+  return false;
+}
+
 bool PhysicsHelp::SphereToAlignedBox(
     const Vec4f& min, const Vec4f& max,
     const Vec4f& pos, float radius,
