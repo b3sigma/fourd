@@ -13,12 +13,12 @@ bool PlayerCapsuleShape::DoesCollide(
     Vec4f collideDir = position - collidePos;
     safePos = collidePos + (collideDir.normalized() * m_radius);
 
-    if(m_pPhysics->SphereCollide(safePos, m_radius,
-        NULL /*pos*/, NULL /*normal*/)) {
-      Vec4f garbage = safePos;
+    //if(m_pPhysics->SphereCollide(safePos, m_radius,
+    //    NULL /*pos*/, NULL /*normal*/)) {
+    //  Vec4f garbage = safePos;
 
-      return true;
-    }
+    //  return true;
+    //}
 
 
     return true;

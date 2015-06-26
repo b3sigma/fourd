@@ -136,7 +136,8 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
           if(!chunk.IsPresent(x, y, z, w))
             continue;
           
-          if(PhysicsHelp::SphereToAlignedBox(
+          //if(PhysicsHelp::SphereToAlignedBox(
+          if(PhysicsHelp::SphereToAlignedBoxMinkowski(
               minBox, maxBox, position, radius, &currentHit, &currentNormal)) {
             float distSq = (position - currentHit).lengthSq();
             if(distSq < smallestHitSq) {

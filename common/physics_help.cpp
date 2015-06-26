@@ -127,62 +127,114 @@ bool PhysicsHelp::SphereToAlignedBoxMinkowski(
 
   Vec4f radiusVec(radius, radius, radius, radius);
 
-  if(!WithinBox(pos - radiusVec, pos + radiusVec, pos)) {
+  if(!WithinBox(min - radiusVec, max + radiusVec, pos)) {
     return false;
   }
 
-  // so enlarge in each di
-  for(int c = 0; c < 4; c++) {
-    Vec4f kowMin(min);
-    Vec4f kowMax(max);
-    kowMin[c] -= radius;
-    kowMax[c] += radius;
+  bool hadCollision = false;
+  bool withinNonMinkowski = false;
 
-    if(WithinBox(kowMin, kowMax, pos)) {
-      // now to guess at collision point, find closest wall
-      int closest;
-      float smallestDist = FLT_MAX;
-      for(int w = 0; w < 4; ++w) {
-        float distToMin = fabs(pos[w] - min[w]);
-        if(distToMin < smallestDist) {
-          closest = w;
-          smallestDist = distToMin;
-        }
-        float distToMax = fabs(pos[w] - max[w]);
-        if(distToMax < smallestDist) {
-          closest = w + 4;
-          smallestDist = distToMax;
-        }
+  if(WithinBox(pos, min, max)) {
+    hadCollision = true;
+    withinNonMinkowski = true;
+  }
+  
+  //// so enlarge in each direction to do easy minkowski cases
+  //for(int c = 0; c < 4; c++) {
+  //  Vec4f kowMin(min);
+  //  Vec4f kowMax(max);
+  //  kowMin[c] -= radius;
+  //  kowMax[c] += radius;
+
+  //  if(WithinBox(kowMin, kowMax, pos)) {
+  //    hadCollision = true;
+  //    break;
+  //  }
+  //}
+
+  if(!hadCollision) {
+    // not hitting above means we are between box and minkowski box
+    // maybe in general we can classify a point as to how many dimensions
+    //  it isn't within the unenlarged bounds of, and then get distances
+    //  per component.
+    // for each component outside, accum dist^2, then sqrt, then < radius
+
+    float accumDistSq = 0.0f;
+    for(int c = 0; c < 4; c++) {
+      if(pos[c] < min[c]) {
+        float diff = pos[c] - min[c];
+        accumDistSq += diff * diff;
+      } else if(pos[c] > max[c]) {
+        float diff = pos[c] - max[c];
+        accumDistSq += diff * diff;
       }
+    }
 
-      if(outNormal) {
-        Vec4f hitNormal(0,0,0,0);
-        hitNormal[closest % 4] = (closest > 4) ? 1.0f : -1.0f;
-        *outNormal = hitNormal;
-      }
-
-      if(outPoint) {
-        // um, shrink the point down inversely to how the box was enlarged
-        // and then do ray between start point and shrunk point to associated plane
-        Vec4f boxMid = (min + max) * 0.5f;
-      }
-
-
-      return true;
+    if(accumDistSq < (radius * radius)) {
+      hadCollision = true;
     }
   }
 
-  // not hitting above means we are in an edge or corner case (heh)
-  // for corners, find the closest unenlarged corner (out of 16)
-  //   and then do a simple radius against that
-  // for 2-edges and 3-edges...?
-  // 
-  // maybe in general we can classify a point as to how many dimensions
-  //  it isn't within the unenlarged bounds of, and then get distances
-  //  per component.
-  // for each component outside, accum dist^2, then sqrt, then < radius
+  if(!hadCollision) {
+    // still no collision means no collision
+    return false;
+  }
 
-  return false;
+  // now to guess at collision point, find closest wall
+  // for a hit, this will be 0-3 for min, 4-8 for max
+  int closestWall;
+  float smallestDist = FLT_MAX;
+  for(int w = 0; w < 4; ++w) {
+    float distToMin = fabs(pos[w] - min[w]);
+    if(distToMin < smallestDist) {
+      closestWall = w;
+      smallestDist = distToMin;
+    }
+    float distToMax = fabs(pos[w] - max[w]);
+    if(distToMax < smallestDist) {
+      closestWall = w + 4;
+      smallestDist = distToMax;
+    }
+  }
+
+  if(outNormal) {
+    Vec4f hitNormal(0,0,0,0);
+    hitNormal[closestWall % 4] = (closestWall > 4) ? 1.0f : -1.0f;
+    *outNormal = hitNormal;
+  }
+
+  if(outPoint) {
+    // try the really stupid thing for a moment
+    //if(withinNonMinkowski) {
+      Vec4f returnPos(pos);
+      int coord = closestWall % 4;
+      returnPos[coord] = (closestWall > 4) ? max[coord] : min[coord];
+      *outPoint = returnPos;
+    //} else {
+    //  // um, shrink the point down inversely to how the box was enlarged
+    //  // then do ray between start point and shrunk point to associated plane?
+    //  // nope, that's wrong, but it's not well defined anyway, so maybe it's fine
+    //  Vec4f boxMid = (min + max) * 0.5f;
+    //  Vec4f localCoord = pos - boxMid;
+    //  float boxRadius = ((max + radiusVec) - boxMid).length();
+    //  float shrinkRatio = boxRadius / (radius + boxRadius); 
+    //  Vec4f shrunkLocalCoord(localCoord);
+    //  shrunkLocalCoord *= shrinkRatio;
+    //  Vec4f rayInward = shrunkLocalCoord - localCoord;
+    //  float shrinkEpsilon = 0.001f; // actually makes it slinkly less shrunk
+    //  localCoord *= (1.0f + shrinkEpsilon);
+
+    //  if(!PhysicsHelp::RayToAlignedBox(min, max, 
+    //      localCoord + boxMid, rayInward,
+    //      NULL /*dist*/, outPoint)) {
+    //    assert(false); // huh, that should have worked
+    //    //whatever, pick a point time
+    //    *outPoint = shrunkLocalCoord + boxMid;
+    //  }
+    //}
+  }
+
+  return true;
 }
 
 bool PhysicsHelp::SphereToAlignedBox(
@@ -317,21 +369,29 @@ void PhysicsHelp::RunTests() {
   pos = Vec4f(2.5f, 2.5f, 2.5f, 2.5f);
   Vec4f hitNormal;
   assert(true == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+  assert(true == SphereToAlignedBoxMinkowski(
+      min, max, pos, radius, &hitPoint, &hitNormal));
 
   pos = Vec4f(2.5f, 2.5f, 20.5f, 2.5f);
   assert(false == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+  assert(false == SphereToAlignedBoxMinkowski(
+      min, max, pos, radius, &hitPoint, &hitNormal));
 
-  //min.set(1.0f, 1.0f, 1.0f, 0.0f);
-  //max.set(2.0f, 2.0f, 2.0f, 0.0f);
-  //pos = Vec4f(2.5f, 2.0f, 2.5f, 0.0f);
-  //radius = 0.70f;
+  min.set(1.0f, 1.0f, 1.0f, 0.0f);
+  max.set(2.0f, 2.0f, 2.0f, 0.0f);
+  pos = Vec4f(2.5f, 2.0f, 2.5f, 0.0f);
+  radius = 0.70f;
   //assert(false == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+  assert(false == SphereToAlignedBoxMinkowski(
+      min, max, pos, radius, &hitPoint, &hitNormal));
 
-  //min.set(1.0f, 1.0f, 1.0f, 1.0f);
-  //max.set(2.0f, 2.0f, 2.0f, 2.0f);
-  //pos = Vec4f(2.5f, 2.0f, 2.5f, 2.0f);
-  //radius = 0.70f;
+  min.set(1.0f, 1.0f, 1.0f, 1.0f);
+  max.set(2.0f, 2.0f, 2.0f, 2.0f);
+  pos = Vec4f(2.5f, 2.0f, 2.5f, 2.0f);
+  radius = 0.70f;
   //assert(false == SphereToAlignedBox(min, max, pos, radius, &hitPoint, &hitNormal));
+  assert(false == SphereToAlignedBoxMinkowski(
+      min, max, pos, radius, &hitPoint, &hitNormal));
 }
 
 
