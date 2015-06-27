@@ -21,6 +21,8 @@
 
 namespace fd {
 
+Shader::ShaderHash Shader::s_shaderhash;
+
 Shader::~Shader() {
   RemoveFromShaderHash();
   Release();
@@ -36,21 +38,22 @@ void Shader::Release() {
     glDeleteProgram(m_programId);
     m_programId = 0;
   }
-  if(m_uniforms) {
-    handle_hash_destroy(m_uniforms);
-    m_uniforms = NULL;
-  }
-  if(m_attribs) {
-    handle_hash_destroy(m_attribs);
-    m_attribs = NULL;
-  }
+  //if(m_uniforms) {
+  //  handle_hash_destroy(m_uniforms);
+  //  m_uniforms = NULL;
+  //}
+  //if(m_attribs) {
+  //  handle_hash_destroy(m_attribs);
+  //  m_attribs = NULL;
+  //}
 }
 
 Shader::Shader() 
     : m_programId(0)
     , m_shaderType(0)
-    , m_attribs(NULL)
-    , m_uniforms(NULL) {
+    //, m_attribs(NULL)
+    //, m_uniforms(NULL) 
+{
   s_test_shader_refs++;
 }
 
@@ -119,25 +122,24 @@ void Shader::ClearShaderHash() {
   // TODO: change to a decent hash or unordered_map
 }
 
-Shader* Shader::GetShaderByRefName(const char* refName) {
-  return (s_pShaderhash != NULL) ?
-      shader_hash_get(s_pShaderhash, refName) : NULL;
+Shader* Shader::GetShaderByRefName(const std::string& refName) {
+  auto itShader = s_shaderhash.find(refName);
+  if (itShader != s_shaderhash.end()) {
+    return itShader->second;
+  }
+  return NULL;
 }
 
 void Shader::AddToShaderHash() {
-  if (s_pShaderhash == NULL) {
-    s_pShaderhash = shader_hash_create();
-  }
-
-  if (NULL == shader_hash_get(s_pShaderhash, m_refName.c_str())) {
-    shader_hash_add(s_pShaderhash, m_refName.c_str(), this);
-  }
+  s_shaderhash.insert(std::make_pair(m_refName, this));
 }
 
 void Shader::RemoveFromShaderHash() {
-  if( s_pShaderhash) {
-    shader_hash_remove(s_pShaderhash, m_refName.c_str(), NULL);
-  }
+  if (s_shaderhash.empty()) return;
+
+  auto itShader = s_shaderhash.find(m_refName);
+  if (itShader != s_shaderhash.end())
+    s_shaderhash.erase(itShader);
 }
 
 bool Shader::LoadFromFileDerivedNames(const char* refName) {
@@ -182,8 +184,8 @@ bool Shader::LoadFromFile(const char* refName,
   }
 
   m_programId = programId;
-  m_attribs = handle_hash_create();
-  m_uniforms = handle_hash_create();
+  //m_attribs = handle_hash_create();
+  //m_uniforms = handle_hash_create();
   m_refName.assign(refName);
   AddToShaderHash();
   StartUsing();
@@ -286,75 +288,75 @@ bool Shader::GetIsUsing() const {
   return (currentProgram == m_programId);
 }
 
-//////////////////
-// TShaderHash support
-// This stb hash business was a massive hassle to get to compile,
-// and the other huge downwside
-// of single file header libraries that are #define based shows up when
-// there is a problem and debugging is essentially guesswork.
-
-TShaderHash* Shader::s_pShaderhash = NULL;
-
-#define STR_KEY_HASH_EMPTY ((const char*)(1))
-#define STR_KEY_HASH_DEL ((const char*)(2))
-
-// Ugh, this is silly. Would rather std::string but stb hash is malloc based
-// so it didn't call constructors.
-const char* string_key_hash_str_copy(const char* str) {
-  if (str == NULL) return NULL;
-  if (str == STR_KEY_HASH_EMPTY) return STR_KEY_HASH_EMPTY;
-  if (str == STR_KEY_HASH_DEL) return STR_KEY_HASH_DEL;
-
-  unsigned int size = strlen(str) + 1;
-  char* newStr = new char[size];
-  strcpy_s(newStr, size, str);
-  return newStr;
-}
-
-void string_key_hash_str_del(const char* str) {
-  delete [] str;
-}
-
-bool string_key_hash_str_cmp(const char* left, const char* right) {
-  if (left == right) { return true; }
-  if (left == NULL || left == STR_KEY_HASH_EMPTY || left == STR_KEY_HASH_DEL ||
-      right == NULL || right == STR_KEY_HASH_EMPTY || right == STR_KEY_HASH_DEL) {
-    return false;
-  }
-
-  return _stricmp(left, right) == 0;
-}
-
-stb_define_hash_base(STB_noprefix, TShaderHash, STB_nofields,
-  shader_hash_, shader_hash_, 0.85f, const char*, 
-  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
-  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
-  string_key_hash_str_cmp, string_key_hash_str_cmp,
-  return stb_hash(k); , Shader*, STB_nullvalue, NULL);
-
-//////////////////
-// THandleHash support
-
-#define HANDLE_HASH_NULL ((GLint)(-1))
-
-stb_define_hash_base(STB_noprefix, THandleHash, STB_nofields,
-  handle_hash_, handle_hash_, 0.85f, const char*, 
-  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
-  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
-  string_key_hash_str_cmp, string_key_hash_str_cmp,
-  return stb_hash(k); , GLint, STB_nullvalue, HANDLE_HASH_NULL);
+////////////////////
+//// TShaderHash support
+//// This stb hash business was a massive hassle to get to compile,
+//// and the other huge downwside
+//// of single file header libraries that are #define based shows up when
+//// there is a problem and debugging is essentially guesswork.
+//
+//TShaderHash* Shader::s_pShaderhash = NULL;
+//
+//#define STR_KEY_HASH_EMPTY ((const char*)(1))
+//#define STR_KEY_HASH_DEL ((const char*)(2))
+//
+//// Ugh, this is silly. Would rather std::string but stb hash is malloc based
+//// so it didn't call constructors.
+//const char* string_key_hash_str_copy(const char* str) {
+//  if (str == NULL) return NULL;
+//  if (str == STR_KEY_HASH_EMPTY) return STR_KEY_HASH_EMPTY;
+//  if (str == STR_KEY_HASH_DEL) return STR_KEY_HASH_DEL;
+//
+//  unsigned int size = strlen(str) + 1;
+//  char* newStr = new char[size];
+//  strcpy_s(newStr, size, str);
+//  return newStr;
+//}
+//
+//void string_key_hash_str_del(const char* str) {
+//  delete [] str;
+//}
+//
+//bool string_key_hash_str_cmp(const char* left, const char* right) {
+//  if (left == right) { return true; }
+//  if (left == NULL || left == STR_KEY_HASH_EMPTY || left == STR_KEY_HASH_DEL ||
+//      right == NULL || right == STR_KEY_HASH_EMPTY || right == STR_KEY_HASH_DEL) {
+//    return false;
+//  }
+//
+//  return _stricmp(left, right) == 0;
+//}
+//
+//stb_define_hash_base(STB_noprefix, TShaderHash, STB_nofields,
+//  shader_hash_, shader_hash_, 0.85f, const char*, 
+//  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
+//  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
+//  string_key_hash_str_cmp, string_key_hash_str_cmp,
+//  return stb_hash(k); , Shader*, STB_nullvalue, NULL);
+//
+////////////////////
+//// THandleHash support
+//
+//#define HANDLE_HASH_NULL ((GLint)(-1))
+//
+//stb_define_hash_base(STB_noprefix, THandleHash, STB_nofields,
+//  handle_hash_, handle_hash_, 0.85f, const char*, 
+//  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
+//  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
+//  string_key_hash_str_cmp, string_key_hash_str_cmp,
+//  return stb_hash(k); , GLint, STB_nullvalue, HANDLE_HASH_NULL);
 
 GLint Shader::getAttrib(const char* name) const {
   assert(name != NULL);
   assert(m_programId != 0);
-  assert(m_attribs != NULL);
-  // Why do we assume GL isn't already doing something like this?
-  // TODO: test whether this is a pre-optimization, dumbass.
-  GLint handle = handle_hash_get(m_attribs, name);
-  if (handle != HANDLE_HASH_NULL)
-    return handle;
+  //assert(m_attribs != NULL);
+  //// Why do we assume GL isn't already doing something like this?
+  //// TODO: test whether this is a pre-optimization, dumbass.
+  //GLint handle = handle_hash_get(m_attribs, name);
+  //if (handle != HANDLE_HASH_NULL)
+  //  return handle;
 
-  handle = glGetAttribLocation(m_programId, name);
+  GLint handle = glGetAttribLocation(m_programId, name);
   WasGLErrorPlusPrint();
   if(handle == -1) {
     #ifdef SHADER_DEBUG_SPAM
@@ -363,21 +365,21 @@ GLint Shader::getAttrib(const char* name) const {
     return handle;
   }
 
-  handle_hash_add(m_attribs, name, handle);
+  //handle_hash_add(m_attribs, name, handle);
   return handle;
 }
 
 GLint Shader::getUniform(const char* name) const {
   assert(name != NULL);
   assert(m_programId != 0);
-  assert(m_uniforms != NULL);
-  // Why do we assume GL isn't already doing something like this?
-  // TODO: test whether this is a pre-optimization, dumbass.
-  GLint handle = handle_hash_get(m_uniforms, name);
-  if (handle != HANDLE_HASH_NULL)
-    return handle;
+  //assert(m_uniforms != NULL);
+  //// Why do we assume GL isn't already doing something like this?
+  //// TODO: test whether this is a pre-optimization, dumbass.
+  //GLint handle = handle_hash_get(m_uniforms, name);
+  //if (handle != HANDLE_HASH_NULL)
+  //  return handle;
 
-  handle = glGetUniformLocation(m_programId, name);
+  GLint handle = glGetUniformLocation(m_programId, name);
   WasGLErrorPlusPrint();
   if(handle == -1) {
     #ifdef SHADER_DEBUG_SPAM
@@ -386,7 +388,7 @@ GLint Shader::getUniform(const char* name) const {
     return handle;
   }
 
-  handle_hash_add(m_uniforms, name, handle);
+  //handle_hash_add(m_uniforms, name, handle);
   return handle;
 }
 
@@ -396,64 +398,64 @@ GLint Shader::getUniform(const char* name) const {
 int Shader::s_test_shader_refs = 0;
 
 bool Shader::RunTests() {
-  TShaderHash* pTestHash = shader_hash_create();
+  //TShaderHash* pTestHash = shader_hash_create();
 
-  int startingShaderRefs = Shader::s_test_shader_refs;
+  //int startingShaderRefs = Shader::s_test_shader_refs;
 
-  char hashTest1[] = "shady0";
-  char hashTest2[] = "shady1";
-  assert(stb_hash(&hashTest1[0]) != stb_hash(&hashTest2[0]));
-  
-  int numEntries = 100;
-  for (int test = 0; test < numEntries; ++test) {
-    char* name = new char[256];
-    sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", test);
-    Shader* pShader = new Shader();
-    
-    assert(0 == shader_hash_update(pTestHash, name, pShader));
-    assert(1 == shader_hash_add(pTestHash, name, pShader));
-    assert(0 == shader_hash_add(pTestHash, name, pShader));
-    //assert(1 == shader_hash_set(pTestHash, name, pShader));
-    //assert(1 == shader_hash_update(pTestHash, name, pShader));
+  //char hashTest1[] = "shady0";
+  //char hashTest2[] = "shady1";
+  //assert(stb_hash(&hashTest1[0]) != stb_hash(&hashTest2[0]));
+  //
+  //int numEntries = 100;
+  //for (int test = 0; test < numEntries; ++test) {
+  //  char* name = new char[256];
+  //  sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", test);
+  //  Shader* pShader = new Shader();
+  //  
+  //  assert(0 == shader_hash_update(pTestHash, name, pShader));
+  //  assert(1 == shader_hash_add(pTestHash, name, pShader));
+  //  assert(0 == shader_hash_add(pTestHash, name, pShader));
+  //  //assert(1 == shader_hash_set(pTestHash, name, pShader));
+  //  //assert(1 == shader_hash_update(pTestHash, name, pShader));
 
-    assert(shader_hash_get(pTestHash, name) == pShader);
-    assert(shader_hash_get(pTestHash, std::string(name).c_str()) == pShader);
-  }
+  //  assert(shader_hash_get(pTestHash, name) == pShader);
+  //  assert(shader_hash_get(pTestHash, std::string(name).c_str()) == pShader);
+  //}
 
-  assert(Shader::s_test_shader_refs == (numEntries + startingShaderRefs));
+  //assert(Shader::s_test_shader_refs == (numEntries + startingShaderRefs));
 
-  for (int test = 0; test < numEntries; ++test) {
-    int nameIndex = rand() + numEntries;
-    char* name = new char[256];
-    sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", nameIndex);
-    Shader* pShader = new Shader();
+  //for (int test = 0; test < numEntries; ++test) {
+  //  int nameIndex = rand() + numEntries;
+  //  char* name = new char[256];
+  //  sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", nameIndex);
+  //  Shader* pShader = new Shader();
 
-    if(1 == shader_hash_add(pTestHash, name, pShader)) {
-      assert(shader_hash_get(pTestHash, name) == pShader);
-      
-      Shader* pToDelete = NULL;
-      shader_hash_remove(pTestHash, std::string(name).c_str(), &pToDelete);
-      assert(pShader == pToDelete);
-    }
-    delete pShader;
-  }
+  //  if(1 == shader_hash_add(pTestHash, name, pShader)) {
+  //    assert(shader_hash_get(pTestHash, name) == pShader);
+  //    
+  //    Shader* pToDelete = NULL;
+  //    shader_hash_remove(pTestHash, std::string(name).c_str(), &pToDelete);
+  //    assert(pShader == pToDelete);
+  //  }
+  //  delete pShader;
+  //}
 
-  assert(Shader::s_test_shader_refs == (numEntries + startingShaderRefs));
+  //assert(Shader::s_test_shader_refs == (numEntries + startingShaderRefs));
 
-  for (int test = 0; test < numEntries; ++test) {
-    char* name = new char[256];
-    sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", test);
+  //for (int test = 0; test < numEntries; ++test) {
+  //  char* name = new char[256];
+  //  sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", test);
 
-    Shader* pShader = shader_hash_get(pTestHash, std::string(name).c_str());
+  //  Shader* pShader = shader_hash_get(pTestHash, std::string(name).c_str());
 
-    Shader* pToDelete = NULL;
-    shader_hash_remove(pTestHash, std::string(name).c_str(), &pToDelete);
-    delete pToDelete;
-    delete [] name;
-  }
+  //  Shader* pToDelete = NULL;
+  //  shader_hash_remove(pTestHash, std::string(name).c_str(), &pToDelete);
+  //  delete pToDelete;
+  //  delete [] name;
+  //}
 
-  assert(Shader::s_test_shader_refs == startingShaderRefs);
-  shader_hash_destroy(pTestHash);
+  //assert(Shader::s_test_shader_refs == startingShaderRefs);
+  //shader_hash_destroy(pTestHash);
 
   return true;
 }

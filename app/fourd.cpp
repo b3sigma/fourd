@@ -92,7 +92,7 @@ fd::Shader* LoadShader(const char* shaderName) {
   std::string fragName = shaderDir + fragPrefix + baseNameWithExt;
 
   std::unique_ptr<::fd::Shader> shaderMem;
-  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(baseNameWithExt.c_str());
+  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(baseNameWithExt);
   if (pShader) {
     pShader->Release();
   } else {

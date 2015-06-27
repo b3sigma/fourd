@@ -1,4 +1,5 @@
 // uivCompose
+#version 330
 
 in vec2 vertPosition;
 //in vec2 vertCoord;

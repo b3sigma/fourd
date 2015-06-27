@@ -1,4 +1,5 @@
 // fragRedShift
+#version 330
 
 uniform sampler2D texDiffuse0;
 

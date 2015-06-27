@@ -1,4 +1,5 @@
 // basic
+#version 330
 
 struct Vertex 
 {
