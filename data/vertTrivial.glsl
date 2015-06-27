@@ -1,4 +1,5 @@
 // vertTrivial
+#version 330
 
 varying vec3 normal;
 varying vec4 blarg;

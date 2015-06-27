@@ -4,10 +4,11 @@
 #include <Windows.h>
 #endif //WIN32
 
-#include "../stb/stb.h"
+//#include "../stb/stb.h"
 #include <GL/glew.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "../common/fourmath.h"
   
@@ -16,11 +17,11 @@ namespace fd {
   class Camera;
   class Shader;
 
-  stb_declare_hash(STB_noprefix, TShaderHash, shader_hash_,
-    const char*, fd::Shader*);
+  //stb_declare_hash(STB_noprefix, TShaderHash, shader_hash_,
+  //  const char*, fd::Shader*);
 
-  stb_declare_hash(STB_noprefix, THandleHash, handle_hash_,
-    const char*, GLint);
+  //stb_declare_hash(STB_noprefix, THandleHash, handle_hash_,
+  //  const char*, GLint);
 
   class Shader {
   protected:
@@ -31,10 +32,11 @@ namespace fd {
     GLuint m_programId;
     GLenum m_shaderType;
 
-    THandleHash* m_attribs;
-    THandleHash* m_uniforms;
+    //THandleHash* m_attribs;
+    //THandleHash* m_uniforms;
 
-    static TShaderHash* s_pShaderhash;
+    typedef std::unordered_map<std::string, Shader*> ShaderHash;
+    static ShaderHash s_shaderhash;
 
     // because msvc can't do constexpr quite right, must update cpp
     // names if you change these in InitCameraParamHandles
@@ -90,7 +92,8 @@ namespace fd {
         GLuint programId, const char* vertFilename, const char* fragFilename);
 
     static void ClearShaderHash();
-    static Shader* GetShaderByRefName(const char* refName);
+    static Shader* GetShaderByRefName(const std::string& refName);
+    //static Shader* GetShaderByRefName(const char* refName);
     
   protected:
     void AddToShaderHash();

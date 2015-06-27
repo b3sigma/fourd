@@ -1,4 +1,5 @@
 // vertOverdrawRainbow
+#version 330
 
 uniform mat4 projectionMatrix;
 uniform vec4 sliceRange;

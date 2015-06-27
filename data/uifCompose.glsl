@@ -1,4 +1,5 @@
 // uifCompose
+#version 330
 
 uniform sampler2D texSolid;
 uniform sampler2D texOverdraw;

@@ -1,5 +1,5 @@
-
 // uivImgui
+#version 330
 
 uniform mat4 projectionMatrix;
 
@@ -13,5 +13,5 @@ out vec2 fragTex0;
 void main() {
   fragTex0.xy = vertCoord.xy;
   fragCol0 = vertColor;
-  gl_Position = projectionMatrix * vec4(vertPosition.xy, 0.0f, 1.0f);
+  gl_Position = projectionMatrix * vec4(vertPosition.xy, 0.0, 1.0);
 }
