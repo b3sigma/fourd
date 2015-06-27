@@ -72,12 +72,13 @@ Game TODOs:
 * quaxol bitpacked rendering
 * quaxol chunking
 * quaxol streaming
-* sphere vs quaxol collision
 * refactor input keys
 * add console
 * Add 120 cell
 * Load compressed textures with mipmaps directly
 * Cleanup quaxol size/worldscale
+* Separate physics into modular system
+* Improve physics response loop
 
 QM/Physics TODOs:
 * Add spin system
