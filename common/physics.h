@@ -8,10 +8,7 @@
 namespace fd {
   
   // wow seriously are we writing our own physics lib? lulz
-  class RigidBody {
-    
-  };
-  
+  // no choice for the 4d
   class Physics {
   public:
     // experiment doing mostly public vars to avoid get/set spam

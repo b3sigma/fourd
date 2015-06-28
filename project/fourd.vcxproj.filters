@@ -90,6 +90,9 @@
     <ClCompile Include="..\imgui\imgui.cpp">
       <Filter>thirdparty</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\physics_rigidbody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -195,6 +198,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\app\glhelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\physics_rigidbody.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
