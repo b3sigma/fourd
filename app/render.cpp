@@ -188,6 +188,7 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     // but first the stupid way
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_ALWAYS);

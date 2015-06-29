@@ -23,6 +23,7 @@ void main() {
   //finalColor.gb = fragTex0.xy;
 
   //finalColor.rgb = mix(fragCol0.rgb, texture2D(texDiffuse0, fragTex0).rgb, fragTexBlend);
-  finalColor.a = fragCol0.a;
+  //finalColor.a = fragCol0.a;
+  finalColor.a = fragCol0.a * 0.2;
   //finalColor.a = 1.0;
 }

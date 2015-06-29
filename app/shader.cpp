@@ -38,6 +38,7 @@ void Shader::Release() {
     glDeleteProgram(m_programId);
     m_programId = 0;
   }
+  m_subShaderNames.resize(0);
   //if(m_uniforms) {
   //  handle_hash_destroy(m_uniforms);
   //  m_uniforms = NULL;
@@ -118,8 +119,14 @@ GLint Shader::GetColorHandle() const {
 }
 
 void Shader::ClearShaderHash() {
-  // um fuck? seems to be no way to iterate through this stupid stb hash
-  // TODO: change to a decent hash or unordered_map
+  //int numShaders = (int)s_shaderhash.size();
+  //for(int s = 0; s < numShaders; s++) {
+  //  if(!s_shaderhash.empty()) {
+  //    // should auto-remove itself
+  //    delete s_shaderhash.begin()->second;
+  //  }
+  //}
+  s_shaderhash.clear();
 }
 
 Shader* Shader::GetShaderByRefName(const std::string& refName) {
@@ -142,6 +149,29 @@ void Shader::RemoveFromShaderHash() {
     s_shaderhash.erase(itShader);
 }
 
+bool Shader::ReloadAllShaders() {
+  bool totalSuccess = true;
+  for(auto itShader : s_shaderhash) {
+    totalSuccess &= itShader.second->Reload();
+  }
+  return totalSuccess;
+}
+
+bool Shader::Reload() {
+  TSubShaderNames namesCopy = m_subShaderNames;
+  std::string refNameCopy = m_refName;
+  Release();
+
+  for(auto nameTypePair : namesCopy) {
+    if(!AddSubShader(nameTypePair.first.c_str(), nameTypePair.second)) {
+      printf("Reload of %s failed\n", nameTypePair.first.c_str());
+      return false;
+    }
+  }
+
+  return FinishProgram(refNameCopy.c_str());
+}
+
 bool Shader::LoadFromFileDerivedNames(const char* refName) {
   const static std::string shaderDir = "data\\";
   const static std::string vertPrefix = std::string("vert");
@@ -155,16 +185,10 @@ bool Shader::LoadFromFileDerivedNames(const char* refName) {
   return LoadFromFile(refName, vertName.c_str(), fragName.c_str());
 }
 
-bool Shader::LoadFromFile(const char* refName, 
-    const char* vertexFile, const char* pixelFile) {
-  if(!AddSubShader(vertexFile, GL_VERTEX_SHADER))
-    return false;
-  if(!AddSubShader(pixelFile, GL_FRAGMENT_SHADER))
-    return false;
-
+bool Shader::FinishProgram(const char* refName) {
   GLuint programId = glCreateProgram();
   if(programId == 0) {
-    printf("Couldn't create program v:%s f:%s\n", vertexFile, pixelFile);
+    printf("Couldn't create program: %s\n", refName);
     return false;
   }
 
@@ -178,7 +202,7 @@ bool Shader::LoadFromFile(const char* refName,
     glDetachShader(programId, shaderId);
   }
 
-  if(!CheckGLShaderLinkStatus(programId, vertexFile, pixelFile)) {
+  if(!CheckGLShaderLinkStatus(programId, refName)) {
     glDeleteProgram(programId);
     return false;
   }
@@ -186,12 +210,27 @@ bool Shader::LoadFromFile(const char* refName,
   m_programId = programId;
   //m_attribs = handle_hash_create();
   //m_uniforms = handle_hash_create();
-  m_refName.assign(refName);
-  AddToShaderHash();
+
   StartUsing();
   InitCameraParamHandles();
   StopUsing();
 
+  return true;
+}
+
+bool Shader::LoadFromFile(const char* refName, 
+    const char* vertexFile, const char* pixelFile) {
+  if(!AddSubShader(vertexFile, GL_VERTEX_SHADER))
+    return false;
+  if(!AddSubShader(pixelFile, GL_FRAGMENT_SHADER))
+    return false;
+
+  if(!FinishProgram(refName))
+    return false;
+
+  m_refName.assign(refName);
+  AddToShaderHash();
+  
   return true;
 }
 
@@ -216,17 +255,12 @@ bool Shader::CheckGLShaderCompileStatus(GLuint shaderId, const char* filename) {
 }
 
 bool Shader::CheckGLShaderLinkStatus(
-    GLuint programId, const char* vertFilename, const char* fragFilename) {
+    GLuint programId, const char* refName) {
   GLint linkSuccess = GL_TRUE;
   glGetProgramiv(programId, GL_LINK_STATUS, &linkSuccess);
   if(WasGLErrorPlusPrint() || linkSuccess != GL_TRUE) {
-    printf("program linking failed err:%d\n", linkSuccess);
-    if(vertFilename) {
-      printf("vert filename:%s\n", vertFilename);
-    }
-    if(fragFilename) {
-      printf("frag filename:%s\n", fragFilename);
-    }
+    printf("program linking failed name:%s err:%d\n", refName, linkSuccess);
+    
     GLint errorLength;
     glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &errorLength);
     std::string error;
@@ -265,6 +299,7 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
   }
 
   m_subShaders.push_back(shaderId);
+  m_subShaderNames.push_back(std::make_pair(std::string(filename), shaderType));
 
   return true;
 }
@@ -371,7 +406,6 @@ GLint Shader::getAttrib(const char* name) const {
 
 GLint Shader::getUniform(const char* name) const {
   assert(name != NULL);
-  assert(m_programId != 0);
   //assert(m_uniforms != NULL);
   //// Why do we assume GL isn't already doing something like this?
   //// TODO: test whether this is a pre-optimization, dumbass.

@@ -29,6 +29,9 @@ namespace fd {
     TVecShaderIds m_subShaders;
     std::string m_refName;
 
+    typedef std::vector<std::pair<std::string, GLenum>> TSubShaderNames;
+    TSubShaderNames m_subShaderNames;
+
     GLuint m_programId;
     GLenum m_shaderType;
 
@@ -77,6 +80,7 @@ namespace fd {
     bool LoadFromFileDerivedNames(const char* refName);
     bool LoadFromFile(const char* refName, const char* vertexFile, const char* pixelFile);
     void Release();
+    bool Reload();
 
     void StartUsing() const;
     void StopUsing() const;
@@ -89,13 +93,15 @@ namespace fd {
     static bool CheckGLShaderCompileStatus(
         GLuint shaderId, const char* filename);
     static bool CheckGLShaderLinkStatus(
-        GLuint programId, const char* vertFilename, const char* fragFilename);
+        GLuint programId, const char* refName);
 
     static void ClearShaderHash();
     static Shader* GetShaderByRefName(const std::string& refName);
     //static Shader* GetShaderByRefName(const char* refName);
-    
+    static bool ReloadAllShaders();
+
   protected:
+    bool FinishProgram(const char* refName);
     void AddToShaderHash();
     void RemoveFromShaderHash();
 

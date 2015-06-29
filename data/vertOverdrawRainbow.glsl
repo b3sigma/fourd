@@ -24,9 +24,9 @@ void main() {
   //fragTex0.xy = vertCoord.xy;
 
   vec3 rainbow;
-  rainbow.r = mod(abs(vertPosition.x / 10.0), 2.0);
-	rainbow.g = mod(abs(vertPosition.z / 10.0), 2.0);
-	rainbow.b = mod(abs(vertPosition.w / 10.0), 2.0);
+  rainbow.r = mod(abs(vertPosition.x / 10.0), 2.0) + 0.5;
+  rainbow.g = mod(abs(vertPosition.z / 10.0), 2.0) + 0.5;
+  rainbow.b = mod(abs(vertPosition.w / 10.0), 2.0) + 0.5;
   
   vec4 homogenousCoords = projectionMatrix * threeSpace;
 

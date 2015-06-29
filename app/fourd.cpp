@@ -596,6 +596,7 @@ void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
     }
   }
 
+  // code like this last written in the 80s?
   switch(asciiCode) {
     case '=' : asciiCode = (isShift) ? '+' : '='; break;
     case '-' : asciiCode = (isShift) ? '_' : '-'; break;
@@ -603,6 +604,11 @@ void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
     case '[' : asciiCode = (isShift) ? '{' : '['; break;
     case ']' : asciiCode = (isShift) ? '}' : ']'; break;
     case '\\' : asciiCode = (isShift) ? '|' : '\\'; break;
+    case '\'' : asciiCode = (isShift) ? '"' : '\''; break;
+    case ';' : asciiCode = (isShift) ? ':' : ';'; break;
+    case ',' : asciiCode = (isShift) ? '<' : ','; break;
+    case '.' : asciiCode = (isShift) ? '>' : '.'; break;
+    case '`' : asciiCode = (isShift) ? '~' : '`'; break;
   }
 
   AsciiKeyUpdate(asciiCode, (mods & GLFW_MOD_SHIFT));
@@ -818,6 +824,9 @@ void AsciiKeyUpdate(int key, bool isShift) {
     case '\'' : {
       tesseract.printIt();
     } break;
+    case '"' : {
+      Shader::ReloadAllShaders();
+    } break;
     case '[' : {
       if (g_camera.getMovementMode() == Camera::LOOK) {
         ToggleCameraMode(Camera::WALK);
@@ -881,7 +890,8 @@ void Draw(GLFWwindow* window) {
   if (!g_shader)
     return;
 
-  g_renderer.m_clearColor = Vec4f(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
+  //g_renderer.m_clearColor = Vec4f(158.0f / 255.0f, 224.0f / 255.0f, 238.0f / 255.0f, 0.0f);
+  g_renderer.m_clearColor = Vec4f(0, 0, 0, 0);
   glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
