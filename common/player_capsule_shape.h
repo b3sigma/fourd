@@ -11,9 +11,10 @@ class PlayerCapsuleShape : public PhysicsShape {
 public:
   Physics* m_pPhysics;
   float m_radius;
+  Vec4f m_offset;
 
-  PlayerCapsuleShape(Physics* phys, float radius) 
-      : m_pPhysics(phys), m_radius(radius) {}
+  PlayerCapsuleShape(Physics* phys, float radius, const Vec4f& offset) 
+      : m_pPhysics(phys), m_radius(radius), m_offset(offset) {}
 
   virtual bool ApplyMovement(
       float& deltaTime, Vec4f& velocity,

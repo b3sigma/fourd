@@ -185,7 +185,9 @@ void ToggleCameraMode(Camera::MovementMode mode) {
         std::string("DestroyPhysics"), SignalN<>());
     PhysicsShape* shape = NULL;
     if(g_useCapsuleShape) {
-      shape = new PlayerCapsuleShape(g_scene.m_pPhysics, g_blockSize);
+      float capsuleRadius = g_blockSize * 0.5f;
+      Vec4f offset(0.0f, capsuleRadius, 0.0f, 0.0f);
+      shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
     } else {
       RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
       rayshape->AddCapsuleRays(g_blockSize);

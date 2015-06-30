@@ -12,7 +12,7 @@ bool PlayerCapsuleShape::ApplyMovement(
   bool hitSomething = false;
   bool madeProgress = false;
 
-  Vec4f bestPosition = position;
+  Vec4f bestPosition = position - m_offset;
   Vec4f attempVelocity = velocity;
 
   float remainingDeltaTime = deltaTime;
@@ -49,7 +49,7 @@ bool PlayerCapsuleShape::ApplyMovement(
 
   if(madeProgress) {
     velocity = attempVelocity;
-    position = bestPosition;
+    position = bestPosition + m_offset;
   }
   
   return hitSomething;
