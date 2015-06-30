@@ -185,8 +185,9 @@ void ToggleCameraMode(Camera::MovementMode mode) {
         std::string("DestroyPhysics"), SignalN<>());
     PhysicsShape* shape = NULL;
     if(g_useCapsuleShape) {
-      float capsuleRadius = g_blockSize * 0.5f;
-      Vec4f offset(0.0f, capsuleRadius, 0.0f, 0.0f);
+      float capsuleRadius = g_blockSize * 0.4f;
+      float targetHeight = 10.0f;
+      Vec4f offset(0.0f, targetHeight - capsuleRadius, 0.0f, 0.0f);
       shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
     } else {
       RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
@@ -977,6 +978,7 @@ void RaycastToCollsion() {
 }
 
 void UpdatePointerEntity() {
+  return;
   //if(g_camera.getMovementMode() == Camera::LOOK)
   {
     static bool quaxolMode = true;

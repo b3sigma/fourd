@@ -180,59 +180,94 @@ bool PhysicsHelp::SphereToAlignedBoxMinkowski(
     return false;
   }
 
-  // now to guess at collision point, find closest wall
-  // for a hit, this will be 0-3 for min, 4-8 for max
-  int closestWall;
-  float smallestDist = FLT_MAX;
+  // project the sphere center on the box as a proxy for collision point
+  // if the shere is within the tesseract, the point will just be the center
+  Vec4f projectedPoint = pos;
+  Vec4f projectedNormal(0.0f, 0.0f, 0.0f, 0.0f);
   for(int w = 0; w < 4; ++w) {
-    float distToMin = fabs(pos[w] - min[w]);
-    if(distToMin < smallestDist) {
-      closestWall = w;
-      smallestDist = distToMin;
-    }
-    float distToMax = fabs(pos[w] - max[w]);
-    if(distToMax < smallestDist) {
-      closestWall = w + 4;
-      smallestDist = distToMax;
+    if(projectedPoint[w] < min[w]) {
+      projectedPoint[w] = min[w];
+      projectedNormal[w] = -1.0f;
+    } else if(projectedPoint[w] > max[w]) {
+      projectedPoint[w] = max[w];
+      projectedNormal[w] = 1.0f;
     }
   }
 
-  if(outNormal) {
-    Vec4f hitNormal(0,0,0,0);
-    hitNormal[closestWall % 4] = (closestWall > 4) ? 1.0f : -1.0f;
-    *outNormal = hitNormal;
+  if(outNormal) { 
+    if(projectedNormal.lengthSq() > 0.0f) {
+      *outNormal = projectedNormal.normalized();
+    } else { // within the tesseract, just use the delta?
+      Vec4f posDelta = ((min + max) * 0.5f) - pos;
+      if(posDelta.lengthSq() > 0.0f) {
+        *outNormal = posDelta.normalized();
+      } else {
+        // right in the middle of box, totally undefined so return up
+        // person who wanted to redefine up, but ran into a bug <1% of the time,
+        // and just found this bit of code, fuck you :)
+        *outNormal = Vec4f(0.0f, 1.0f, 0.0f, 0.0f); 
+      }
+    }
   }
 
   if(outPoint) {
-    // try the really stupid thing for a moment
-    //if(withinNonMinkowski) {
-      Vec4f returnPos(pos);
-      int coord = closestWall % 4;
-      returnPos[coord] = (closestWall > 4) ? max[coord] : min[coord];
-      *outPoint = returnPos;
-    //} else {
-    //  // um, shrink the point down inversely to how the box was enlarged
-    //  // then do ray between start point and shrunk point to associated plane?
-    //  // nope, that's wrong, but it's not well defined anyway, so maybe it's fine
-    //  Vec4f boxMid = (min + max) * 0.5f;
-    //  Vec4f localCoord = pos - boxMid;
-    //  float boxRadius = ((max + radiusVec) - boxMid).length();
-    //  float shrinkRatio = boxRadius / (radius + boxRadius); 
-    //  Vec4f shrunkLocalCoord(localCoord);
-    //  shrunkLocalCoord *= shrinkRatio;
-    //  Vec4f rayInward = shrunkLocalCoord - localCoord;
-    //  float shrinkEpsilon = 0.001f; // actually makes it slinkly less shrunk
-    //  localCoord *= (1.0f + shrinkEpsilon);
-
-    //  if(!PhysicsHelp::RayToAlignedBox(min, max, 
-    //      localCoord + boxMid, rayInward,
-    //      NULL /*dist*/, outPoint)) {
-    //    assert(false); // huh, that should have worked
-    //    //whatever, pick a point time
-    //    *outPoint = shrunkLocalCoord + boxMid;
-    //  }
-    //}
+    *outPoint = projectedPoint;
   }
+
+
+  //// now to guess at collision point, find closest wall
+  //// for a hit, this will be 0-3 for min, 4-8 for max
+  //int closestWall;
+  //float smallestDist = FLT_MAX;
+  //for(int w = 0; w < 4; ++w) {
+  //  float distToMin = fabs(pos[w] - min[w]);
+  //  if(distToMin < smallestDist) {
+  //    closestWall = w;
+  //    smallestDist = distToMin;
+  //  }
+  //  float distToMax = fabs(pos[w] - max[w]);
+  //  if(distToMax < smallestDist) {
+  //    closestWall = w + 4;
+  //    smallestDist = distToMax;
+  //  }
+  //}
+
+  //if(outNormal) {
+  //  Vec4f hitNormal(0,0,0,0);
+  //  hitNormal[closestWall % 4] = (closestWall > 4) ? 1.0f : -1.0f;
+  //  *outNormal = hitNormal;
+  //}
+
+  //if(outPoint) {
+  //  // try the really stupid thing for a moment
+  //  //if(withinNonMinkowski) {
+  //    Vec4f returnPos(pos);
+  //    int coord = closestWall % 4;
+  //    returnPos[coord] = (closestWall > 4) ? max[coord] : min[coord];
+  //    *outPoint = returnPos;
+  //  //} else {
+  //  //  // um, shrink the point down inversely to how the box was enlarged
+  //  //  // then do ray between start point and shrunk point to associated plane?
+  //  //  // nope, that's wrong, but it's not well defined anyway, so maybe it's fine
+  //  //  Vec4f boxMid = (min + max) * 0.5f;
+  //  //  Vec4f localCoord = pos - boxMid;
+  //  //  float boxRadius = ((max + radiusVec) - boxMid).length();
+  //  //  float shrinkRatio = boxRadius / (radius + boxRadius); 
+  //  //  Vec4f shrunkLocalCoord(localCoord);
+  //  //  shrunkLocalCoord *= shrinkRatio;
+  //  //  Vec4f rayInward = shrunkLocalCoord - localCoord;
+  //  //  float shrinkEpsilon = 0.001f; // actually makes it slinkly less shrunk
+  //  //  localCoord *= (1.0f + shrinkEpsilon);
+
+  //  //  if(!PhysicsHelp::RayToAlignedBox(min, max, 
+  //  //      localCoord + boxMid, rayInward,
+  //  //      NULL /*dist*/, outPoint)) {
+  //  //    assert(false); // huh, that should have worked
+  //  //    //whatever, pick a point time
+  //  //    *outPoint = shrunkLocalCoord + boxMid;
+  //  //  }
+  //  //}
+  //}
 
   return true;
 }

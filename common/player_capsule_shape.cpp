@@ -31,7 +31,7 @@ bool PlayerCapsuleShape::ApplyMovement(
         testPosition, m_radius, &collisionPos, &collisionNormal)) {
 
       // cheat and override
-      collisionNormal = Vec4f(0.0f, 1.0f, 0.0f, 0.0f);
+      //collisionNormal = Vec4f(0.0f, 1.0f, 0.0f, 0.0f);
       float colDotVel = attempVelocity.dot(collisionNormal);
       Vec4f removeVel = collisionNormal * (-1.0f * colDotVel);
       attempVelocity += removeVel;
