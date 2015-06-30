@@ -213,7 +213,8 @@ GLFWmonitor* PlatformWindow::GetRiftMonitorByName(const char* name) {
   int monitorCount;
   GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
   for(int m = 0; m < monitorCount; m++) {
-    if(strcmp(glfwGetWin32Monitor(monitors[m]), name) == 0) {
+    const char* monitorName = glfwGetWin32Monitor(monitors[m]);
+    if(strstr(name, monitorName) == 0) {
       return monitors[m];
     }
   }

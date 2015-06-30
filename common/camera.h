@@ -45,6 +45,7 @@ public:
   Mat4f _yawTrans; // only used in vr walk mode
   Vec4f _pushVelocity; // walk mode
   bool _collidingLastFrame;
+  Vec4f _velocity;
 
   bool _nextSimpleSlicePositive;
 

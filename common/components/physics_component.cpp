@@ -13,9 +13,11 @@ PhysicsComponent::PhysicsComponent(Physics* pPhys, PhysicsShape* shape)
 void PhysicsComponent::OnConnected() {
   static std::string BDATpos("position");
   static std::string BDATorient("orientation");
+  static std::string BDATvelocity("velocity");
       
   if(!m_ownerBus->GetOwnerData(BDATorient, true, &m_pOwnerOrientation)
-      || !m_ownerBus->GetOwnerData(BDATpos, true, &m_pOwnerPosition)) {
+      || !m_ownerBus->GetOwnerData(BDATpos, true, &m_pOwnerPosition)
+      || !m_ownerBus->GetOwnerData(BDATvelocity, true, &m_pOwnerVelocity)) {
     assert(false);
     SelfDestruct();
   }
@@ -52,16 +54,16 @@ void PhysicsComponent::OnJump(float frameTime) {
 
   const float jumpTime = 1.0f;
   m_jumpCountdown = jumpTime;
-  m_velocity += impulse;
+  *m_pOwnerVelocity += impulse;
 }
 
 void PhysicsComponent::OnImpulse(const Vec4f& impulse) {
-  m_velocity += impulse;
+  *m_pOwnerVelocity += impulse;
 }
 
 void PhysicsComponent::ShapeMovement(
     float deltatime, bool& hadGroundCollision) {
-  hadGroundCollision = m_pShape->ApplyMovement(deltatime, m_velocity,
+  hadGroundCollision = m_pShape->ApplyMovement(deltatime, *m_pOwnerVelocity,
       *m_pOwnerOrientation, *m_pOwnerPosition,
       hadGroundCollision);
 }
@@ -77,7 +79,7 @@ void PhysicsComponent::ShapeMovement(
 void PhysicsComponent::MultiStepMovement(
     float deltatime, bool& hadGroundCollision) {
   float remainingDelta = deltatime;
-  Vec4f remainingVelocity = m_velocity * remainingDelta;
+  Vec4f remainingVelocity = (*m_pOwnerVelocity) * remainingDelta;
   Vec4f currentPosition = *m_pOwnerPosition; 
   Mat4f& testOrientation = *m_pOwnerOrientation;
   
@@ -116,7 +118,7 @@ void PhysicsComponent::MultiStepMovement(
 void PhysicsComponent::SingleStepMovement(
     float deltatime, bool& hadGroundCollision) {
 
-  Vec4f frameVelocity = m_velocity * deltatime;
+  Vec4f frameVelocity = *m_pOwnerVelocity * deltatime;
 
   // yeah it's becoming quickly clear that a slow progression of physics bits
   // is the wrong way to proceed. Should just do a proper decoupled system
@@ -126,9 +128,9 @@ void PhysicsComponent::SingleStepMovement(
   Vec4f hitNormal;
   Vec4f hitPos;
   if(m_pShape->DoesMovementCollide(*m_pOwnerOrientation, *m_pOwnerPosition,
-      m_velocity, deltatime, hitPos, possibleVelocity, hitNormal)) {
+      *m_pOwnerVelocity, deltatime, hitPos, possibleVelocity, hitNormal)) {
     frameVelocity = possibleVelocity * deltatime;
-    m_velocity = possibleVelocity;
+    *m_pOwnerVelocity = possibleVelocity;
     const float groundCollisionThreshold = 0.1f;
     if(hitNormal.dot(m_pPhysics->m_groundNormal) > groundCollisionThreshold) {
       hadGroundCollision = true;
@@ -141,9 +143,9 @@ void PhysicsComponent::SingleStepMovement(
 // is the wrong way to proceed. Should just do a proper decoupled system
 // where there are rigidbody + shape things in a physics scene.    
 void PhysicsComponent::OnStepSignal(float delta) {
-  m_velocity += m_pPhysics->m_gravity * delta;
+  *m_pOwnerVelocity += m_pPhysics->m_gravity * delta;
   if(m_pOwnerPushVelocity) {
-    m_velocity += *m_pOwnerPushVelocity;
+    *m_pOwnerVelocity += *m_pOwnerPushVelocity;
     *m_pOwnerPushVelocity = Vec4f(0,0,0,0);
   }
 
@@ -160,7 +162,7 @@ void PhysicsComponent::OnStepSignal(float delta) {
   }
       
   // the abundance of physics issues makes this a nice thing
-  if(m_pPhysics->ClampToGround(m_pOwnerPosition, &m_velocity)) {
+  if(m_pPhysics->ClampToGround(m_pOwnerPosition, m_pOwnerVelocity)) {
     hadGroundCollision = true;
   }
   if(m_pOwnerCollidingLastFrame) {
@@ -169,7 +171,7 @@ void PhysicsComponent::OnStepSignal(float delta) {
 
   if(hadGroundCollision) {
     static float frictionCoef = -10.0f;
-    m_velocity += (m_velocity * (frictionCoef * delta));
+    *m_pOwnerVelocity += ((*m_pOwnerVelocity) * (frictionCoef * delta));
   }
 }
 

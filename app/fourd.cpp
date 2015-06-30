@@ -264,13 +264,13 @@ bool Initialize(int width, int height) {
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
 
-  g_renderer.m_multiPass = false; //true; //false;
+  g_renderer.m_multiPass = true; //true; //false;
   if(g_renderer.m_multiPass) {
     g_camera.SetWProjection(
         -50.0f /* wNear */, 50.0f /* wFar */, 0.5f /* wScreenRatio */);
   } else {
     g_camera.SetWProjection(
-        0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
+        0.0f /* wNear */, 50.0f /* wFar */, 0.5f /* wScreenRatio */);
   }
 
   if(g_useCapsuleShape) {
@@ -907,7 +907,7 @@ void Draw(GLFWwindow* window) {
   static bool renderVRUI = true;
 
   if(VRWrapper::IsUsingVR() && g_vr) {
-    Vec2f uiOffset(150.0f, 300.0f);
+    Vec2f uiOffset(150.0f, 400.0f);
     g_vr->StartFrame();
     Texture* renderColor;
     Texture* renderDepth;
@@ -1115,17 +1115,21 @@ int main(int argc, char *argv[]) {
   GLFWmonitor* monitor = NULL;
   const GLFWvidmode* vidMode;
   static bool startFullscreen = false;
-  if(startFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
+  static bool startVRFullscreen = true;
+  if(startVRFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
     std::string deviceName = g_vr->GetDeviceName();
     monitor = PlatformWindow::GetRiftMonitorByName(deviceName.c_str());
     vidMode = glfwGetVideoMode(monitor);
     g_vr->GetTotalRenderSize(startWidth, startHeight);
   } else if(startFullscreen) {
+    startVRFullscreen = false;
     monitor = glfwGetPrimaryMonitor();
     vidMode = glfwGetVideoMode(monitor);
     startWidth = vidMode->width;
     startHeight = vidMode->height;
   } else {
+    startFullscreen = false;
+    startVRFullscreen = false;
     monitor = glfwGetPrimaryMonitor();
     vidMode = glfwGetVideoMode(monitor);
   }
@@ -1134,7 +1138,7 @@ int main(int argc, char *argv[]) {
   glfwWindowHint(GLFW_GREEN_BITS, vidMode->greenBits);
   glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
   glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
-  if(!startFullscreen) {
+  if(!startFullscreen && !startVRFullscreen) {
     monitor = NULL;
   }
 
@@ -1170,8 +1174,11 @@ int main(int argc, char *argv[]) {
 
   glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
 
-  if(g_vr) {
-    g_vr->SetIsUsingVR(startFullscreen && g_vr->GetIsDebugDevice());
+  if(g_vr && startVRFullscreen) {
+    g_vr->SetIsUsingVR(true); // && g_vr->GetIsDebugDevice());
+    //g_vr->ToggleFullscreen();  
+    glfwSetInputMode(g_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
   }
   
   if(!Initialize(startWidth, startHeight)) {

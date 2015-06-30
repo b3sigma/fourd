@@ -1,5 +1,6 @@
 Four dimensional VR minecraft thing!
 OpenGL, Oculus and C++11ish.
+Actually maybe I should advertise as 5 dimensional as it's 4 space + 1 time!
 
 Getting:
 * Make sure you use --recursive on your clone command as this project uses submodules.
@@ -48,12 +49,9 @@ X add bunch of quaxols in a line
 Esc quit
 
 Minimal TODOs:
-* Fix projection in multipass mode in vr, seems to be treating nearby solids as distant
 * Make a ui directive
 * Make a glowy
 * Create an escape level
-* Iterate on multipass shader in VR
-* Improve multipass fillrate performance (overdraw is overboard)
 ** Lower resolution blendy?
 ** Try blend vs compose for VR final pass
 
@@ -80,6 +78,8 @@ Game TODOs:
 * Cleanup quaxol size/worldscale
 * Separate physics into modular system
 * Improve physics response loop
+* Iterate on multipass shader in VR
+* Improve multipass fillrate performance (overdraw is overboard)
 
 QM/Physics TODOs:
 * Add spin system

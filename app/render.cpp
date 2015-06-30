@@ -154,7 +154,9 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     WasGLErrorPlusPrint();
 
     m_pSlicedQuaxol->StartUsing();
-    static Vec4f sliceRange(0.45f, 0.55f, 0.0f, 0.0f);
+    // TODO: calc this from the block size and the w near and far
+    // currently tuned for -40 near, 40 far, 10 blocksize
+    static Vec4f sliceRange(0.44f, 0.56f, 0.0f, 0.0f);
     GLuint hSliceShaderRange = m_pSlicedQuaxol->getUniform("sliceRange");
     if(hSliceShaderRange != -1) {
       glUniform4fv(hSliceShaderRange, 1, sliceRange.raw());

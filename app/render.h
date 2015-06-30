@@ -70,6 +70,7 @@ class Render {
 public:  
   Vec4f m_clearColor;
   bool m_multiPass;
+  Vec4f m_sliceRange;
 
 
 public:

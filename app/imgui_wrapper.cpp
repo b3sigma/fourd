@@ -359,8 +359,8 @@ void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) 
     io.MousePos = ImVec2(-1, -1);
   }
   
-  glfwSetInputMode(s_glfwWindow, GLFW_CURSOR,
-      io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
+  //glfwSetInputMode(s_glfwWindow, GLFW_CURSOR,
+  //    io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 
   ImGui::NewFrame();
 

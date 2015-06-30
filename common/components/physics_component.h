@@ -18,11 +18,12 @@ namespace fd {
     Physics* m_pPhysics; // not owned
     PhysicsShape* m_pShape; //owned
 
-    Vec4f m_velocity;
+    //Vec4f m_velocity;
     float m_jumpCountdown;
 
     Mat4f* m_pOwnerOrientation; // note as this is 4d we need full 4d matrix for orientation
     Vec4f* m_pOwnerPosition; // also need full vec4 for position.
+    Vec4f* m_pOwnerVelocity; // also req
     
     Vec4f* m_pOwnerPushVelocity; // optional, may be null
     bool*  m_pOwnerCollidingLastFrame;

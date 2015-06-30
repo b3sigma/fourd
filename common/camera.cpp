@@ -26,6 +26,7 @@ Camera::Camera()
   _fourToThree.storeIdentity();
   _yawPitchTrans.storeIdentity();
   _pushVelocity.storeZero();
+  _velocity.storeZero();
 
   bool success = _componentBus.RegisterOwnerData(
       std::string("orientation"), &_cameraMatrix, true);
@@ -41,6 +42,8 @@ Camera::Camera()
       std::string("pushVelocity"), &_pushVelocity, true);
   success &= _componentBus.RegisterOwnerData(
       std::string("collidingLastFrame"), &_collidingLastFrame, true);
+  success &= _componentBus.RegisterOwnerData(
+      std::string("velocity"), &_velocity, true);
 
   _componentBus.RegisterSignal(
       std::string("inputForward"), this, &Camera::OnInputForward);
@@ -218,12 +221,30 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
       }
     }
   } else if (_movement == WALK) {
-    const float moveSpeed = 10.0f;
-    float airMoveMultiplier = 0.2f;
+    static float acceleration = 10.0f;
+    static float maxWalkSpeed = 50.0f;
+    static float maxAirSpeed = 30.0f;
+    static float airMoveMultiplier = 0.15f;
+
+    //float sign = (amount >= 0) ? 1.0f : -1.0f;
+    float currentSpeed = _velocity.length();
+    float trySpeed;
+    float maxSpeed;
     if(_collidingLastFrame) {
-      airMoveMultiplier = 1.0f;
+      trySpeed = amount * acceleration;
+      maxSpeed = maxWalkSpeed;
+    } else {
+      trySpeed = amount * acceleration * airMoveMultiplier;
+      maxSpeed = maxAirSpeed;
     }
-    _pushVelocity += _renderMatrix[direction] * (amount * moveSpeed * airMoveMultiplier);
+    float maxScalar = (::std::max)(maxSpeed - currentSpeed, 0.0f) / maxSpeed;
+    //addSpeed *= sign;
+    float addSpeed = trySpeed * maxScalar;
+
+    Vec4f newPushVel = _pushVelocity + (_renderMatrix[direction] * addSpeed);
+
+    _pushVelocity += _renderMatrix[direction] * addSpeed;
+    //_pushVelocity += _renderMatrix[direction] * (amount * acceleration * airMoveMultiplier);
 
     //_cameraPos += _renderMatrix[direction] * amount;
   } else {
