@@ -15,6 +15,11 @@ public:
   PlayerCapsuleShape(Physics* phys, float radius) 
       : m_pPhysics(phys), m_radius(radius) {}
 
+  virtual bool ApplyMovement(
+      float& deltaTime, Vec4f& velocity,
+      Mat4f& orientation, Vec4f& position,
+      bool& hadGroundCollision);
+
   virtual bool DoesCollide(
       float& deltaTime,
       const Mat4f& orientation, const Vec4f& position,
@@ -24,6 +29,9 @@ public:
       const Mat4f& orientation, const Vec4f& position,
       const Vec4f& velocity, float& deltaTime,
       Vec4f& validPos, Vec4f& outVelocity, Vec4f& collisionNormal);
+
+  virtual bool UseShapeAppliedMovement() { return true; }
+
 };
 
 

@@ -2,10 +2,17 @@
 
 namespace fd {
 
+PhysicsComponent::PhysicsComponent(Physics* pPhys, PhysicsShape* shape)
+    : m_pPhysics(pPhys)
+    , m_pShape(shape)
+{
+  assert(shape != NULL);
+  m_shapeAppliedMovement = m_pShape->UseShapeAppliedMovement();
+}
+
 void PhysicsComponent::OnConnected() {
   static std::string BDATpos("position");
   static std::string BDATorient("orientation");
-
       
   if(!m_ownerBus->GetOwnerData(BDATorient, true, &m_pOwnerOrientation)
       || !m_ownerBus->GetOwnerData(BDATpos, true, &m_pOwnerPosition)) {
@@ -52,6 +59,12 @@ void PhysicsComponent::OnImpulse(const Vec4f& impulse) {
   m_velocity += impulse;
 }
 
+void PhysicsComponent::ShapeMovement(
+    float deltatime, bool& hadGroundCollision) {
+  hadGroundCollision = m_pShape->ApplyMovement(deltatime, m_velocity,
+      *m_pOwnerOrientation, *m_pOwnerPosition,
+      hadGroundCollision);
+}
 
 // so the supposition is that we start out not colliding
 // then add velocity to position to get test position
@@ -134,12 +147,12 @@ void PhysicsComponent::OnStepSignal(float delta) {
     *m_pOwnerPushVelocity = Vec4f(0,0,0,0);
   }
 
-  static bool singleStep = true;
   bool hadGroundCollision = false;
-  if(singleStep) {
-    SingleStepMovement(delta, hadGroundCollision);
+  if(m_shapeAppliedMovement) {
+    ShapeMovement(delta, hadGroundCollision);
   } else {
-    MultiStepMovement(delta, hadGroundCollision);
+    SingleStepMovement(delta, hadGroundCollision);
+    //MultiStepMovement(delta, hadGroundCollision);
   }
 
   if(m_jumpCountdown > 0.0) {

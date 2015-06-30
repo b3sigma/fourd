@@ -26,10 +26,11 @@ namespace fd {
     
     Vec4f* m_pOwnerPushVelocity; // optional, may be null
     bool*  m_pOwnerCollidingLastFrame;
+
+    bool m_shapeAppliedMovement;
   public:
 
-    PhysicsComponent(Physics* pPhys, PhysicsShape* shape)
-        : m_pPhysics(pPhys), m_pShape(shape) {}
+    PhysicsComponent(Physics* pPhys, PhysicsShape* shape);
     virtual ~PhysicsComponent() {
       delete m_pShape;
     }
@@ -44,6 +45,7 @@ namespace fd {
   protected:
     void SingleStepMovement(float deltatime, bool& hadGroundCollision);
     void MultiStepMovement(float deltatime, bool& hadGroundCollision);
+    void ShapeMovement(float deltatime, bool& hadGroundCollision);
   };
 
 }; //namespace fd
