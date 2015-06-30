@@ -48,6 +48,7 @@ X add bunch of quaxols in a line
 Esc quit
 
 Minimal TODOs:
+* Fix projection in multipass mode in vr, seems to be treating nearby solids as distant
 * Make a ui directive
 * Make a glowy
 * Create an escape level
