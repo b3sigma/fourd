@@ -107,6 +107,7 @@
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />
+    <ClCompile Include="..\common\physics_rigidbody.cpp" />
     <ClCompile Include="..\common\player_capsule_shape.cpp" />
     <ClCompile Include="..\common\quaxol.cpp" />
     <ClCompile Include="..\common\raycast_shape.cpp" />
@@ -139,6 +140,7 @@
     <ClInclude Include="..\common\mesh.h" />
     <ClInclude Include="..\common\misc_defs.h" />
     <ClInclude Include="..\common\physics.h" />
+    <ClInclude Include="..\common\physics_rigidbody.h" />
     <ClInclude Include="..\common\physics_shape_interface.h" />
     <ClInclude Include="..\common\player_capsule_shape.h" />
     <ClInclude Include="..\common\quaxol.h" />

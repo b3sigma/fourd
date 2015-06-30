@@ -3,6 +3,58 @@
 #include "physics_help.h"
 
 namespace fd {
+  
+bool PlayerCapsuleShape::ApplyMovement(
+    float& deltaTime, Vec4f& velocity,
+    Mat4f& orientation, Vec4f& position,
+    bool& hadGroundCollision) {
+
+  bool hitSomething = false;
+  bool madeProgress = false;
+
+  Vec4f bestPosition = position - m_offset;
+  Vec4f attempVelocity = velocity;
+
+  float remainingDeltaTime = deltaTime;
+  const int maxSteps = 4;
+  for(int s = 0; s < maxSteps; s++) {
+  
+    Vec4f deltaPosition = attempVelocity * remainingDeltaTime;
+    Vec4f testPosition = bestPosition + deltaPosition;
+
+    // this has ended up as any position within the intersection of the sphere
+    // and the other shape
+    Vec4f collisionPos;
+    // this ends up being nearly anything it seems
+    Vec4f collisionNormal;
+    if(m_pPhysics->SphereCollide(
+        testPosition, m_radius, &collisionPos, &collisionNormal)) {
+
+      // cheat and override
+      //collisionNormal = Vec4f(0.0f, 1.0f, 0.0f, 0.0f);
+      float colDotVel = attempVelocity.dot(collisionNormal);
+      Vec4f removeVel = collisionNormal * (-1.0f * colDotVel);
+      attempVelocity += removeVel;
+
+      //remainingDeltaTime *= 0.5f;
+      //bestPosition = collisionPos;
+      hitSomething = true;
+      continue;
+    } else {
+      madeProgress = true;
+      bestPosition = testPosition;
+      break;
+    }
+  }
+
+  if(madeProgress) {
+    velocity = attempVelocity;
+    position = bestPosition + m_offset;
+  }
+  
+  return hitSomething;
+}
+
 
 bool PlayerCapsuleShape::DoesCollide(
     float& deltaTime, const Mat4f& orientation, const Vec4f& position,

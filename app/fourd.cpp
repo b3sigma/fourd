@@ -58,6 +58,7 @@ Mesh tesseract;
 ::fd::Shader* g_shader = NULL;
 ::fd::Entity* g_pointerEntity = NULL;
 bool g_captureMouse = false;
+bool g_useCapsuleShape = false;
 ::fd::PlatformWindow* g_platformWindow = NULL;
 GLFWwindow* g_glfwWindow = NULL;
 ::fd::InputHandler g_inputHandler;
@@ -182,10 +183,12 @@ void ToggleCameraMode(Camera::MovementMode mode) {
   if (g_camera.getMovementMode() == Camera::WALK) {
     g_camera.GetComponentBus().SendSignal(
         std::string("DestroyPhysics"), SignalN<>());
-    static bool usePlayerShape = false;
     PhysicsShape* shape = NULL;
-    if(usePlayerShape) {
-      shape = new PlayerCapsuleShape(g_scene.m_pPhysics, g_blockSize);
+    if(g_useCapsuleShape) {
+      float capsuleRadius = g_blockSize * 0.4f;
+      float targetHeight = 10.0f;
+      Vec4f offset(0.0f, targetHeight - capsuleRadius, 0.0f, 0.0f);
+      shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
     } else {
       RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
       rayshape->AddCapsuleRays(g_blockSize);
@@ -270,7 +273,11 @@ bool Initialize(int width, int height) {
         0.0f /* wNear */, 40.0f /* wFar */, 0.5f /* wScreenRatio */);
   }
 
-  g_camera.SetCameraPosition(Vec4f(1.5f, 19.5f, 1.5f, 1.5f));
+  if(g_useCapsuleShape) {
+    g_camera.SetCameraPosition(Vec4f(1.5f, 40.0f, 1.5f, 1.5f));
+  } else {
+    g_camera.SetCameraPosition(Vec4f(1.5f, 19.5f, 1.5f, 1.5f));
+  }
   //g_camera.SetCameraPosition(Vec4f(100.5f, 100.5f, 115.5f, 100.5f));
   //g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
   g_debugHeadPose.storeIdentity();
@@ -981,6 +988,7 @@ void RaycastToCollsion() {
 }
 
 void UpdatePointerEntity() {
+  return;
   //if(g_camera.getMovementMode() == Camera::LOOK)
   {
     static bool quaxolMode = true;
