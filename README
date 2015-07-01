@@ -50,10 +50,9 @@ Esc quit
 
 Minimal TODOs:
 * Make a ui directive
-* Make a glowy
+* Make a glowy goal with level transition
+* Create a super basic level
 * Create an escape level
-** Lower resolution blendy?
-** Try blend vs compose for VR final pass
 
 Game TODOs:
 * Add VR UI input?
@@ -80,6 +79,8 @@ Game TODOs:
 * Improve physics response loop
 * Iterate on multipass shader in VR
 * Improve multipass fillrate performance (overdraw is overboard)
+** Lower resolution blendy?
+** Try blend vs compose for VR final pass
 
 QM/Physics TODOs:
 * Add spin system
