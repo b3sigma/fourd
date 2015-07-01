@@ -127,6 +127,19 @@ public:
     return result.second;
   }
 
+  // Dammnit, mismatch between pointer types means we need this. Seems like there is a solution
+  // that doesn't require two functions, but I'm in a hurry right now.
+  template <typename TData>
+  bool RegisterOwnerDataPtr(const std::string& name, TData** data, bool permanentStorage) {
+    RegData* pReg = new RegData((void*)data, name, typeid(TData).hash_code(),
+        permanentStorage);
+    auto result = _regHash.insert(std::make_pair(pReg->_name, pReg));
+    if(result.second == false) {
+      delete pReg; //insert failed! couldn't get emplace to work right
+    }
+    return result.second;
+  }
+
   template <typename TData>
   void CreateOwnerData(const std::string& name, TData* data) {
   }
@@ -143,6 +156,25 @@ public:
     if(pReg->_isPermanentStorage || !permanentStorage) {
       // Yeah another void* cast, but the typeid check above provides hope.
       *data = (TData*)pReg->_data;
+      return true;
+    } else {
+      // Don't give out temporary pointers for permanent storage
+      return false;
+    }
+  }
+
+  template <typename TData>
+  bool GetOwnerDataPtr(const std::string& name, bool permanentStorage, TData** data) {
+    assert(data != NULL);
+    auto regIt = _regHash.find(name);
+    if (regIt == _regHash.end())
+      return false;
+
+    RegData* pReg = regIt->second;
+    assert(pReg->_type_hash == typeid(TData).hash_code());
+    if(pReg->_isPermanentStorage || !permanentStorage) {
+      // Yeah another void* cast, but the typeid check above provides hope.
+      *data = *((TData**)pReg->_data);
       return true;
     } else {
       // Don't give out temporary pointers for permanent storage

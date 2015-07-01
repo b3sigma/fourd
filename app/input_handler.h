@@ -6,7 +6,9 @@ namespace fd {
 
 class InputHandler {
 public:
-  ComponentBus* m_inputTarget;
+  typedef std::vector<ComponentBus*> BusList;
+  BusList m_inputTargets;
+  //ComponentBus* m_inputTarget;
 
   struct JoystickBinding {
     std::string m_command;
@@ -40,13 +42,14 @@ public:
   typedef std::vector<Joystick> JoystickList;
   JoystickList m_joysticks;
 
+
   // weirdly, I feel like this is still under-abstracted,
   // like there should be yet another intermediate that holds state
-
   void AddDefaultBindings();
   void PollJoysticks();
   void ApplyJoystickInput(float frameTime);
 
+  void AddInputTarget(ComponentBus* bus);
 };
 
 } // namespace fd

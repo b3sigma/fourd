@@ -28,10 +28,8 @@ void InputHandler::PollJoysticks() {
       if(axesCount > 0) {
         memcpy(&joy.m_axes[0], axes, axesCount * sizeof(joy.m_axes[0]));
       }
-
     }
   }
-
 }
 
 
@@ -71,9 +69,34 @@ void InputHandler::AddDefaultBindings() {
   binding.m_isButton = true;
   m_joyBindings.push_back(binding);
 
+  binding.m_command.assign("inputAddQuaxol");
+  binding.m_buttonIndex = 2;
+  binding.m_isButton = true;
+  m_joyBindings.push_back(binding);
+
+  binding.m_command.assign("inputRemoveQuaxol");
+  binding.m_buttonIndex = 3;
+  binding.m_isButton = true;
+  m_joyBindings.push_back(binding);
+
+  binding.m_command.assign("inputNextCurrentItem");
+  binding.m_buttonIndex = 4;
+  binding.m_isButton = true;
+  m_joyBindings.push_back(binding);
+
+  binding.m_command.assign("inputPrevCurrentItem");
+  binding.m_buttonIndex = 5;
+  binding.m_isButton = true;
+  m_joyBindings.push_back(binding);
+}
+
+void InputHandler::AddInputTarget(ComponentBus* bus) {
+  m_inputTargets.push_back(bus);
+  //m_inputTarget = bus;
 }
 
 void InputHandler::ApplyJoystickInput(float frameTime) {
+
   for(auto& joy : m_joysticks) {
     if(!joy.m_isPresent) continue;
 
@@ -96,8 +119,10 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
           }
         }
 
-        m_inputTarget->SendSignal(binding.m_command,
-          SignalN<float>(), frameTime);
+        for(auto inputTarget : m_inputTargets) {
+          inputTarget->SendSignal(binding.m_command,
+              SignalN<float>(), frameTime);
+        }
       } else {
         if(binding.m_buttonIndex >= (int)joy.m_axes.size())
           continue; // not a possible binding
@@ -108,8 +133,10 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
           amount *= -1.0f;
         }
 
-        m_inputTarget->SendSignal(binding.m_command,
-          SignalN<float, float>(), frameTime, amount);
+        for(auto inputTarget : m_inputTargets) {
+          inputTarget->SendSignal(binding.m_command,
+              SignalN<float, float>(), frameTime, amount);
+        }
       }
     }
 

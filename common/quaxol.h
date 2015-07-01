@@ -146,6 +146,7 @@ namespace fd {
 
     bool LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset);
     void SetAt(const QuaxolSpec& pos, bool present);
+    void SetAt(const QuaxolSpec& pos, bool present, int type);
     void UpdateRendering();
 
     // unchecked, local

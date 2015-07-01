@@ -57,6 +57,7 @@ public:
   void TakeLoadedChunk(QuaxolChunk* pChunk);
 
   void SetQuaxolAt(const QuaxolSpec& pos, bool present);
+  void SetQuaxolAt(const QuaxolSpec& pos, bool present, int type);
   void RenderQuaxols(Camera* pCamera, Shader* pShader);
   void RenderQuaxolChunk(Camera* pCamera, Shader* pShader);
   void RenderQuaxolsIndividually(Camera* pCamera, Shader* pShader); // deprecated
@@ -83,7 +84,7 @@ public:
 protected:
   // horrible way to index textures
   // going to need a shader context or something soon
-  void SetTexture(int index, GLint hTex);
+  void SetTexture(int index, int hTex);
 
 };
 

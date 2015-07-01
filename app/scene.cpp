@@ -86,11 +86,18 @@ void Scene::SetQuaxolAt(const QuaxolSpec& pos, bool present) {
   m_pQuaxolChunk->UpdateRendering();
 }
 
+void Scene::SetQuaxolAt(const QuaxolSpec& pos, bool present, int type) {
+  if(!m_pQuaxolChunk) return;
+  m_pQuaxolChunk->SetAt(pos, present, type);
+  m_pQuaxolChunk->UpdateRendering();
+}
+
 void Scene::AddTexture(Texture* pTex) {
   m_texList.push_back(pTex);
 }
 
-void Scene::SetTexture(int index, GLint hTex) {
+// how does this work without the glUniform1i? Fragile! Except it errored once so I removed it.
+void Scene::SetTexture(int index, int hTex) {
   assert(index >= 0 && index < (int)m_texList.size());
 
   if(m_texList.empty())
@@ -108,7 +115,7 @@ void Scene::SetTexture(int index, GLint hTex) {
 // Let the scene do the allocation to allow for mem opt
 Entity* Scene::AddEntity() {
   // the less stupid way to do this is batches
-  Entity* pEntity = new Entity();
+  Entity* pEntity = new Entity(this);
   m_dynamicEntities.push_back(pEntity);
   m_componentBus.AddComponent((Component*)pEntity);
   return pEntity;

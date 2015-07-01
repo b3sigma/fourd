@@ -64,7 +64,14 @@ void QuaxolChunk::SetAt(const QuaxolSpec& pos, bool present) {
   Block& block = GetBlock(pos);
   block.present = present;
 }
- 
+
+void QuaxolChunk::SetAt(const QuaxolSpec& pos, bool present, int type) {
+  if(!IsValid(pos)) return;
+  Block& block = GetBlock(pos);
+  block.present = present;
+  block.type = (unsigned char)type;
+}
+
 void QuaxolChunk::UpdateConnects() {
   // do this the slow but simple way as a first pass
   // index x,y,w,z currently, so do that loop

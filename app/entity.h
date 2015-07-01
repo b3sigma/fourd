@@ -6,9 +6,10 @@
 namespace fd {
 
 class Mesh;
+class MeshBuffer;
+class Scene;
 class Shader;
 class Texture;
-class MeshBuffer;
 
 class Entity : Component {
 public:
@@ -18,6 +19,9 @@ public:
   Vec4f m_position;
 
   ComponentBus m_componentBus;
+  Scene* m_scene;
+  
+  // TODO: abstract this stuff into mesh component?
   MeshBuffer* m_pMeshBuffer;
   Mesh* m_pMesh; // not owned
   Shader* m_pShader; // not owned
@@ -25,7 +29,7 @@ public:
   TTextureList m_textures;
 
 public:
-  Entity();
+  Entity(Scene* scene);
   ~Entity();
 
   virtual void OnConnected();

@@ -3,18 +3,23 @@
 
 namespace fd {
 
-Entity::Entity() 
+Entity::Entity(Scene* scene) 
     : m_pMesh(NULL)
-    , m_pShader(NULL) {
+    , m_pShader(NULL)
+    , m_scene(scene)
+{
   m_componentBus.RegisterOwnerData(
       std::string("orientation"), &m_orientation, true);
   m_componentBus.RegisterOwnerData(
       std::string("position"), &m_position, true);
+  m_componentBus.RegisterOwnerDataPtr(
+      std::string("scene"), &m_scene, true);
   
   m_componentBus.RegisterSignal(
       std::string("DeleteSelf"), this, &Entity::OnDeleteSelf);
 
   m_orientation.storeIdentity();
+  m_position.storeZero();
 }
 
 Entity::~Entity() {

@@ -25,6 +25,7 @@
 #include "../common/player_capsule_shape.h"
 #include "../common/raycast_shape.h"
 #include "../common/components/animated_rotation.h"
+#include "../common/components/camera_follow.h"
 #include "../common/components/periodic_motion.h"
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
@@ -36,6 +37,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "glhelper.h"
+#include "components/scene_modifier.h"
 
 #define USE_VR
 #ifdef USE_VR
@@ -284,8 +286,13 @@ bool Initialize(int width, int height) {
   g_camera._yaw = (float)PI;
   ToggleCameraMode(Camera::MovementMode::WALK);
 
-  g_inputHandler.m_inputTarget = &(g_camera.GetComponentBus());
+  g_inputHandler.AddInputTarget(&(g_camera.GetComponentBus()));
   g_inputHandler.AddDefaultBindings();
+
+  Entity* playerEntity = g_scene.AddEntity();
+  playerEntity->GetComponentBus().AddComponent(new CameraFollowComponent(&g_camera));
+  playerEntity->GetComponentBus().AddComponent(new SceneModifierComponent());
+  g_inputHandler.AddInputTarget(&(playerEntity->GetComponentBus()));
 
   //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);

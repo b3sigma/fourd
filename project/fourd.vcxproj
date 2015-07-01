@@ -88,6 +88,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\app\components\scene_modifier.cpp" />
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
     <ClCompile Include="..\app\imgui_wrapper.cpp" />
@@ -115,6 +116,7 @@
     <ClCompile Include="..\imgui\imgui.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\app\components\scene_modifier.h" />
     <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\glhelper.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
@@ -131,6 +133,7 @@
     <ClInclude Include="..\common\chunkloader.h" />
     <ClInclude Include="..\common\component.h" />
     <ClInclude Include="..\common\components\animated_rotation.h" />
+    <ClInclude Include="..\common\components\camera_follow.h" />
     <ClInclude Include="..\common\components\periodic_motion.h" />
     <ClInclude Include="..\common\components\physics_component.h" />
     <ClInclude Include="..\common\components\timed_death.h" />
