@@ -191,10 +191,30 @@ public:
       pCamera->UpdateRenderMatrix(&localEye, &ovrEyePos);
 
     } else {
+      const ovrVector3f& ovrEyeZero = m_eyeRenderPose[0].Position;
+      const ovrVector3f& ovrEyeOne = m_eyeRenderPose[1].Position;
+
+      Vec4f ovrEyeDifference(
+          ovrEyeOne.x - ovrEyeZero.x,
+          ovrEyeOne.y - ovrEyeZero.y,
+          ovrEyeOne.z - ovrEyeZero.z,
+          0.0f);
+
       const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
       static int transposer[3] = {0, 1, 2};
-      static Vec4f sign(1.0f, 1.0f, 1.0f, 1.0f);
+      //static Vec4f sign(1.0f, 1.0f, 1.0f, 1.0f);
+      static Vec4f sign(-1.0f, 1.0f, 1.0f, 1.0f);
       Vec4f ovrEyePos(localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
+      
+      // TODO: try to convert ovr into local using simple sign switch
+      // then independently do eye and forehead transformations
+      Vec4f ovrForehead;
+      if(eye == 0) {
+        ovrForehead = ovrEyePos - (ovrEyeDifference * 0.5f);
+      } else {
+        ovrForehead = ovrEyePos - (ovrEyeDifference * -0.5f);
+      }
+
       ovrEyePos *= worldScale;
       Vec4f localOffset(
           ovrEyePos[transposer[0]] * sign.x, 
@@ -209,7 +229,7 @@ public:
           amount, targetAxis, sourceAxis));
       //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
       //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
-      static int doArbitrary = 1;
+      static int doArbitrary = 0; //1;
       if(doArbitrary > 0) {
         localOffset = matArbitrary.transform(localOffset);
       } else if (doArbitrary < 0) {
@@ -228,7 +248,7 @@ public:
         // do nothing
       }
 
-      static int doCameraTrans = -1;
+      static int doCameraTrans = 0; //-1;
       Vec4f worldSpaceOffset = eyeSpaceOffset;
       if(doCameraTrans > 0) {
         worldSpaceOffset = pCamera->_cameraMatrix.transform(worldSpaceOffset);
@@ -238,7 +258,7 @@ public:
         // do nothing
       }
 
-      static int doRenderTrans = 0;
+      static int doRenderTrans = -1; //0;
       Vec4f renderOffset = worldSpaceOffset;
       if(doRenderTrans > 0) {
         renderOffset = pCamera->_renderMatrix.transform(renderOffset);

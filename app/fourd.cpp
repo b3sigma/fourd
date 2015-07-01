@@ -915,19 +915,19 @@ void Draw(GLFWwindow* window) {
     g_vr->StartLeftEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
-      ImGuiWrapper::Render(frameTime, uiOffset, true /*doUpdate*/);
+      ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, true /*doUpdate*/);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartRightEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
-      ImGuiWrapper::Render(frameTime, uiOffset, false /*doUpdate*/);
+      ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, false /*doUpdate*/);
     g_vr->FinishFrame();
   } else {
     Vec2f uiOffset(0, 0);
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_renderer.RenderAllScenesPerCamera(NULL /*renderColor*/, NULL /*renderDepth*/);
-    ImGuiWrapper::Render(frameTime, uiOffset, true /*doUpdate*/);
+    ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, true /*doUpdate*/);
   }
 
   glFlush();
@@ -1166,7 +1166,7 @@ int main(int argc, char *argv[]) {
   }
 
   ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/);
-  //glfwSetKeyCallback(g_glfwWindow, Key);
+  //glfwSetKeyCallback(g_glfwWindow, Key); // If not using ImGui, put this back.
   
   g_vr->InitializeWindow(g_platformWindow);
 
@@ -1175,10 +1175,8 @@ int main(int argc, char *argv[]) {
   glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
 
   if(g_vr && startVRFullscreen) {
-    g_vr->SetIsUsingVR(true); // && g_vr->GetIsDebugDevice());
-    //g_vr->ToggleFullscreen();  
+    g_vr->SetIsUsingVR(true);
     glfwSetInputMode(g_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
   }
   
   if(!Initialize(startWidth, startHeight)) {

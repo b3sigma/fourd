@@ -86,6 +86,7 @@ public:
   double GetTotalTime();
 
   void AddCamera(Camera* pCamera);
+  Camera* GetFirstCamera();
   void AddScene(Scene* pScene);
 
   void RenderAllScenesPerCamera(Texture* pRenderColor, Texture* pRenderDepth);

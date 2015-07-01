@@ -7,6 +7,7 @@
 namespace fd {
 
 class Shader;
+class Render;
 
 class ImGuiWrapper {
 public:
@@ -22,7 +23,7 @@ public:
       GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback);
   static void Shutdown();
   static void NewFrame(float deltaTime, int renderWidth, int renderHeight);
-  static void Render(float frameTime, const Vec2f& offset, bool doUpdate);
+  static void Render(float frameTime, const Vec2f& offset, Render* renderer, bool doUpdate);
   
 protected:
   static bool InitOpenGL();

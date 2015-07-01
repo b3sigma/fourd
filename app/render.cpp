@@ -134,6 +134,13 @@ void Render::AddCamera(Camera* pCamera) {
   m_cameras.push_back(pCamera);
 }
 
+Camera* Render::GetFirstCamera() {
+  if(m_cameras.empty())
+    return NULL;
+
+  return m_cameras.front();
+}
+
 void Render::AddScene(Scene* pScene) {
   m_scenes.push_back(pScene);
 }

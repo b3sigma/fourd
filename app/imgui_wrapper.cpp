@@ -16,6 +16,7 @@
 #include <GLFW/glfw3native.h>
 #endif
 
+#include "render.h"
 #include "shader.h"
 
 namespace fd {
@@ -383,9 +384,25 @@ void RenderFpsOverlay(float frameTime, const Vec2f& offset) {
   ImGui::End();
 }
 
-void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, bool doUpdate) {
+void RenderVRDebugOverlay(float frameTime, const Vec2f& offset, ::fd::Render* renderer) {
+  //static bool opened = true;
+  //ImVec2 startPos(200.0f, 400.0f);
+  //startPos.x += offset.x();
+  //startPos.y += offset.y();
+  //ImGui::SetNextWindowPos(startPos);
+  //if (!ImGui::Begin("fps overlay", &opened, ImVec2(0,0), 0.3f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
+  //{
+  //    ImGui::End();
+  //    return;
+  //}
+  //ImGui::Text("Frametime: %f \t(fps:%f)", frameTime, (frameTime > 0.0f) ? 1.0f / frameTime : 0.0f);
+  //ImGui::End();
+}
+
+void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* renderer, bool doUpdate) {
   if(doUpdate) {
     RenderFpsOverlay(frameTime, offset);
+    //RenderVRDebugOverlay(frameTime, offset, renderer);
   }
 
   //static bool opened = true;
