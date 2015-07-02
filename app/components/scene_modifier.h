@@ -16,8 +16,7 @@ public:
   Scene* m_pOwnerScene;
 
 public:
-  SceneModifierComponent() {
-  }
+  SceneModifierComponent() : m_currentQuaxolType(0) {}
 
   virtual void OnConnected();
 

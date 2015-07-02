@@ -53,7 +53,7 @@ void SceneModifierComponent::OnRemoveQuaxol(float frameTime) {
 
 }
 
-static const int g_numValidTypes = 4;
+static const int g_numValidTypes = 3;
 void SceneModifierComponent::OnNextCurrentItem(float frameTime) {
   m_currentQuaxolType = (m_currentQuaxolType + 1 + g_numValidTypes) % g_numValidTypes; 
 }

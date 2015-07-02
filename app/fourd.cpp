@@ -508,34 +508,6 @@ void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, cons
   //    new TimedDeath(21.0f /* duration */));
 }
 
-void AddQuaxolUnderCursor() {
-  Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getLookForward();
-  ray *= 1000.0f;
-
-  QuaxolSpec gridPos;
-  if(g_scene.m_pPhysics->RayCastToOpenQuaxol(
-      position, ray, &gridPos, NULL /*hitPos*/)) {
-    g_scene.SetQuaxolAt(gridPos, true /*present*/);
-    printf("Added quaxol at x:%d y:%d z:%d w:%d\n",
-        gridPos.x, gridPos.y, gridPos.z, gridPos.w);
-  }
-}
-
-void RemoveQuaxolUnderCursor() {
-  Vec4f position = g_camera.getCameraPos();
-  Vec4f ray = g_camera.getLookForward();
-  ray *= 1000.0f;
-
-  QuaxolSpec gridPos;
-  if(g_scene.m_pPhysics->RayCastToPresentQuaxol(
-      position, ray, &gridPos, NULL /*hitPos*/)) {
-    g_scene.SetQuaxolAt(gridPos, false /*present*/);
-    printf("Removed quaxol at x:%d y:%d z:%d w:%d\n",
-        gridPos.x, gridPos.y, gridPos.z, gridPos.w);
-  }
-}
-
 void AddRaycastEntity() {
   Vec4f position = g_camera.getCameraPos();
   Vec4f ray = g_camera.getLookForward();
@@ -861,14 +833,14 @@ void AsciiKeyUpdate(int key, bool isShift) {
       }
     } break;
     case 'z' : {
+      g_inputHandler.DoCommand("inputAddQuaxol", g_renderer.GetFrameTimeF());
       //AddRaycastEntity();
-      AddQuaxolUnderCursor();
     } break;
     case 'X' : {
       AddTesseractLine();
     } break;
     case 'Z' : {
-      RemoveQuaxolUnderCursor();
+      g_inputHandler.DoCommand("inputRemoveQuaxol", g_renderer.GetFrameTimeF());
     } break;
     case 'C' : {
       if (g_vr) {

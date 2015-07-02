@@ -144,4 +144,11 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
   }
 }
 
+void InputHandler::DoCommand(const std::string& command, float frameTime) {
+  for (auto inputTarget : m_inputTargets) {
+    inputTarget->SendSignal(command,
+      SignalN<float>(), frameTime);
+  }
+}
+
 } // namespace fd

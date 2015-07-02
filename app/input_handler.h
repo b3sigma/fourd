@@ -49,6 +49,8 @@ public:
   void PollJoysticks();
   void ApplyJoystickInput(float frameTime);
 
+  void DoCommand(const std::string& command, float frameTime);
+
   void AddInputTarget(ComponentBus* bus);
 };
 

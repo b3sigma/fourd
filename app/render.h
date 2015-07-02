@@ -82,6 +82,7 @@ public:
 
   void UpdateFrameTime();
   void Step();
+  float GetFrameTimeF() { return (float)GetFrameTime(); } // so lazy
   double GetFrameTime();
   double GetTotalTime();
 
