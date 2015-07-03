@@ -49,6 +49,7 @@ X add bunch of quaxols in a line
 Esc quit
 
 Minimal TODOs:
+* Better fix for solid/blendy interaction alignment
 * Make a ui directive
 * Make a glowy goal with level transition
 * Create a super basic level
