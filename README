@@ -61,7 +61,7 @@ Game TODOs:
 * more visualization attempts
 ** Multi-texture render target?
 *** Depthy to 0, alpha to 1
-*** would still need compose pass
+*** would still need compose passt
 ** Single pass conditional depth writes?
 ** sub-surface w mode?
 ** Alpha test cleaner clipping?
@@ -82,6 +82,7 @@ Game TODOs:
 * Improve multipass fillrate performance (overdraw is overboard)
 ** Lower resolution blendy?
 ** Try blend vs compose for VR final pass
+* Add a map
 
 QM/Physics TODOs:
 * Add spin system
