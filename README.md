@@ -2,6 +2,8 @@ Four dimensional VR minecraft thing!
 OpenGL, Oculus and C++11ish.
 Actually maybe I should advertise as 5 dimensional as it's 4 space + 1 time!
 
+![Project picture](data/textures/poster.jpg?raw=true)
+
 Getting:
 * Make sure you use --recursive on your clone command as this project uses submodules.
 * If you already didn't do that, do this sequence:
