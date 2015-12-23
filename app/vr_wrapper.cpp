@@ -86,10 +86,10 @@ public:
     return true;
   }
   
-  virtual bool InitializeWindow(PlatformWindow* pWindow) {
+  virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) {
     m_pWindow = pWindow;
     
-    const float pixelsPerDisplayPixel = 1.0f; //0.25f; // 1.0f;
+    const float pixelsPerDisplayPixel = pixelScale; //0.25f; // 1.0f;
     bool createSuccess = true;
     for (int e = 0; e < 2; e++) {
       ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(

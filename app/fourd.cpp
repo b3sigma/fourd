@@ -29,6 +29,7 @@
 #include "../common/components/periodic_motion.h"
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
+#include "../common/thirdparty/argh.h"
 #include "entity.h"
 #include "imgui_wrapper.h"
 #include "input_handler.h"
@@ -1071,7 +1072,14 @@ void glfwErrorCallback(int error, const char* description) {
 // Soooo tacky!
 #define RUN_TESTS
 
-int main(int argc, char *argv[]) {
+int main(int argc, const char *argv[]) {
+
+  bool disableUI = false;
+  float pixelScale = 1.0f;
+  argh::Argh cmd_line;
+  cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled, "--disable_ui", "Disable the gui, useful for when it sucks");
+  cmd_line.addOption<float>(pixelScale, 1.0f, "--pixel_scale", "How much to reduce the render target to improve fill rate");
+  cmd_line.parse(argc, argv);
 
   StaticInitialize();
 
@@ -1147,7 +1155,7 @@ int main(int argc, char *argv[]) {
   ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/);
   //glfwSetKeyCallback(g_glfwWindow, Key); // If not using ImGui, put this back.
   
-  g_vr->InitializeWindow(g_platformWindow);
+  g_vr->InitializeWindow(g_platformWindow, pixelScale);
 
   glfwSetCursorPosCallback(g_glfwWindow, PassiveMotion);
 

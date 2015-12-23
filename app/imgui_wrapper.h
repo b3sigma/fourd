@@ -10,7 +10,9 @@ class Shader;
 class Render;
 
 class ImGuiWrapper {
-public:
+public: // needs to be public
+  static bool s_bGuiDisabled;
+public: // probably just because of lazy
   static GLFWwindow* s_glfwWindow;
   static GLFWmousebuttonfun s_chainedMouseButtonCallback;
   static GLFWkeyfun s_chainedKeyCallback;

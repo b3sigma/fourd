@@ -21,6 +21,7 @@
 
 namespace fd {
 
+bool ImGuiWrapper::s_bGuiDisabled = false;
 GLFWwindow* ImGuiWrapper::s_glfwWindow = NULL;
 GLFWmousebuttonfun ImGuiWrapper::s_chainedMouseButtonCallback = NULL;
 GLFWkeyfun ImGuiWrapper::s_chainedKeyCallback = NULL;
@@ -400,6 +401,10 @@ void RenderVRDebugOverlay(float frameTime, const Vec2f& offset, ::fd::Render* re
 }
 
 void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* renderer, bool doUpdate) {
+  if(ImGuiWrapper::s_bGuiDisabled) {
+    return;
+  }
+
   if(doUpdate) {
     RenderFpsOverlay(frameTime, offset);
     //RenderVRDebugOverlay(frameTime, offset, renderer);

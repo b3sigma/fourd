@@ -19,7 +19,7 @@ public:
   static bool IsUsingVR() { return s_UsingVR; }
 
   // so with glfw, ovr must happen first, then glfw, then ovr window
-  virtual bool InitializeWindow(PlatformWindow* pWindow) { return false; }
+  virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) { return false; }
   
   virtual void StartFrame() {}
   virtual void StartLeftEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
