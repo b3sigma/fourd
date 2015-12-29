@@ -112,6 +112,10 @@
     <ClCompile Include="..\common\player_capsule_shape.cpp" />
     <ClCompile Include="..\common\quaxol.cpp" />
     <ClCompile Include="..\common\raycast_shape.cpp" />
+    <ClCompile Include="..\common\thirdparty\jenn3d\definitions.cpp" />
+    <ClCompile Include="..\common\thirdparty\jenn3d\linalg.cpp" />
+    <ClCompile Include="..\common\thirdparty\jenn3d\polytopes.cpp" />
+    <ClCompile Include="..\common\thirdparty\jenn3d\todd_coxeter.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
   </ItemGroup>
@@ -148,6 +152,10 @@
     <ClInclude Include="..\common\player_capsule_shape.h" />
     <ClInclude Include="..\common\quaxol.h" />
     <ClInclude Include="..\common\raycast_shape.h" />
+    <ClInclude Include="..\common\thirdparty\jenn3d\definitions.h" />
+    <ClInclude Include="..\common\thirdparty\jenn3d\linalg.h" />
+    <ClInclude Include="..\common\thirdparty\jenn3d\polytopes.h" />
+    <ClInclude Include="..\common\thirdparty\jenn3d\todd_coxeter.h" />
     <ClInclude Include="..\common\thirdparty\signals\Delegate.h" />
     <ClInclude Include="..\common\thirdparty\signals\Signal.h" />
     <ClInclude Include="..\common\timer.h" />

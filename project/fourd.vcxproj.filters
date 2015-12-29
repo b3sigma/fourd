@@ -96,6 +96,18 @@
     <ClCompile Include="..\app\components\scene_modifier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\thirdparty\jenn3d\todd_coxeter.cpp">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\thirdparty\jenn3d\linalg.cpp">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\thirdparty\jenn3d\polytopes.cpp">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\thirdparty\jenn3d\definitions.cpp">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -211,6 +223,18 @@
     </ClInclude>
     <ClInclude Include="..\common\components\camera_follow.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\thirdparty\jenn3d\definitions.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\thirdparty\jenn3d\linalg.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\thirdparty\jenn3d\polytopes.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\thirdparty\jenn3d\todd_coxeter.h">
+      <Filter>thirdparty</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

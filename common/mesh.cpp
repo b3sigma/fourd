@@ -1114,8 +1114,10 @@ void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
 }
 
 void Mesh::build120cell(float radius, Vec4f offset) {
-  buildPolytope(radius, offset, 5 /*vertsPerPoly*/, 3 /*polysPerCellVert*/,
-      3 /*cellsPerEdge*/);
+
+  // Don't think this worked
+  //buildPolytope(radius, offset, 5 /*vertsPerPoly*/, 3 /*polysPerCellVert*/,
+  //    3 /*cellsPerEdge*/);
 }
 
 int Mesh::addUniqueVert(const Vec4f& vert) { // wow this is slow and inaccurate
