@@ -210,6 +210,9 @@ enum EyeCandyTypes {
   EyeCandyCube,
   EyeCandyTesseract,
   EyeCandy16Cell,
+  EyeCandy24Cell,
+  EyeCandy120Cell,
+  EyeCandy600Cell,
 };
 typedef std::list<std::unique_ptr<Mesh>> MeshList;
 MeshList g_eyeCandyMeshes;
@@ -231,6 +234,21 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
     case EyeCandy16Cell:
       candy->build16cell(size, Vec4f());
       break;
+    case EyeCandy24Cell: {
+      const float shift = 8.5f;
+      const Vec4f offsetSize(shift, shift, 0.5f, shift);
+      candy->buildCaylay24Cell(size, offsetSize);
+    } break;
+    case EyeCandy120Cell: {
+      const float shift = 5.5f;
+      const Vec4f offsetSize(size / 2 + shift, size / 2 + shift, shift, size / 2 + shift);
+      candy->buildCaylay120Cell(size, offsetSize);
+    } break;
+    case EyeCandy600Cell: {
+      const float shift = 5.5f;
+      const Vec4f offsetSize(size / 2 + shift, size / 2 + shift, shift, size / 2 + shift);
+      candy->buildCaylay600Cell(size, offsetSize);
+    } break;
   }
 
   Entity* pEntity = g_scene.AddEntity();
@@ -252,6 +270,9 @@ void AddEyeCandy() {
   AddEyeCandy(EyeCandyCube, Vec4f(-50.0f, 00.0f, 00.0f, 0.0f));
   AddEyeCandy(EyeCandyTesseract, Vec4f(-50.0f, 00.0f, 50.0f, 0.0f));
   AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 0.0f));
+  AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 200.0f, 0.0f));
+  AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 200.0f, 0.0f));
 
   g_shader = savedShader;
   g_scene.m_pQuaxolShader = g_shader;
@@ -518,7 +539,7 @@ void AddRaycastEntity() {
     Entity* pEntity = g_scene.AddEntity();
     // ugh need like a mesh manager and better approach to shader handling
     pEntity->Initialize(&tesseract, g_shader, NULL);
-    pEntity->m_orientation.storeScale(0.1f);
+    //pEntity->m_orientation.storeScale(10.0f);
 
     pEntity->m_position = position + ray.normalized() * dist;
 
@@ -695,7 +716,8 @@ void AsciiKeyUpdate(int key, bool isShift) {
     } break;
     case '6' : {
       //tesseract.build120cell(10.0f, Vec4f(0,0,0,0));
-      tesseract.buildCircle(10.0f, Vec4f(10.5, 0.5, 0.5, 0.5), Vec4f(1, 0, 0, 0), Vec4f(0, 1, 0, 0), 6);
+      //tesseract.buildCircle(10.0f, Vec4f(10.5, 0.5, 0.5, 0.5), Vec4f(1, 0, 0, 0), Vec4f(0, 1, 0, 0), 6);
+      tesseract.buildCaylayTesseract(10.0f, Vec4f(05.5, 05.5, 05.5, 05.5));
     } break;
     case '7' : {
       tesseract.buildCylinder(10.0f, 10.f, 60);
@@ -835,7 +857,9 @@ void AsciiKeyUpdate(int key, bool isShift) {
     } break;
     case 'z' : {
       g_inputHandler.DoCommand("inputAddQuaxol", g_renderer.GetFrameTimeF());
-      //AddRaycastEntity();
+    } break;
+    case 'S' : {
+      AddRaycastEntity();
     } break;
     case 'X' : {
       AddTesseractLine();

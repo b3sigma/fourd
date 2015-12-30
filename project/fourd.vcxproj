@@ -168,12 +168,14 @@
     <None Include="..\data\fragAlphaTest.glsl" />
     <None Include="..\data\fragAlphaTestTex.glsl" />
     <None Include="..\data\fragColorBlend.glsl" />
+    <None Include="..\data\fragColorBlendClipped.glsl" />
     <None Include="..\data\fragFourd.glsl" />
     <None Include="..\data\fragTrivial.glsl" />
     <None Include="..\data\vertAlphaTest.glsl" />
     <None Include="..\data\vertAlphaTestTex.glsl" />
     <None Include="..\data\vertBlendNoTex.glsl" />
     <None Include="..\data\vertColorBlend.glsl" />
+    <None Include="..\data\vertColorBlendClipped.glsl" />
     <None Include="..\data\vertCommonTransform.glsl" />
     <None Include="..\data\vertFourd.glsl" />
     <None Include="..\data\vertTrivial.glsl" />

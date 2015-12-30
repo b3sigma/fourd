@@ -34,9 +34,9 @@ void main() {
   
   //fragCol0.r = 1.0 - abs((savedW - 0.5) * 2.0);
   //fragCol0.b = mod(abs(threeSpace.x / 10), 1.0);
-	fragCol0.r = mod(abs(vertPosition.x / 10.0), 2.0) + 0.5;
-	fragCol0.g = mod(abs(vertPosition.z / 10.0), 2.0) + 0.5;
-	fragCol0.b = mod(abs(vertPosition.w / 10.0), 2.0) + 0.5;
+	fragCol0.r = mod(abs(vertPosition.x / 10.0), 2.0); //, 0.1);
+	fragCol0.g = mod(abs(vertPosition.z / 10.0), 2.0); //, 0.1);
+	fragCol0.b = mod(abs(vertPosition.w / 10.0), 2.0); //, 0.1);
 	//fragCol0.g = vertColor.y;
   //fragCol0.r = abs(worldSpace.z / 10);
   //fragCol0.b = abs(worldSpace.w / 10);
@@ -45,8 +45,8 @@ void main() {
 	//fragCol0.xyz = worldSpace.xyz;
 	//fragCol0.xyz = homogenousCoords.xyz;
 	//fragCol0.xyz = fragHPos.xyz;
-	fragCol0.rgb = max(fragCol0.rgb, vec3(0,0,0));
-	fragCol0.rgb += vec3(0.1,0.1,0.1);
+	fragCol0.rgb = max(fragCol0.rgb, vec3(0.1,0,0));
+	//fragCol0.rgb += vec3(0.1,0.1,0.1);
 	//fragCol0.r = vertposition.w;
 
   gl_Position = fragHPos;

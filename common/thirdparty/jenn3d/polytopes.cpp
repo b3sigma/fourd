@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "polytopes.h"
+#include "todd_coxeter.h"
 //#include "drawing.h"
 //#include "projection.h"
 #include <cstring>
@@ -57,12 +58,13 @@ Vect int2Vect (int w)
     return result;
 }
 
-void view (int c12, int c13, int c14, int c23, int c24, int c34,
+ToddCoxeter::Graph* view (int c12, int c13, int c14, int c23, int c24, int c34,
            int g1, int g2, int g3,
            int edges, int faces, int weights);
-void select (int code, int edges, int faces, int weights)
+
+ToddCoxeter::Graph* select (int code, int edges, int faces, int weights)
 {//selects based on digit pattern CCCCCCGGG (WARNING: pack g's with zeros)
-    if (not code) return;
+    if (not code) return NULL;
 
     int g3 = code % 10; code /= 10;
     int g2 = code % 10; code /= 10;
@@ -75,11 +77,12 @@ void select (int code, int edges, int faces, int weights)
     int c13 = code % 10; code /= 10;
     int c12 = code % 10; code /= 10;
 
-    view(c12,c13,c14,c23,c24,c34,
+    return view(c12,c13,c14,c23,c24,c34,
          g1,g2,g3,
          edges, faces, weights);
 }
-void view (int c12, int c13, int c14, int c23, int c24, int c34,
+
+ToddCoxeter::Graph* view (int c12, int c13, int c14, int c23, int c24, int c34,
            int g1, int g2, int g3,
            int edges, int faces, int weights)
 {
@@ -149,18 +152,16 @@ void view (int c12, int c13, int c14, int c23, int c24, int c34,
     //define weights
     Vect weight_vect = int2Vect(weights);
 
-    view(arg_coxeter, gens, v_cogens, e_gens, f_gens, weight_vect);
+    return view(arg_coxeter, gens, v_cogens, e_gens, f_gens, weight_vect);
 }
 
-void view (const int* coxeter,
+ToddCoxeter::Graph* view (const int* coxeter,
            const WordList& gens,
            const WordList& v_cogens,
            const WordList& e_gens,
            const WordList& f_gens,
            const Vect& weights)
 {
-    static bool polytope_exists = false;
-
     const Logging::fake_ostream& os = logger.debug() << "setting polytope:";
     os << "\n  gens = ";
     for (unsigned i=0; i<gens.size(); ++i) {
@@ -180,23 +181,7 @@ void view (const int* coxeter,
     }
     os |0;
 
-    //TODO this probably needs to do something
-    //int params = 0;
-    //if (polytope_exists) {
-    //    params = drawing->get_params();
-    //    delete drawing;
-    //}
-
-    //drawing = new Drawings::Drawing(
-    //          new ToddCoxeter::Graph(coxeter, gens,
-    //                                 v_cogens, e_gens, f_gens, weights));
-
-    //if (polytope_exists) {
-    //    drawing->set_params(params);
-    //    projector->set_drawing();
-    //}
-
-    polytope_exists = true;
+    return new ToddCoxeter::Graph(coxeter, gens, v_cogens, e_gens, f_gens, weights);
 }
 
 }

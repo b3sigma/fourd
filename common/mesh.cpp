@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <vector>
 #include <map>
+#include <memory>
 #include <algorithm>
 #include <functional>
 #include "mesh.h"
 #include "fourmath.h"
+#include "thirdparty\jenn3d\polytopes.h"
 
 using namespace ::fd;
 
@@ -1175,6 +1177,74 @@ void Mesh::Shape::cleanupShapes(Shapes& shapes) {
   shapes.resize(0);
 }
 
+class JennGraphConverter : public MeshConverter {
+
+public:
+  JennGraphConverter() {}
+
+  static bool Convert(const jenn::ToddCoxeter::Graph* graph, Mesh* mesh, float radius, Vec4f offset) {
+    if(!graph || !mesh || graph->faces.empty())
+      return false;
+
+    Mesh::VecList& _verts = mesh->_verts;
+    Mesh::IndexList& _indices = mesh->_indices;
+    
+    int numVerts = (int)graph->points.size(); 
+    _verts.resize(numVerts);
+    for(int v = 0; v < numVerts; v++) {
+      const jenn::Vect& p = graph->points[v];
+      _verts[v].set(p[0], p[1], p[2], p[3]);
+      _verts[v] *= radius;
+      _verts[v] += offset;
+    }
+
+    int numFaces = (int)graph->faces.size();
+    // not sure if the assumption that all faces have the same length is always valid
+    int numIndicesGuess = numFaces * (graph->faces[0].size() - 2) * 3; // tri-list a polygon 
+    _indices.resize(0);
+    _indices.reserve(numIndicesGuess);
+    for(int f = 0; f < numFaces; f++) {
+      const jenn::ToddCoxeter::Ring& poly = graph->faces[f];
+      int polySize = poly.size();
+      int numTris = (polySize - 2);
+      for(int tri = 0; tri < numTris; tri++) {
+        _indices.push_back(poly[0]);
+        _indices.push_back(poly[1 + tri]);
+        _indices.push_back(poly[2 + tri]);
+      }
+    }
+
+    printf("Graph had %d faces, %d verts, made  %d indices %d tris\n", 
+        graph->faces.size(), graph->points.size(), _indices.size(), _indices.size() / 3);
+
+    return true;
+  }
+};
+
+void Mesh::buildCaylayTesseract(float radius, Vec4f offset) {
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::select(jenn::Polytope::the_8_cell));
+  JennGraphConverter::Convert(graph.get(), this, radius, offset);
+}
+
+void Mesh::buildCaylay16Cell(float radius, Vec4f offset) {
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::select(jenn::Polytope::the_16_cell));
+  JennGraphConverter::Convert(graph.get(), this, radius, offset);
+}
+
+void Mesh::buildCaylay120Cell(float radius, Vec4f offset) {
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::select(jenn::Polytope::the_120_cell));
+  JennGraphConverter::Convert(graph.get(), this, radius, offset);
+}
+
+void Mesh::buildCaylay24Cell(float radius, Vec4f offset) {
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::select(jenn::Polytope::the_24_cell));
+  JennGraphConverter::Convert(graph.get(), this, radius, offset);
+}
+
+void Mesh::buildCaylay600Cell(float radius, Vec4f offset) {
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::select(jenn::Polytope::the_600_cell));
+  JennGraphConverter::Convert(graph.get(), this, radius, offset);
+}
 
 #if 0 // currently abandoned approach to generic polytope creation
   {3,3,4} {4,3,3}, {5,3,3}

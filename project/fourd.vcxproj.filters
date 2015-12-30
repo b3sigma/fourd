@@ -277,5 +277,11 @@
     <None Include="..\data\vertAlphaTestTex.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\data\vertColorBlendClipped.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\fragColorBlendClipped.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

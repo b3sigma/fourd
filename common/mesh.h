@@ -11,9 +11,15 @@
 
 namespace fd {
 
+class MeshConverter {
+public:
+  MeshConverter() {}
+};
+
 // Windings are a mess and should be considered meaningless.
 class Mesh {
 public:
+  friend MeshConverter;
 
   typedef std::vector<Vec4f> VecList;
   VecList _verts;
@@ -51,6 +57,12 @@ public:
   void buildGeneralized16cell(float radius, Vec4f offset);
   void build120cell(float radius, Vec4f offset); // {5,3,3}
   void buildGeneralizedTesseract(float size, const Vec4f& start);
+  
+  void buildCaylayTesseract(float radius, Vec4f offset);
+  void buildCaylay16Cell(float radius, Vec4f offset);
+  void buildCaylay120Cell(float radius, Vec4f offset);
+  void buildCaylay24Cell(float radius, Vec4f offset);
+  void buildCaylay600Cell(float radius, Vec4f offset);
 
   void buildQuaxolTesseract(float size); // assumptions about tri positions
 

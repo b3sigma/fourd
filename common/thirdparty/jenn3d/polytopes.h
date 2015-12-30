@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "definitions.h"
 #include "linalg.h"
+#include "todd_coxeter.h"
+
 #include <vector>
 
 namespace jenn {
@@ -38,13 +40,13 @@ Word int2word (int g);
 Word str2word (const char* g);
 Vect int2Vect (int w);
 
-void view (const int* coxeter,  //upper triang of cox. matrix
+ToddCoxeter::Graph* view (const int* coxeter,  //upper triang of cox. matrix
    const WordList& gens,        //subgroup generators
    const WordList& v_cogens,    //vertex-stabilizing words
    const WordList& e_gens,      //edge words: origin to ___
    const WordList& f_gens,      //generator pairs, or empty word for all faces
    const Vect& weights);        //vertex weights, for positioning center
-void select (int code, int edges=1111, int faces=111111, int weights=1111);
+ToddCoxeter::Graph* select (int code, int edges=1111, int faces=111111, int weights=1111);
 
 
 //named polytopes
