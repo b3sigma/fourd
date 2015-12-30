@@ -37,14 +37,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 namespace jenn {
 
 
-template<class T> inline T min (T lhs, T rhs) { return (lhs<rhs) ? lhs:rhs; }
-template<class T> inline T max (T lhs, T rhs) { return (lhs>rhs) ? lhs:rhs; }
+  template<class T> inline T min(T lhs, T rhs) { return (lhs < rhs) ? lhs : rhs; }
+  template<class T> inline T max(T lhs, T rhs) { return (lhs > rhs) ? lhs : rhs; }
 
-//================================ debugging ================================
+  //================================ debugging ================================
 
 #ifndef DEBUG_LEVEL
-  #define DEBUG_LEVEL 0
-  #define NDEBUG
+#define DEBUG_LEVEL 0
+#define NDEBUG
 #endif
 
 #define LATER() {logger.error()\
@@ -63,132 +63,134 @@ template<class T> inline T max (T lhs, T rhs) { return (lhs>rhs) ? lhs:rhs; }
 #define Assert2(cond,mess) Assert(((DEBUG_LEVEL<2)or(cond)),mess)
 #define Assert3(cond,mess) Assert(((DEBUG_LEVEL<3)or(cond)),mess)
 
-//================================ logging ================================
+  //================================ logging ================================
 
-namespace Logging
-{
+  namespace Logging
+  {
 
 #ifdef LOG_FILE
-extern std::ofstream logFile;
+    extern std::ofstream logFile;
 #endif
 
-class fake_ostream
-{
-private:
-    const bool m_live;
-public:
-    fake_ostream (bool live) : m_live(live) {}
-    template <class Message>
-    const fake_ostream& operator << (const Message& message) const
+    class fake_ostream
     {
+    private:
+      const bool m_live;
+    public:
+      fake_ostream(bool live) : m_live(live) {}
+      template <class Message>
+      const fake_ostream& operator << (const Message& message) const
+      {
 #ifdef LOG_FILE
         if (m_live) { logFile << message; }
 #else
         if (m_live) { std::cout << message; }
 #endif
         return *this;
-    }
-    const fake_ostream& operator | (int) const
-    {
+      }
+      const fake_ostream& operator | (int) const
+      {
 #ifdef LOG_FILE
         if (m_live) { logFile << std::endl; }
 #else
         if (m_live) { std::cout << std::endl; }
 #endif
         return *this;
-    }
-};
+      }
+    };
 
-const fake_ostream live_out(true), dead_out(false);
+    const fake_ostream live_out(true), dead_out(false);
 
-//title/section label
-void title (std::string name);
+    //title/section label
+    void title(std::string name);
 
-//indentation stuff
-const int length = 64;
-const int stride = 2;
-const char* const spaces = "                                                                " + length;
-extern int indentLevel;
-inline void indent ();
-inline void outdent ();
-inline const char* indentation () { return spaces - indentLevel * stride; }
-class IndentBlock
-{
-public:
-    IndentBlock () { indent (); }
-    ~IndentBlock () { outdent (); }
-};
+    //indentation stuff
+    const int length = 64;
+    const int stride = 2;
+    const char* const spaces = "                                                                " + length;
+    extern int indentLevel;
+    inline void indent();
+    inline void outdent();
+    inline const char* indentation() { return spaces - indentLevel * stride; }
+    class IndentBlock
+    {
+    public:
+      IndentBlock() { indent(); }
+      ~IndentBlock() { outdent(); }
+    };
 
-//log channels
-enum LogLevel {ERROR, WARNING, INFO, DEBUG, DEBUG1};
-const std::string levelNames[5] =
-{
-    "\033[31mERROR\033[39m",  //red
-    //"\033[36mWARNING\033[39m",//cyan
-    "\033[31mwarning\033[39m",//red
-    "\033[32minfo\033[39m",   //green
-    "\033[33mdebug\033[39m",  //yellow
-    "\033[33mdebug1\033[39m"  //yellow
-};
-class Logger
-{
-private:
-    const std::string m_name;
-    const LogLevel m_level;
-public:
-    Logger (std::string name, LogLevel level = INFO)
+    //log channels
+    enum LogLevel { ERROR, WARNING, INFO, DEBUG, DEBUG1 };
+    const std::string levelNames[5] =
+    {
+      "\033[31mERROR\033[39m",  //red
+      //"\033[36mWARNING\033[39m",//cyan
+      "\033[31mwarning\033[39m",//red
+      "\033[32minfo\033[39m",   //green
+      "\033[33mdebug\033[39m",  //yellow
+      "\033[33mdebug1\033[39m"  //yellow
+    };
+    class Logger
+    {
+    private:
+      const std::string m_name;
+      const LogLevel m_level;
+    public:
+      Logger(std::string name, LogLevel level = INFO)
         : m_name(name), m_level(level) {}
-    const fake_ostream& active_log (LogLevel level) const;
+      const fake_ostream& active_log(LogLevel level) const;
 
-    //heading
-    void static heading (char* label);
+      //heading
+      void static heading(char* label);
 
-    //log
-    const fake_ostream& log (LogLevel level) const
-    { return (level <= m_level) ? active_log(level) : dead_out; }
-    const fake_ostream& error   () const { return log(ERROR); }
-    const fake_ostream& warning () const { return log(WARNING); }
-    const fake_ostream& info    () const { return log(INFO); }
-    const fake_ostream& debug   () const { return log(DEBUG); }
-    const fake_ostream& debug1  () const { return log(DEBUG1); }
+      //log
+      const fake_ostream& log(LogLevel level) const
+      {
+        return (level <= m_level) ? active_log(level) : dead_out;
+      }
+      const fake_ostream& error() const { return log(ERROR); }
+      const fake_ostream& warning() const { return log(WARNING); }
+      const fake_ostream& info() const { return log(INFO); }
+      const fake_ostream& debug() const { return log(DEBUG); }
+      const fake_ostream& debug1() const { return log(DEBUG1); }
 
-    //indent
-    void indent_ (LogLevel level) const { if (level <= m_level) indent(); }
-    void indent_info   () const { return indent_(INFO); }
-    void indent_debug  () const { return indent_(DEBUG); }
-    void indent_debug1 () const { return indent_(DEBUG1); }
+      //indent
+      void indent_(LogLevel level) const { if (level <= m_level) indent(); }
+      void indent_info() const { return indent_(INFO); }
+      void indent_debug() const { return indent_(DEBUG); }
+      void indent_debug1() const { return indent_(DEBUG1); }
 
-    //outdent
-    void outdent_ (LogLevel level) const { if (level <= m_level) outdent(); }
-    void outdent_info   () const { return outdent_(INFO); }
-    void outdent_debug  () const { return outdent_(DEBUG); }
-    void outdent_debug1 () const { return outdent_(DEBUG1); }
-};
-const Logger logger ("general", INFO);
+      //outdent
+      void outdent_(LogLevel level) const { if (level <= m_level) outdent(); }
+      void outdent_info() const { return outdent_(INFO); }
+      void outdent_debug() const { return outdent_(DEBUG); }
+      void outdent_debug1() const { return outdent_(DEBUG1); }
+    };
+    const Logger logger("general", INFO);
 
-inline void indent ()
-{
-    ++indentLevel;
-    Assert1(indentLevel*stride < length, "indent level overflow");
-}
-inline void outdent ()
-{
-    --indentLevel;
-    Assert1(indentLevel >= 0, "indent level underflow");
-}
+    inline void indent()
+    {
+      ++indentLevel;
+      Assert1(indentLevel*stride < length, "indent level overflow");
+    }
+    inline void outdent()
+    {
+      --indentLevel;
+      Assert1(indentLevel >= 0, "indent level underflow");
+    }
 
-}
+  }
 
-//[ memory stuff ]------------------------------------------
-inline void mem_err(void)
-{
+  //[ memory stuff ]------------------------------------------
+  inline void mem_err(void)
+  {
     Logging::logger.error() << "\nerror: out of memory";
-}
+  }
 
-//[ time measurement ]----------------------------------
-long time_seed ();
-float elapsed_time ();
-float time_difference ();
+  //[ time measurement ]----------------------------------
+  long time_seed();
+  float elapsed_time();
+  float time_difference();
 
 
 }; //namespace jenn

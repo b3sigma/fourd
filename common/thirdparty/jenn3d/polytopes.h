@@ -28,44 +28,44 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace jenn {
 
-namespace Polytope
-{
+  namespace Polytope
+  {
 
-const Logging::Logger logger("poly", Logging::INFO);
+    const Logging::Logger logger("poly", Logging::INFO);
 
-//conversions
-typedef std::vector<int> Word;
-typedef std::vector<Word> WordList;
-Word int2word (int g);
-Word str2word (const char* g);
-Vect int2Vect (int w);
+    //conversions
+    typedef std::vector<int> Word;
+    typedef std::vector<Word> WordList;
+    Word int2word(int g);
+    Word str2word(const char* g);
+    Vect int2Vect(int w);
 
-ToddCoxeter::Graph* view (const int* coxeter,  //upper triang of cox. matrix
-   const WordList& gens,        //subgroup generators
-   const WordList& v_cogens,    //vertex-stabilizing words
-   const WordList& e_gens,      //edge words: origin to ___
-   const WordList& f_gens,      //generator pairs, or empty word for all faces
-   const Vect& weights);        //vertex weights, for positioning center
-ToddCoxeter::Graph* select (int code, int edges=1111, int faces=111111, int weights=1111);
+    ToddCoxeter::Graph* view(const int* coxeter,  //upper triang of cox. matrix
+      const WordList& gens,        //subgroup generators
+      const WordList& v_cogens,    //vertex-stabilizing words
+      const WordList& e_gens,      //edge words: origin to ___
+      const WordList& f_gens,      //generator pairs, or empty word for all faces
+      const Vect& weights);        //vertex weights, for positioning center
+    ToddCoxeter::Graph* select(int code, int edges = 1111, int faces = 111111, int weights = 1111);
 
 
-//named polytopes
-const int the_5_cell    = 322323234;
-const int the_8_cell    = 422323234;
-const int the_16_cell   = 322324234;
-const int the_24_cell   = 322423234;
-const int the_120_cell  = 522323234;
-const int the_600_cell  = 322325234;
+    //named polytopes
+    const int the_5_cell = 322323234;
+    const int the_8_cell = 422323234;
+    const int the_16_cell = 322324234;
+    const int the_24_cell = 322423234;
+    const int the_120_cell = 522323234;
+    const int the_600_cell = 322325234;
 
-const int graph_torus   = 922229000;
+    const int graph_torus = 922229000;
 
-const int graph_333     = 322323000;
-const int graph_Y       = 333222000;
-const int graph_334     = 422323000;
-const int graph_343     = 322423000;
-const int graph_335     = 522323000;
+    const int graph_333 = 322323000;
+    const int graph_Y = 333222000;
+    const int graph_334 = 422323000;
+    const int graph_343 = 322423000;
+    const int graph_335 = 522323000;
 
-}
+  }
 
 }; // namespace jenn
 

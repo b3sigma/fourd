@@ -26,33 +26,33 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace jenn {
 
-namespace ToddCoxeter
-{
+  namespace ToddCoxeter
+  {
 
-const Logging::Logger logger("t/c", Logging::INFO);
+    const Logging::Logger logger("t/c", Logging::INFO);
 
-//cayley coset graph
-typedef std::vector<int> Ring;
-typedef std::vector<int> Word;
-class Graph
-{
-public:
-    int ord, deg, ord_f;
-    std::vector<Word> adj; //[coset][edge]
-    std::vector<Ring> faces; //[face][corner]
-    std::vector<Vect> points;
-    std::vector<Vect> normals;
-    Graph (const int *cartan,
-           const std::vector<Word>& gens,
-           const std::vector<Word>& v_cogens,
-           const std::vector<Word>& e_gens,
-           const std::vector<Word>& f_gens,
-           const Vect& weights);
+    //cayley coset graph
+    typedef std::vector<int> Ring;
+    typedef std::vector<int> Word;
+    class Graph
+    {
+    public:
+      int ord, deg, ord_f;
+      std::vector<Word> adj; //[coset][edge]
+      std::vector<Ring> faces; //[face][corner]
+      std::vector<Vect> points;
+      std::vector<Vect> normals;
+      Graph(const int *cartan,
+        const std::vector<Word>& gens,
+        const std::vector<Word>& v_cogens,
+        const std::vector<Word>& e_gens,
+        const std::vector<Word>& f_gens,
+        const Vect& weights);
 
-    void save (const char* filename = "jenn.graph");
-};
+      void save(const char* filename = "jenn.graph");
+    };
 
-}
+  }
 
 }; //namespace jenn {
 
