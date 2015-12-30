@@ -69,6 +69,9 @@ GLFWwindow* g_glfwWindow = NULL;
 ::fd::VRWrapper* g_vr = NULL;
 Mat4f g_debugHeadPose;
 
+bool g_startupAddEyeCandy = false;
+std::string g_startupLevel = "current.bin";
+
 fd::Shader* LoadShader(const char* shaderName) {
   static std::string g_currentShader;
   std::string shaderDir = "data\\";
@@ -155,7 +158,12 @@ bool LoadLevel(const char* levelName) {
     if(binExtStart != std::string::npos) {
       baseNameWithExt = nameBase;
     } else {
-      baseNameWithExt = nameBase + nameExt;
+      size_t txtExtStart = nameBase.rfind(nameExt);
+      if(txtExtStart != std::string::npos) {
+        baseNameWithExt = nameBase;
+      } else {
+        baseNameWithExt = nameBase + nameExt;
+      }
     }
   }
   std::string fullName = g_levelPath + baseNameWithExt;
@@ -236,7 +244,7 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
       break;
     case EyeCandy24Cell: {
       const float shift = 8.5f;
-      const Vec4f offsetSize(shift, shift, 0.5f, shift);
+      const Vec4f offsetSize(shift, shift, 0.5f, shift * 2);
       candy->buildCaylay24Cell(size, offsetSize);
     } break;
     case EyeCandy120Cell: {
@@ -261,7 +269,7 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
       -20.0f, true));
 }
 
-void AddEyeCandy() {
+void AddAllEyeCandy() {
 
   // yeah yeah side effects blah blah
   Shader* savedShader = g_shader;
@@ -342,7 +350,8 @@ bool Initialize(int width, int height) {
     exit(-1);
   }
 
-  LoadLevel("current.bin");
+  LoadLevel(g_startupLevel.c_str());
+  //LoadLevel("current.bin");
   //LoadLevel("4d_double_base");
   //LoadLevel("plus_minus_centered");
   //LoadLevel("pillar");
@@ -372,7 +381,9 @@ bool Initialize(int width, int height) {
     WasGLErrorPlusPrint();
   }
 
-  AddEyeCandy();
+  if(g_startupAddEyeCandy) {
+    AddAllEyeCandy();
+  }
 
   return true;
 }
@@ -696,7 +707,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       }
     } break;
     case '=' : {
-      AddEyeCandy();
+      AddAllEyeCandy();
     } break;
     case '1' : {
       tesseract.buildQuad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
@@ -1098,12 +1109,24 @@ void glfwErrorCallback(int error, const char* description) {
 
 int main(int argc, const char *argv[]) {
 
-  bool disableUI = false;
+  bool displayUsage = false;
   float pixelScale = 1.0f;
   argh::Argh cmd_line;
+  cmd_line.addFlag(displayUsage, "--help", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(displayUsage, "-h", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(displayUsage, "-?", "Display help (you probably figured this one out)");
   cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled, "--disable_ui", "Disable the gui, useful for when it sucks");
-  cmd_line.addOption<float>(pixelScale, 1.0f, "--pixel_scale", "How much to reduce the render target to improve fill rate");
+  cmd_line.addOption<float>(pixelScale, pixelScale, "--pixel_scale", "How much to reduce the render target to improve fill rate");
+  cmd_line.addOption<std::string>(g_startupLevel, g_startupLevel, "--start_level", "Level name to start with, without path, with extension"); 
+  cmd_line.addFlag(g_startupAddEyeCandy, "--add_eye_candy", "Adds a bunch of shapes on startup");
   cmd_line.parse(argc, argv);
+
+  if(displayUsage) {
+    printf("Helpy?\n%s\n", cmd_line.getUsage().c_str());
+    return 0;
+  }
+
+  printf("Start level is %s\n", g_startupLevel.c_str());
 
   StaticInitialize();
 

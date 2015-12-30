@@ -75,7 +75,6 @@ Game TODOs:
 * quaxol streaming
 * refactor input keys
 * add console
-* Add 120 cell
 * Load compressed textures with mipmaps directly
 * Cleanup quaxol size/worldscale
 * Separate physics into modular system

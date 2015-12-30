@@ -43,8 +43,10 @@ namespace jenn {
   //================================ debugging ================================
 
 #ifndef DEBUG_LEVEL
-#define DEBUG_LEVEL 0
-#define NDEBUG
+  #define DEBUG_LEVEL 0
+  #ifndef NDEBUG
+    #define NDEBUG
+  #endif // NDEBUG
 #endif
 
 #define LATER() {logger.error()\
