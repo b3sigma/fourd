@@ -38,6 +38,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "glhelper.h"
+#include "components/reset_watcher.h"
 #include "components/scene_modifier.h"
 
 #define USE_VR
@@ -68,6 +69,7 @@ GLFWwindow* g_glfwWindow = NULL;
 
 ::fd::VRWrapper* g_vr = NULL;
 Mat4f g_debugHeadPose;
+float g_screensaverTime = 0.0f; // 0 is disabled
 
 fd::Shader* LoadShader(const char* shaderName) {
   static std::string g_currentShader;
@@ -271,8 +273,8 @@ void AddEyeCandy() {
   AddEyeCandy(EyeCandyTesseract, Vec4f(-50.0f, 00.0f, 50.0f, 0.0f));
   AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 0.0f));
   AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 200.0f, 0.0f));
-  AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
-  AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 200.0f, 0.0f));
+  //AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 200.0f, 0.0f));
 
   g_shader = savedShader;
   g_scene.m_pQuaxolShader = g_shader;
@@ -311,10 +313,17 @@ bool Initialize(int width, int height) {
   g_inputHandler.AddInputTarget(&(g_camera.GetComponentBus()));
   g_inputHandler.AddDefaultBindings();
 
+  if (g_screensaverTime > 0.0f) {
+    // reset the game world after 5 minutes of inactivity
+    g_camera.GetComponentBus().AddComponent(new ResetWatcherComponent(g_screensaverTime));
+  }
+
   Entity* playerEntity = g_scene.AddEntity();
   playerEntity->GetComponentBus().AddComponent(new CameraFollowComponent(&g_camera));
   playerEntity->GetComponentBus().AddComponent(new SceneModifierComponent());
   g_inputHandler.AddInputTarget(&(playerEntity->GetComponentBus()));
+
+  g_camera.MarkStartingPosition();
 
   //static Vec4f clearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
@@ -733,6 +742,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       exit(0);
     } break;
     case ' ' : {
+      g_camera.GetComponentBus().SendSignal("AnyInput", SignalN<>());
       g_camera.GetComponentBus().SendSignal("inputJump",
           SignalN<float>(), (float)g_renderer.GetFrameTime());
     } break;
@@ -1103,7 +1113,10 @@ int main(int argc, const char *argv[]) {
   argh::Argh cmd_line;
   cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled, "--disable_ui", "Disable the gui, useful for when it sucks");
   cmd_line.addOption<float>(pixelScale, 1.0f, "--pixel_scale", "How much to reduce the render target to improve fill rate");
+  cmd_line.addOption<float>(g_screensaverTime, g_screensaverTime, "--screensaver", "Enable the screensaver system");
   cmd_line.parse(argc, argv);
+  
+  printf("Screensaver was %f\n", g_screensaverTime);
 
   StaticInitialize();
 

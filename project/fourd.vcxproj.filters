@@ -236,6 +236,15 @@
     <ClInclude Include="..\common\thirdparty\jenn3d\todd_coxeter.h">
       <Filter>thirdparty</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\components\animated_camera_params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\components\screensaver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\components\reset_watcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">

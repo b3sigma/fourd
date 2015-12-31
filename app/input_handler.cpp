@@ -148,6 +148,9 @@ void InputHandler::DoCommand(const std::string& command, float frameTime) {
   for (auto inputTarget : m_inputTargets) {
     inputTarget->SendSignal(command,
       SignalN<float>(), frameTime);
+
+    static const std::string anyInputSignal("AnyInput");
+    inputTarget->SendSignal(anyInputSignal, SignalN<>());
   }
 }
 

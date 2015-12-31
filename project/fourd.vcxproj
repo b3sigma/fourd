@@ -120,7 +120,9 @@
     <ClCompile Include="..\imgui\imgui.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\app\components\reset_watcher.h" />
     <ClInclude Include="..\app\components\scene_modifier.h" />
+    <ClInclude Include="..\app\components\screensaver.h" />
     <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\glhelper.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
@@ -136,6 +138,7 @@
     <ClInclude Include="..\common\camera.h" />
     <ClInclude Include="..\common\chunkloader.h" />
     <ClInclude Include="..\common\component.h" />
+    <ClInclude Include="..\common\components\animated_camera_params.h" />
     <ClInclude Include="..\common\components\animated_rotation.h" />
     <ClInclude Include="..\common\components\camera_follow.h" />
     <ClInclude Include="..\common\components\periodic_motion.h" />

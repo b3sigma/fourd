@@ -18,6 +18,7 @@ Camera::Camera()
     , _wProjectionEnabled(true)
     , _collidingLastFrame(false)
     , _nextSimpleSlicePositive(true)
+    , _startingCameraCopy(NULL)
 {
   _cameraMatrix.storeIdentity();
   _cameraPos.storeZero();
@@ -55,8 +56,46 @@ Camera::Camera()
       std::string("inputLookRight"), this, &Camera::OnInputLookRight);
   _componentBus.RegisterSignal(
       std::string("inputShiftSlice"), this, &Camera::OnInputShiftSlice);
+  _componentBus.RegisterSignal(
+      std::string("RestartGameState"), this, &Camera::RestartGameState);
 
   assert(success == true);
+}
+
+Camera::~Camera() {
+  delete _startingCameraCopy;
+}
+
+void Camera::RestartGameState() {
+  if(!_startingCameraCopy) {
+    return;
+  }
+  _cameraMatrix = _startingCameraCopy->_cameraMatrix;
+  _cameraPos = _startingCameraCopy->_cameraPos;
+  _movement = _startingCameraCopy->_movement;
+  _cameraLookAt = _startingCameraCopy->_cameraLookAt;
+  _yaw = _startingCameraCopy->_yaw;
+  _pitch = _startingCameraCopy->_pitch;
+  _yawPitchTrans = _startingCameraCopy->_yawPitchTrans;
+  _yawTrans = _startingCameraCopy->_yawTrans;
+  _pushVelocity = _startingCameraCopy->_pushVelocity;
+  _collidingLastFrame = _startingCameraCopy->_collidingLastFrame;
+  _velocity = _startingCameraCopy->_velocity;
+}
+
+void Camera::MarkStartingPosition() {
+  _startingCameraCopy = new Camera();
+  _startingCameraCopy->_cameraMatrix = _cameraMatrix;
+  _startingCameraCopy->_cameraPos = _cameraPos;
+  _startingCameraCopy->_movement = _movement;
+  _startingCameraCopy->_cameraLookAt = _cameraLookAt;
+  _startingCameraCopy->_yaw = _yaw;
+  _startingCameraCopy->_pitch = _pitch;
+  _startingCameraCopy->_yawPitchTrans = _yawPitchTrans;
+  _startingCameraCopy->_yawTrans = _yawTrans;
+  _startingCameraCopy->_pushVelocity = _pushVelocity;
+  _startingCameraCopy->_collidingLastFrame = _collidingLastFrame;
+  _startingCameraCopy->_velocity = _velocity;
 }
 
 void Camera::setMovementMode(MovementMode mode) {
