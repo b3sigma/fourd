@@ -51,7 +51,10 @@ public:
 
   ComponentBus _componentBus;
 
+  Camera* _startingCameraCopy;
+
   Camera();
+  ~Camera();
 
   //Camera(MovementMode mode)
   //    : _movement(mode) {
@@ -68,6 +71,9 @@ public:
   void SetCameraPosition(Vec4f position) {
     _cameraPos = position;
   }
+
+  void MarkStartingPosition();
+  void RestartGameState();
 
   void ApplyOrbitInput(float radians, Direction direction);
   void ApplyRotationInput(float radians, Direction target, Direction source);
