@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "../common/fd_simple_file.h"
 #include "../common/fourmath.h"
 #include "../common/mesh.h"
 #include "../common/camera.h"
@@ -1109,6 +1110,7 @@ void glfwErrorCallback(int error, const char* description) {
 
 int main(int argc, const char *argv[]) {
 
+  std::string keepAliveFileName("");
   bool displayUsage = false;
   float pixelScale = 1.0f;
   argh::Argh cmd_line;
@@ -1119,6 +1121,7 @@ int main(int argc, const char *argv[]) {
   cmd_line.addOption<float>(pixelScale, pixelScale, "--pixel_scale", "How much to reduce the render target to improve fill rate");
   cmd_line.addOption<std::string>(g_startupLevel, g_startupLevel, "--start_level", "Level name to start with, without path, with extension"); 
   cmd_line.addFlag(g_startupAddEyeCandy, "--add_eye_candy", "Adds a bunch of shapes on startup");
+  cmd_line.addOption<std::string>(keepAliveFileName, keepAliveFileName, "--keep_alive_file_name", "If specified, will write to this file every 5 seconds to indicate the process is alive"); 
   cmd_line.parse(argc, argv);
 
   if(displayUsage) {
@@ -1126,7 +1129,7 @@ int main(int argc, const char *argv[]) {
     return 0;
   }
 
-  printf("Start level is %s\n", g_startupLevel.c_str());
+  printf("keep alive is %s\n", keepAliveFileName.c_str());
 
   StaticInitialize();
 
@@ -1220,10 +1223,20 @@ int main(int argc, const char *argv[]) {
 
   ReshapeGL(g_glfwWindow, startWidth, startHeight);
 
+  double keepAliveTime = 5.0f; //write every five seconds
+  double keepAliveNext = 0.0f;
+
   while(true) {
     StepFrame();
     Draw(g_glfwWindow);
-  
+
+    if(!keepAliveFileName.empty()) {
+      if(g_renderer.GetTotalTime() >= keepAliveNext) {
+        keepAliveNext = g_renderer.GetTotalTime() + keepAliveTime; 
+        fd_file_write_vec(keepAliveFileName.c_str(), std::vector<unsigned char>('!'));
+      }
+    }
+
     glfwPollEvents();
     if(glfwWindowShouldClose(g_glfwWindow)) {
       break;
