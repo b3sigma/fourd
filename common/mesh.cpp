@@ -1246,6 +1246,12 @@ void Mesh::buildCaylay600Cell(float radius, Vec4f offset) {
   JennGraphConverter::Convert(graph.get(), this, radius, offset);
 }
 
+void Mesh::buildCaylayEnumerated(float radius, Vec4f offset) {
+  // uses internal state and essentially iterates through building stuff it knows about
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::selectNext());
+  JennGraphConverter::Convert(graph.get(), this, radius, offset);
+}
+
 #if 0 // currently abandoned approach to generic polytope creation
   {3,3,4} {4,3,3}, {5,3,3}
   {P,F,C} 

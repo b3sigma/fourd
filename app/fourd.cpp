@@ -567,7 +567,7 @@ void AddRaycastEntity() {
 
     pEntity->GetComponentBus().AddComponent(
       new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
-      20.0f, true));
+      -20.0f, true));
 
     //pEntity->GetComponentBus().AddComponent(
     //    new TimedDeath(10.0f /* duration */));
@@ -733,7 +733,8 @@ void AsciiKeyUpdate(int key, bool isShift) {
       tesseract.buildFourTetrad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5));
     } break;
     case '5' : {
-      tesseract.buildGeneralizedTesseract(10.0f, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
+      tesseract.buildCaylayEnumerated(10.0f, Vec4f(05.5, 05.5, 05.5, 05.5));
+      //tesseract.buildGeneralizedTesseract(10.0f, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
       //tesseract.buildReferenceTesseract(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
     case '6' : {
