@@ -48,6 +48,8 @@ namespace jenn {
       const Vect& weights);        //vertex weights, for positioning center
     ToddCoxeter::Graph* select(int code, int edges = 1111, int faces = 111111, int weights = 1111);
     ToddCoxeter::Graph* selectNext();
+    ToddCoxeter::Graph* selectPrev();
+
 
     //named polytopes
     const int the_5_cell = 322323234;

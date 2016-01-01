@@ -40,7 +40,7 @@
 #include "texture.h"
 #include "glhelper.h"
 #include "components/reset_watcher.h"
-#include "components/scene_modifier.h"
+#include "components/quaxol_modifier.h"
 
 #define USE_VR
 #ifdef USE_VR
@@ -118,7 +118,7 @@ fd::Shader* LoadShader(const char* shaderName) {
 
   shaderMem.release();
   g_shader = pShader;
-  g_scene.m_pQuaxolShader = g_shader;
+  //g_scene.m_pQuaxolShader = g_shader;
 
   g_currentShader = vertPrefix + baseNameWithExt;
   printf("Loaded shader %s\n", vertName.c_str());
@@ -282,11 +282,11 @@ void AddAllEyeCandy() {
   AddEyeCandy(EyeCandyTesseract, Vec4f(-50.0f, 00.0f, 50.0f, 0.0f));
   AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 0.0f));
   AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 200.0f, 0.0f));
-  //AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
-  //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 200.0f, 0.0f));
+  AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 200.0f, 0.0f));
 
   g_shader = savedShader;
-  g_scene.m_pQuaxolShader = g_shader;
+  //g_scene.m_pQuaxolShader = g_shader;
 }
 
 bool Initialize(int width, int height) {
@@ -329,7 +329,7 @@ bool Initialize(int width, int height) {
 
   Entity* playerEntity = g_scene.AddEntity();
   playerEntity->GetComponentBus().AddComponent(new CameraFollowComponent(&g_camera));
-  playerEntity->GetComponentBus().AddComponent(new SceneModifierComponent());
+  playerEntity->GetComponentBus().AddComponent(new QuaxolModifierComponent());
   g_inputHandler.AddInputTarget(&(playerEntity->GetComponentBus()));
 
   g_camera.MarkStartingPosition();
@@ -368,7 +368,7 @@ bool Initialize(int width, int height) {
   g_renderer.AddCamera(&g_camera);
   g_renderer.AddScene(&g_scene);
   g_scene.m_pQuaxolMesh = &tesseract;
-  g_scene.m_pQuaxolShader = g_shader;
+  //g_scene.m_pQuaxolShader = g_shader;
   if(!g_scene.Initialize())
     return false;
 
@@ -560,13 +560,15 @@ void AddRaycastEntity() {
   if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
     Entity* pEntity = g_scene.AddEntity();
     // ugh need like a mesh manager and better approach to shader handling
-    pEntity->Initialize(&tesseract, g_shader, NULL);
+    
+    pEntity->Initialize(&tesseract, LoadShader("ColorBlendClipped"), NULL);
+    //pEntity->Initialize(&tesseract, g_shader, NULL);
     //pEntity->m_orientation.storeScale(10.0f);
 
     pEntity->m_position = position + ray.normalized() * dist;
 
     pEntity->GetComponentBus().AddComponent(
-      new AnimatedRotation((float)PI * 10.0f, Camera::RIGHT, Camera::INSIDE,
+      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
       -20.0f, true));
 
     //pEntity->GetComponentBus().AddComponent(
@@ -733,14 +735,15 @@ void AsciiKeyUpdate(int key, bool isShift) {
       tesseract.buildFourTetrad(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5));
     } break;
     case '5' : {
-      tesseract.buildCaylayEnumerated(10.0f, Vec4f(05.5, 05.5, 05.5, 05.5));
+      tesseract.buildCaylayEnumerated(30.0f, Vec4f(10.5, 20.5, 0.5, 10.5), 1);
       //tesseract.buildGeneralizedTesseract(10.0f, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
       //tesseract.buildReferenceTesseract(10.0f, Vec4f(0.5, 0.5, 0.5, 0.5), Vec4f(0, 0, 0, 0));
     } break;
     case '6' : {
+      tesseract.buildCaylayEnumerated(30.0f, Vec4f(10.5, 10.5, 0.5, 10.5), -1);
       //tesseract.build120cell(10.0f, Vec4f(0,0,0,0));
       //tesseract.buildCircle(10.0f, Vec4f(10.5, 0.5, 0.5, 0.5), Vec4f(1, 0, 0, 0), Vec4f(0, 1, 0, 0), 6);
-      tesseract.buildCaylayTesseract(10.0f, Vec4f(05.5, 05.5, 05.5, 05.5));
+      //tesseract.buildCaylayTesseract(10.0f, Vec4f(05.5, 05.5, 05.5, 05.5));
     } break;
     case '7' : {
       tesseract.buildCylinder(10.0f, 10.f, 60);

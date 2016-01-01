@@ -7,7 +7,7 @@ namespace fd {
 
 class Scene;
 
-class SceneModifierComponent : public Component {
+class QuaxolModifierComponent : public Component {
 public:
   int m_currentQuaxolType;
 
@@ -16,8 +16,8 @@ public:
   Scene* m_pOwnerScene;
 
 public:
-  SceneModifierComponent() : m_currentQuaxolType(0) {}
-
+  QuaxolModifierComponent() : m_currentQuaxolType(0) {}
+  
   virtual void OnConnected();
 
   // because I suck, all input callbacks take a frametime

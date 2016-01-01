@@ -65,7 +65,7 @@ public:
   void buildCaylay600Cell(float radius, Vec4f offset);
 
   // uses internal state and essentially iterates through building stuff it knows about
-  void buildCaylayEnumerated(float radius, Vec4f offset);
+  void buildCaylayEnumerated(float radius, Vec4f offset, int enumDir = 1);
 
   void buildQuaxolTesseract(float size); // assumptions about tri positions
 

@@ -1,4 +1,4 @@
-#include "scene_modifier.h"
+#include "quaxol_modifier.h"
 
 #include "../../common/camera.h"
 #include "../../common/physics.h"
@@ -6,7 +6,7 @@
 
 namespace fd {
 
-void SceneModifierComponent::OnConnected() {
+void QuaxolModifierComponent::OnConnected() {
   static std::string BDATpos("position");
   static std::string BDATorient("orientation");
   static std::string BDATscene("scene");
@@ -18,13 +18,13 @@ void SceneModifierComponent::OnConnected() {
     SelfDestruct();
   }
 
-  RegisterSignal(std::string("inputAddQuaxol"), this, &SceneModifierComponent::OnAddQuaxol);
-  RegisterSignal(std::string("inputRemoveQuaxol"), this, &SceneModifierComponent::OnRemoveQuaxol);
-  RegisterSignal(std::string("inputNextCurrentItem"), this, &SceneModifierComponent::OnNextCurrentItem);
-  RegisterSignal(std::string("inputPrevCurrentItem"), this, &SceneModifierComponent::OnPrevCurrentItem);
+  RegisterSignal(std::string("inputAddQuaxol"), this, &QuaxolModifierComponent::OnAddQuaxol);
+  RegisterSignal(std::string("inputRemoveQuaxol"), this, &QuaxolModifierComponent::OnRemoveQuaxol);
+  RegisterSignal(std::string("inputNextCurrentItem"), this, &QuaxolModifierComponent::OnNextCurrentItem);
+  RegisterSignal(std::string("inputPrevCurrentItem"), this, &QuaxolModifierComponent::OnPrevCurrentItem);
 }
 
-void SceneModifierComponent::OnAddQuaxol(float frameTime) {
+void QuaxolModifierComponent::OnAddQuaxol(float frameTime) {
   Vec4f& position = *m_pOwnerPosition;
   Vec4f ray = -(*m_pOwnerOrientation)[Camera::FORWARD];
   ray *= 1000.0f;
@@ -38,7 +38,7 @@ void SceneModifierComponent::OnAddQuaxol(float frameTime) {
   }
 }
 
-void SceneModifierComponent::OnRemoveQuaxol(float frameTime) {
+void QuaxolModifierComponent::OnRemoveQuaxol(float frameTime) {
   Vec4f& position = *m_pOwnerPosition;
   Vec4f ray = -(*m_pOwnerOrientation)[Camera::FORWARD];
   ray *= 1000.0f;
@@ -54,11 +54,11 @@ void SceneModifierComponent::OnRemoveQuaxol(float frameTime) {
 }
 
 static const int g_numValidTypes = 3;
-void SceneModifierComponent::OnNextCurrentItem(float frameTime) {
+void QuaxolModifierComponent::OnNextCurrentItem(float frameTime) {
   m_currentQuaxolType = (m_currentQuaxolType + 1 + g_numValidTypes) % g_numValidTypes; 
 }
 
-void SceneModifierComponent::OnPrevCurrentItem(float frameTime) {
+void QuaxolModifierComponent::OnPrevCurrentItem(float frameTime) {
   m_currentQuaxolType = (m_currentQuaxolType - 1 + g_numValidTypes) % g_numValidTypes; 
 }
 

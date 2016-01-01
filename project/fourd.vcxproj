@@ -88,7 +88,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\app\components\scene_modifier.cpp" />
+    <ClCompile Include="..\app\components\quaxol_modifier.cpp" />
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
     <ClCompile Include="..\app\imgui_wrapper.cpp" />
@@ -120,8 +120,8 @@
     <ClCompile Include="..\imgui\imgui.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\app\components\quaxol_modifier.h" />
     <ClInclude Include="..\app\components\reset_watcher.h" />
-    <ClInclude Include="..\app\components\scene_modifier.h" />
     <ClInclude Include="..\app\components\screensaver.h" />
     <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\glhelper.h" />

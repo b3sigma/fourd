@@ -61,6 +61,12 @@ bool Scene::Initialize() {
     return false;
   }
 
+  m_pQuaxolShader = new Shader();
+  m_pQuaxolShader->AddDynamicMeshCommonSubShaders();
+  if(!m_pQuaxolShader->LoadFromFileDerivedNames("Rainbow")) {
+    return false;
+  }
+ 
   return true;
 }
 

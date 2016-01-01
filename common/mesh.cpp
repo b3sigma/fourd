@@ -1246,9 +1246,10 @@ void Mesh::buildCaylay600Cell(float radius, Vec4f offset) {
   JennGraphConverter::Convert(graph.get(), this, radius, offset);
 }
 
-void Mesh::buildCaylayEnumerated(float radius, Vec4f offset) {
+void Mesh::buildCaylayEnumerated(float radius, Vec4f offset, int enumDir) {
   // uses internal state and essentially iterates through building stuff it knows about
-  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(jenn::Polytope::selectNext());
+  std::unique_ptr<jenn::ToddCoxeter::Graph> graph(
+      (enumDir >= 0) ? jenn::Polytope::selectNext() : jenn::Polytope::selectPrev());
   JennGraphConverter::Convert(graph.get(), this, radius, offset);
 }
 

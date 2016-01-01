@@ -294,14 +294,43 @@ namespace jenn {
     }
 
     bool selectNextSubFamily(int& inSubtype, const char* message, int numCodes,
-        const int* edges, const int* faces, const int* weights, const int* codes,
+        const int* codes, const int* edges, const int* faces, const int* weights,
         int& outCode, int& outEdges, int& outFaces, int& outWeights) {
       if(inSubtype < numCodes) {
         outCode = codes[inSubtype];
+        outEdges = edges[inSubtype];
+        outFaces = faces[inSubtype];
+        outWeights = weights[inSubtype];
         return true;
       }
       return false;
     }
+
+    // Need to also modify the switch statement in selectNextFamily (or refactor)
+    enum Family {
+      fam_polyhedra = 0,
+      fam_polychora,
+      fam_duoprisms,
+      fam_truncated_hedra,
+      fam_truncated_chora,
+      fam_bitrunc_chora,
+      fam_edge_trunc_hedra,
+      fam_edge_trunc_chora,
+      fam_cayley_graphs,
+      fam_solids,
+      fam_mazes,
+      fam_222_family,
+      fam_227_family,
+      fam_233_family,
+      fam_234_family,
+      fam_235_family,
+      fam_Y_family,
+      fam_333_family,
+      fam_334_family,
+      fam_343_family,
+      fam_335_family,
+      numFamilies,
+    };
 
     //if it couldn't find the subtype in the family, it increments the subtype and picks that
     bool selectNextFamily(int& inFamily, int& inSubtype,
@@ -360,49 +389,47 @@ namespace jenn {
 
     // ugh all this code is gross.
     // It's my fault because I am defiling a decent menu system into a static enumerator
+    static int s_nextFamily = 0;
+    static int s_nextSubtype = 0;
+
     ToddCoxeter::Graph* selectNext() {
-      static int nextFamily = 0;
-      static int nextSubtype = 0;
 
       int code;
       int edges;
       int faces;
       int weights;
-      if(selectNextFamily(nextFamily, nextSubtype, code, edges, faces, weights)) {
-        nextSubtype++;
+      if(selectNextFamily(s_nextFamily, s_nextSubtype, code, edges, faces, weights)) {
+        s_nextSubtype++;
       } else {
-        nextFamily = 0;
-        nextSubtype = 0;
+        s_nextFamily = 0;
+        s_nextSubtype = 0;
       }
 
       return select(code, edges, faces, weights);
     }
 
-    // Didn't end up actually using this
-    enum Family {
-      fam_polyhedra = 0,
-      fam_polychora,
-      fam_duoprisms,
-      fam_truncated_hedra,
-      fam_truncated_chora,
-      fam_bitrunc_chora,
-      fam_edge_trunc_hedra,
-      fam_edge_trunc_chora,
-      fam_cayley_graphs,
-      fam_solids,
-      fam_mazes,
-      fam_222_family,
-      fam_227_family,
-      fam_233_family,
-      fam_234_family,
-      fam_235_family,
-      fam_Y_family,
-      fam_333_family,
-      fam_334_family,
-      fam_343_family,
-      fam_335_family,
-      numFamilies,
-    };
+    // this doesn't exactly work perfectly, but whatever
+    ToddCoxeter::Graph* selectPrev() {
+      int code;
+      int edges;
+      int faces;
+      int weights;
+      if(selectNextFamily(s_nextFamily, s_nextSubtype, code, edges, faces, weights)) {
+        s_nextSubtype--;
+        if(s_nextSubtype < 0) {
+          s_nextSubtype = 0;
+          s_nextFamily--;
+          if(s_nextFamily < 0) {
+            s_nextFamily = Family::numFamilies - 1;
+          }
+        }
+      } else {
+        s_nextFamily = 0;
+        s_nextSubtype = 0;
+      }
+
+      return select(code, edges, faces, weights);
+    }
 
   } // namespace Polytope
 
