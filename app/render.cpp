@@ -22,6 +22,8 @@ Render::Render()
     //, m_overdrawDepth(NULL)
     , m_renderColor(NULL)
     , m_renderDepth(NULL)
+    , m_width(0)
+    , m_height(0)
 {
 }
 
@@ -36,6 +38,8 @@ Render::~Render() {
 }
   
 bool Render::Initialize(int width, int height) {
+  m_width = width;
+  m_height = height;
   
   std::unique_ptr<Shader> overdraw(new Shader());
   overdraw->AddDynamicMeshCommonSubShaders();
@@ -73,6 +77,9 @@ bool Render::ResizeRenderTargets(int width, int height) {
       return true; // success but nothing is true I guess
     }
   }
+
+  m_width = width;
+  m_height = height;
 
   DEL_NULL(m_overdrawColor);
   //DEL_NULL(m_overdrawDepth);
