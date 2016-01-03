@@ -31,6 +31,7 @@ public:
 
   ovrEyeRenderDesc m_eyeDesc[2];
   ovrPosef m_eyeRenderPose[2];
+  ovrPosef m_lastEyeRenderPose[2];
   
   int m_eyeRenderWidth;
   int m_eyeRenderHeight;
@@ -141,6 +142,12 @@ public:
         m_eyeDesc[0].HmdToEyeViewOffset,
         m_eyeDesc[1].HmdToEyeViewOffset };
 
+    if(m_doScreenSaver) {
+      // reset screensaver detection state
+      m_lastEyeRenderPose[0] = m_eyeRenderPose[0];
+      m_lastEyeRenderPose[1] = m_eyeRenderPose[1];
+      m_hadInput = false;
+    }
     ovrHmd_GetEyePoses(m_HMD, 0, viewOffsets, m_eyeRenderPose,
         NULL /*trackingState*/);
   }
@@ -354,6 +361,29 @@ public:
     //eyeTexStruct[0] = eyeTex[0].Texture;
     // uh this seems weird.... but parallel to sample so far
     ovrHmd_EndFrame(m_HMD, m_eyeRenderPose, &eyeTex[0].Texture);
+
+    if(m_doScreenSaver) {
+      float maxDeltaPos = 0.0f;
+      float maxDeltaRot = 0.0f;
+      for(int i = 0; i < 2; i++) {
+        
+        Vec4f oldPos(m_lastEyeRenderPose[i].Position.x, m_lastEyeRenderPose[i].Position.y, m_lastEyeRenderPose[i].Position.z, 0.0f);
+        Vec4f newPos(m_eyeRenderPose[i].Position.x, m_eyeRenderPose[i].Position.y, m_eyeRenderPose[i].Position.z, 0.0f);
+        maxDeltaPos = max((oldPos - newPos).length(), maxDeltaPos);
+
+        // TODO: do a proper quat slerp dist? This is probably fine actually
+        Vec4f oldRot(m_lastEyeRenderPose[i].Orientation.x, m_lastEyeRenderPose[i].Orientation.y, m_lastEyeRenderPose[i].Orientation.z, m_lastEyeRenderPose[i].Orientation.w);
+        Vec4f newRot(m_eyeRenderPose[i].Orientation.x, m_eyeRenderPose[i].Orientation.y, m_eyeRenderPose[i].Orientation.z, m_eyeRenderPose[i].Orientation.w);
+        maxDeltaRot = max((oldRot - newRot).length(), maxDeltaRot);
+      }
+
+      const float posThreshold = 0.1f;
+      const float rotThreshold = 0.1f;
+
+      if(maxDeltaPos > posThreshold || maxDeltaRot > rotThreshold) {
+        m_hadInput = true;
+      }
+    }
   }
 
   virtual void SetIsUsingVR(bool usingVR) {

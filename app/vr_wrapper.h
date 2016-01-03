@@ -42,10 +42,16 @@ public:
   virtual void SetDebugHeadOrientation(const Mat4f* matrix) {}
 
   virtual ~VRWrapper() {}
+  
+public:
+  // nothing like late am deadline coding to add public vars
+  bool m_doScreenSaver;
+  bool m_hadInput;
 
 protected:
   static bool s_Initialized;
   static bool s_UsingVR;
+
 
   VRWrapper() {} // prevent direct construction
   virtual bool Initialize() = 0;

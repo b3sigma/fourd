@@ -1053,6 +1053,12 @@ void StepFrame() {
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
   
+  //if(g_vr && g_vr->m_doScreenSaver) {
+  //  if(g_vr->m_hadInput) {
+  //    g_inputHandler.SendAnyInputSignal(&(g_camera.GetComponentBus()));
+  //  }
+  //}
+
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
@@ -1171,6 +1177,9 @@ int main(int argc, const char *argv[]) {
 
   // ovr is supposed to preceed glfw
   g_vr = VRWrapper::CreateVR();
+  if(g_screensaverTime > 0.0f && g_vr) {
+    g_vr->m_doScreenSaver = true;
+  } 
 
   glfwSetErrorCallback(glfwErrorCallback);
 

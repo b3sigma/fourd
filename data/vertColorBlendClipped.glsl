@@ -46,9 +46,9 @@ void main() {
 	//fragCol0.xyz = homogenousCoords.xyz;
 	//fragCol0.xyz = fragHPos.xyz;
 	//fragCol0.rgb = max(fragCol0.rgb, vec3(0.1,0,0));
-  fragCol0.r = max(fragCol0.r, 0.1);
-	fragCol0.g = max(fragCol0.g, 0);
-  fragCol0.b = max(fragCol0.b, 0);
+  fragCol0.r = max(fragCol0.r, 0.15);
+	fragCol0.g = max(fragCol0.g, 0.05);
+  fragCol0.b = max(fragCol0.b, 0.05);
   //fragCol0.rgb += vec3(0.1,0.1,0.1);
 	//fragCol0.r = vertposition.w;
 

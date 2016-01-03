@@ -262,9 +262,6 @@
     <None Include="..\data\vertTrivial.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="..\data\fragAlphaTest.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="..\data\vertAlphaTest.glsl">
       <Filter>Resource Files</Filter>
     </None>
@@ -290,6 +287,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\data\vertCommonTransform.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\data\fragAlphaTest.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

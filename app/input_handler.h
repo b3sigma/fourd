@@ -52,6 +52,8 @@ public:
   void DoCommand(const std::string& command, float frameTime);
 
   void AddInputTarget(ComponentBus* bus);
+
+  void SendAnyInputSignal(ComponentBus* target);
 };
 
 } // namespace fd

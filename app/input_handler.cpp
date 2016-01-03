@@ -120,6 +120,7 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
         }
 
         for(auto inputTarget : m_inputTargets) {
+          SendAnyInputSignal(inputTarget);
           inputTarget->SendSignal(binding.m_command,
               SignalN<float>(), frameTime);
         }
@@ -134,6 +135,7 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
         }
 
         for(auto inputTarget : m_inputTargets) {
+          SendAnyInputSignal(inputTarget);
           inputTarget->SendSignal(binding.m_command,
               SignalN<float, float>(), frameTime, amount);
         }
@@ -144,13 +146,18 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
   }
 }
 
+void InputHandler::SendAnyInputSignal(ComponentBus* target) {
+  static const std::string anyInputSignal("AnyInput");
+  target->SendSignal(anyInputSignal, SignalN<>());
+}
+
+
 void InputHandler::DoCommand(const std::string& command, float frameTime) {
   for (auto inputTarget : m_inputTargets) {
     inputTarget->SendSignal(command,
       SignalN<float>(), frameTime);
 
-    static const std::string anyInputSignal("AnyInput");
-    inputTarget->SendSignal(anyInputSignal, SignalN<>());
+    SendAnyInputSignal(inputTarget);
   }
 }
 

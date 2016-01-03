@@ -64,6 +64,7 @@ bool Scene::Initialize() {
   m_pQuaxolShader = new Shader();
   m_pQuaxolShader->AddDynamicMeshCommonSubShaders();
   if(!m_pQuaxolShader->LoadFromFileDerivedNames("Rainbow")) {
+  //if(!m_pQuaxolShader->LoadFromFileDerivedNames("ColorBlendClipped")) {
     return false;
   }
  
