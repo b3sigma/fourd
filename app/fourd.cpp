@@ -1243,7 +1243,11 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
 
-  ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/);
+  if(!ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/))
+  {
+    printf("Imgui init fail\n");
+    return -1;
+  }
   //glfwSetKeyCallback(g_glfwWindow, Key); // If not using ImGui, put this back.
   
   g_vr->InitializeWindow(g_platformWindow, pixelScale);

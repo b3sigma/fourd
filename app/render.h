@@ -71,6 +71,8 @@ public:
   Vec4f m_clearColor;
   bool m_multiPass;
   Vec4f m_sliceRange;
+  int m_width;
+  int m_height;
 
 
 public:

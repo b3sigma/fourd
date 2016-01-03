@@ -18,6 +18,7 @@
 
 #include "render.h"
 #include "shader.h"
+#include "texture.h"
 
 namespace fd {
 
@@ -34,6 +35,8 @@ static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_Attr
 static size_t       g_VboSize = 0;
 static unsigned int g_VboHandle = 0, g_VaoHandle = 0;
 
+// this is the first ui image being used. On the second, let's make this decently general, eh?
+static Texture* s_ControllerTex = NULL;
 
 void ImGuiMouseButtonCallback(
     GLFWwindow* window, int button, int action, int mods) {
@@ -243,7 +246,8 @@ bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
   s_chainedKeyCallback = keyCallback;
   glfwSetKeyCallback(s_glfwWindow, ImGuiKeyCallback);
 
-  InitOpenGL();
+  if(!InitOpenGL())
+    return false;
 
   return true;
 }
@@ -308,7 +312,11 @@ bool ImGuiWrapper::InitOpenGL() {
   io.Fonts->ClearInputData();
   io.Fonts->ClearTexData();
 
-  return false;
+  s_ControllerTex = new Texture();
+  if(!s_ControllerTex->LoadFromFile("data\\textures\\controller_diagram.png"))
+    return false;
+
+  return true;
 }
 
 void ImGuiWrapper::Shutdown() {
@@ -328,8 +336,12 @@ void ImGuiWrapper::Shutdown() {
     ImGui::GetIO().Fonts->TexID = 0;
     g_FontTexture = 0;
   }
-  ImGui::Shutdown();
 
+  // Texture manager will clean itself up...
+  //delete s_ControllerTex;
+  s_ControllerTex = NULL;
+
+  ImGui::Shutdown();
 }
 
 void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) {
@@ -400,14 +412,51 @@ void RenderVRDebugOverlay(float frameTime, const Vec2f& offset, ::fd::Render* re
   //ImGui::End();
 }
 
+void RenderControlsSceen(ImVec2 res) {
+  if(!s_ControllerTex)
+    return;
+
+  static bool opened = true;
+  ImVec2 startPos(0.0f, 0.0f);
+  ImGui::SetNextWindowPos(startPos);
+  if (!ImGui::Begin("controller screen", &opened, res, 1.0f,
+      ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
+  {
+      ImGui::End();
+      return;
+  }
+  //ImGui::Image((ImTextureID)(s_ControllerTex->GetTextureID()), res);
+
+  typedef std::list<std::pair<ImVec2, std::string>> TextPositions;
+  TextPositions textList = {
+      { ImVec2(0.25f, 0.25f), std::string("Hardcoded thingie") },
+      { ImVec2(0.5f, 0.25f), std::string("Another thingie") }
+  };
+
+  for(auto text : textList) {
+    ImGui::BeginChild(text.second.c_str());
+    ImVec2 pos(res.x * text.first.x, res.y * text.first.y);
+    ImGui::SetWindowPos(pos);
+    ImGui::Text(text.second.c_str());
+    ImGui::EndChild();
+    ImGui::SameLine();
+  }
+  ImGui::End();
+}
+
 void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* renderer, bool doUpdate) {
   if(ImGuiWrapper::s_bGuiDisabled) {
     return;
   }
 
+  ImVec2 windowSize((float)renderer->m_width, (float)renderer->m_height);
+
   if(doUpdate) {
+    
     RenderFpsOverlay(frameTime, offset);
     //RenderVRDebugOverlay(frameTime, offset, renderer);
+
+    //RenderControlsSceen(windowSize);
   }
 
   //static bool opened = true;
