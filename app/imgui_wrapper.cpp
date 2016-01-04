@@ -417,29 +417,43 @@ void RenderControlsSceen(ImVec2 res) {
     return;
 
   static bool opened = true;
-  ImVec2 startPos(0.0f, 0.0f);
+  float sizeScale = 0.8f;
+  float inScale = (1.0f - sizeScale) * 0.5f;
+  ImVec2 startPos(inScale * res.x, inScale * res.y);
+  ImVec2 startSize(sizeScale * res.x, sizeScale * res.y);
+
   ImGui::SetNextWindowPos(startPos);
-  if (!ImGui::Begin("controller screen", &opened, res, 1.0f,
+  if (!ImGui::Begin("controller screen", &opened, startSize, 1.0f,
       ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
   {
       ImGui::End();
       return;
   }
-  //ImGui::Image((ImTextureID)(s_ControllerTex->GetTextureID()), res);
+  ImGui::Image((ImTextureID)(s_ControllerTex->GetTextureID()), startSize);
 
-  typedef std::list<std::pair<ImVec2, std::string>> TextPositions;
+  ImGui::SetWindowFontScale(2.0f);
+
+  ImVec4 black(0.0f, 0.0f, 0.0f, 1.0f);
+  ImVec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+  ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+  typedef std::list<std::pair<std::pair<ImVec2, ImVec4>, std::string>> TextPositions;
   TextPositions textList = {
-      { ImVec2(0.25f, 0.25f), std::string("Hardcoded thingie") },
-      { ImVec2(0.5f, 0.25f), std::string("Another thingie") }
+      { {ImVec2(0.25f, 0.25f), black}, std::string("Jump") },
+      { {ImVec2(0.35f, 0.45f), white}, std::string("Look") },
+      { {ImVec2(0.35f, 0.45f), white}, std::string("Slice") },
+      { {ImVec2(0.5f, 0.35f), red}, std::string("Create") },
+      { {ImVec2(0.35f, 0.45f), white}, std::string("Destroy") },
+      { {ImVec2(0.35f, 0.45f), white}, std::string("Menu") },
+      { {ImVec2(0.35f, 0.45f), white}, std::string("Help") }
   };
 
-  for(auto text : textList) {
-    ImGui::BeginChild(text.second.c_str());
-    ImVec2 pos(res.x * text.first.x, res.y * text.first.y);
-    ImGui::SetWindowPos(pos);
-    ImGui::Text(text.second.c_str());
-    ImGui::EndChild();
-    ImGui::SameLine();
+  for(auto entry : textList) {
+    const ImVec2& relPos = entry.first.first;
+    const ImVec4& color = entry.first.second;
+    const std::string& text = entry.second;
+    ImVec2 pos(startSize.x * relPos.x, startSize.y * relPos.y);
+    ImGui::SetCursorPos(pos);
+    ImGui::TextColored(color, text.c_str());
   }
   ImGui::End();
 }
@@ -449,7 +463,7 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
     return;
   }
 
-  ImVec2 windowSize((float)renderer->m_width, (float)renderer->m_height);
+  ImVec2 windowSize((float)renderer->m_viewWidth, (float)renderer->m_viewHeight);
 
   if(doUpdate) {
     

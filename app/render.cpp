@@ -22,8 +22,11 @@ Render::Render()
     //, m_overdrawDepth(NULL)
     , m_renderColor(NULL)
     , m_renderDepth(NULL)
-    , m_width(0)
-    , m_height(0)
+    , m_bufferWidth(0)
+    , m_bufferHeight(0)
+    , m_viewWidth(0)
+    , m_viewHeight(0)
+    , m_usingVR(false)
 {
 }
 
@@ -38,8 +41,9 @@ Render::~Render() {
 }
   
 bool Render::Initialize(int width, int height) {
-  m_width = width;
-  m_height = height;
+  m_bufferWidth = width;
+  m_bufferHeight = height;
+  UpdateViewHeightFromBuffer();
   
   std::unique_ptr<Shader> overdraw(new Shader());
   overdraw->AddDynamicMeshCommonSubShaders();
@@ -78,8 +82,9 @@ bool Render::ResizeRenderTargets(int width, int height) {
     }
   }
 
-  m_width = width;
-  m_height = height;
+  m_bufferWidth = width;
+  m_bufferHeight = height;
+  UpdateViewHeightFromBuffer();
 
   DEL_NULL(m_overdrawColor);
   //DEL_NULL(m_overdrawDepth);
@@ -111,6 +116,22 @@ bool Render::ResizeRenderTargets(int width, int height) {
   m_renderColor = renderColor.release();
   m_renderDepth = renderDepth.release();
   return true;
+}
+
+void Render::UpdateViewHeightFromBuffer() {
+  // uh, this turned out to be wrong, needs investigation
+  //if(m_usingVR) {
+  //  m_viewWidth = m_bufferWidth / 2;
+  //  m_viewHeight = m_bufferHeight / 2;
+  //} else {
+    m_viewWidth = m_bufferWidth;
+    m_viewHeight = m_bufferHeight;
+  //}
+}
+
+void Render::SetIsUsingVR(bool usingVR) {
+  m_usingVR = usingVR;
+  UpdateViewHeightFromBuffer();
 }
   
 void Render::UpdateFrameTime() {

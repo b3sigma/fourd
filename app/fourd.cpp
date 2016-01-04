@@ -589,6 +589,15 @@ void AddTesseractLine() {
   g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);  
 }
 
+void SetIsUsingVR(bool usingVR) {
+  if(g_vr) {
+    g_vr->SetIsUsingVR(usingVR);
+    g_renderer.m_usingVR = usingVR;
+  } else {
+    g_renderer.m_usingVR = false;
+  }
+}
+
 void AsciiKeyUpdate(int key, bool isShift);
 void Key(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -900,9 +909,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       }
     } break;
     case 'V' : {
-      if (g_vr) {
-        g_vr->SetIsUsingVR(!g_vr->IsUsingVR());
-      }
+      SetIsUsingVR(g_renderer.m_usingVR);
     } break;
     case 'F' : {
       if (g_vr) {
@@ -1141,7 +1148,7 @@ int main(int argc, const char *argv[]) {
 
   std::string keepAliveFileName("");
   bool displayUsage = false;
-  float pixelScale = 1.0f;
+  float pixelScale = 0.5f; //1.0f;
   argh::Argh cmd_line;
   cmd_line.addFlag(displayUsage, "--help", "Display help (you probably figured this one out)");
   cmd_line.addFlag(displayUsage, "-h", "Display help (you probably figured this one out)");
@@ -1192,7 +1199,7 @@ int main(int argc, const char *argv[]) {
   int startHeight = 580;
   GLFWmonitor* monitor = NULL;
   const GLFWvidmode* vidMode;
-  static bool startFullscreen = false;
+  static bool startFullscreen = true; //false;
   static bool startVRFullscreen = true;
   if(startVRFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
     std::string deviceName = g_vr->GetDeviceName();
@@ -1200,7 +1207,7 @@ int main(int argc, const char *argv[]) {
     vidMode = glfwGetVideoMode(monitor);
     g_vr->GetTotalRenderSize(startWidth, startHeight);
   } else if(startFullscreen) {
-    startVRFullscreen = false;
+    //startVRFullscreen = false;
     monitor = glfwGetPrimaryMonitor();
     vidMode = glfwGetVideoMode(monitor);
     startWidth = vidMode->width;
@@ -1257,7 +1264,7 @@ int main(int argc, const char *argv[]) {
   glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
 
   if(g_vr && startVRFullscreen) {
-    g_vr->SetIsUsingVR(true);
+    SetIsUsingVR(true);
     glfwSetInputMode(g_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   }
   

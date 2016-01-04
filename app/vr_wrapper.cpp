@@ -10,6 +10,7 @@
 #include "OVR_CAPI_GL.h"
 
 #include "glhelper.h"
+#include "render.h"
 #include "win32_platform.h"
 #include "../common/fourmath.h"
 #include "../common/camera.h"
@@ -397,7 +398,6 @@ public:
       int restoreHeight;
       m_pWindow->GetWidthHeight(&restoreWidth, &restoreHeight);
       glViewport(0, 0, restoreWidth, restoreHeight);
-
     } else {
       s_UsingVR = true;
     }

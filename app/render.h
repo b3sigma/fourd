@@ -71,8 +71,11 @@ public:
   Vec4f m_clearColor;
   bool m_multiPass;
   Vec4f m_sliceRange;
-  int m_width;
-  int m_height;
+  int m_bufferWidth;
+  int m_bufferHeight; //buffer dims or view dims are wrong
+  int m_viewWidth; //buffer dims or view dims are wrong
+  int m_viewHeight;
+  bool m_usingVR;
 
 
 public:
@@ -118,6 +121,12 @@ public:
   void RenderCompose(Texture* pDestination, 
       Texture* pColorTarget, Texture* pOverdrawSource);
   void ToggleMultipassMode(bool multiPass, int width, int height);
+
+  void SetIsUsingVR(bool usingVR);
+
+protected:
+  void UpdateViewHeightFromBuffer();
+
 };
 
 }  // namespace fd
