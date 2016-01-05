@@ -43,7 +43,7 @@ public:
 
   void SelfDestruct() {
     _beingDestroyed = true;
-    UnregisterAllSignals();
+    //UnregisterAllSignals();
   }
 
   typedef std::vector<std::pair<size_t, DelegateMemento>> TRegisteredSignals;
@@ -201,6 +201,7 @@ public:
         ) {
       Component* pComp = *compIt;
       if(pComp->_beingDestroyed) {
+        pComp->UnregisterAllSignals();
         pComp->PreBusDelete();
         delete pComp;
         compIt = _components.erase(compIt);

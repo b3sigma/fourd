@@ -1060,11 +1060,11 @@ void StepFrame() {
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
   
-  //if(g_vr && g_vr->m_doScreenSaver) {
-  //  if(g_vr->m_hadInput) {
-  //    g_inputHandler.SendAnyInputSignal(&(g_camera.GetComponentBus()));
-  //  }
-  //}
+  if(g_vr && g_vr->IsUsingVR() && g_vr->m_doScreenSaver) {
+    if(g_vr->m_hadInput) {
+      g_inputHandler.SendAnyInputSignal(&(g_camera.GetComponentBus()));
+    }
+  }
 
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
@@ -1199,7 +1199,7 @@ int main(int argc, const char *argv[]) {
   int startHeight = 580;
   GLFWmonitor* monitor = NULL;
   const GLFWvidmode* vidMode;
-  static bool startFullscreen = true; //false;
+  static bool startFullscreen = false;
   static bool startVRFullscreen = true;
   if(startVRFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
     std::string deviceName = g_vr->GetDeviceName();

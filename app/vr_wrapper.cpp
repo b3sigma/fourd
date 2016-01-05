@@ -378,12 +378,15 @@ public:
         maxDeltaRot = max((oldRot - newRot).length(), maxDeltaRot);
       }
 
-      const float posThreshold = 0.1f;
-      const float rotThreshold = 0.1f;
+      const float posThreshold = 0.00003f;
+      const float rotThreshold = 0.0001f;
 
       if(maxDeltaPos > posThreshold || maxDeltaRot > rotThreshold) {
         m_hadInput = true;
       }
+      
+      //printf("VR input:%d pos:%f rot:%f\n", m_hadInput, maxDeltaPos, maxDeltaRot);
+      
     }
   }
 

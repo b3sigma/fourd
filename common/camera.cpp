@@ -409,6 +409,30 @@ void TestSignals() {
 }
 } // namespace _internal
 
+class CountdownDeathComponent : public Component {
+public:
+  int _ticksToDie;
+  CountdownDeathComponent(int count) : _ticksToDie(count) {}
+
+  virtual void OnConnected() {
+    RegisterSignal(std::string("AnySignal"), this, &::CountdownDeathComponent::OnAnySignal);
+    RegisterSignal(std::string("Step"), this, &::CountdownDeathComponent::OnStepSignal);
+  }
+  void OnStepSignal(float delta) {
+    _ticksToDie--;
+    if(_ticksToDie <= 0) {
+      SelfDestruct();
+    }
+  }
+  
+  void OnAnySignal() {
+    _ticksToDie--;
+    if(_ticksToDie <= 0) {
+      SelfDestruct();
+    }
+  }
+};
+
 class SuicideComponent : public Component {
   virtual void OnConnected() {
     RegisterSignal(std::string("Step"), this, &::SuicideComponent::OnStepSignal);
@@ -478,6 +502,19 @@ void Camera::RunTests() {
   assert(pCamera->_cameraMatrix == identity);
   pCamera->GetComponentBus().Step(2.5f);
   assert(pCamera->_cameraMatrix == identity);
+  delete pCamera;
+
+  // Tests for signaling and destruction
+  pCamera = new Camera();
+  pCamera->GetComponentBus().AddComponent(new CountdownDeathComponent(1));
+  pCamera->GetComponentBus().AddComponent(new CountdownDeathComponent(2));
+  pCamera->GetComponentBus().AddComponent(new CountdownDeathComponent(4));
+  pCamera->GetComponentBus().AddComponent(new CountdownDeathComponent(2));
+  pCamera->Step(0.1f);
+  pCamera->GetComponentBus().SendSignal("AnySignal", SignalN<>());
+  pCamera->Step(0.1f);
+  pCamera->GetComponentBus().SendSignal("AnySignal", SignalN<>());
+  pCamera->Step(0.1f);
   delete pCamera;
 
 }
