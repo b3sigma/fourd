@@ -245,6 +245,9 @@
     <ClInclude Include="..\app\components\quaxol_modifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\app\components\gui_input_router.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">

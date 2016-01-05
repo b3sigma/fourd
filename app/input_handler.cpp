@@ -59,6 +59,12 @@ void InputHandler::AddDefaultBindings() {
   binding.m_isInverted = true;
   m_joyBindings.push_back(binding);
 
+  //binding.m_command.assign("inputForward");
+  //binding.m_buttonIndex = 2; // triggers -1 right, +1 left
+  //binding.m_isButton = false;
+  //binding.m_isInverted = true;
+  //m_joyBindings.push_back(binding);
+
   binding.m_command.assign("inputJump");
   binding.m_buttonIndex = 0;
   binding.m_isButton = true;
@@ -70,12 +76,12 @@ void InputHandler::AddDefaultBindings() {
   m_joyBindings.push_back(binding);
 
   binding.m_command.assign("inputAddQuaxol");
-  binding.m_buttonIndex = 2;
+  binding.m_buttonIndex = 3;
   binding.m_isButton = true;
   m_joyBindings.push_back(binding);
 
   binding.m_command.assign("inputRemoveQuaxol");
-  binding.m_buttonIndex = 3;
+  binding.m_buttonIndex = 2;
   binding.m_isButton = true;
   m_joyBindings.push_back(binding);
 
@@ -88,6 +94,17 @@ void InputHandler::AddDefaultBindings() {
   binding.m_buttonIndex = 5;
   binding.m_isButton = true;
   m_joyBindings.push_back(binding);
+
+  binding.m_command.assign("inputControlsMenu");
+  binding.m_buttonIndex = 6; //select
+  binding.m_isButton = true;
+  m_joyBindings.push_back(binding);
+
+  binding.m_command.assign("inputMainMenu");
+  binding.m_buttonIndex = 7; //start
+  binding.m_isButton = true;
+  m_joyBindings.push_back(binding);
+
 }
 
 void InputHandler::AddInputTarget(ComponentBus* bus) {

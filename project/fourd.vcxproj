@@ -120,6 +120,7 @@
     <ClCompile Include="..\imgui\imgui.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\app\components\gui_input_router.h" />
     <ClInclude Include="..\app\components\quaxol_modifier.h" />
     <ClInclude Include="..\app\components\reset_watcher.h" />
     <ClInclude Include="..\app\components\screensaver.h" />

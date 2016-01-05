@@ -412,8 +412,14 @@ void RenderVRDebugOverlay(float frameTime, const Vec2f& offset, ::fd::Render* re
   //ImGui::End();
 }
 
+
+bool g_guiControllerMenu = false;
+void ImGuiWrapper::ToggleControllerMenu() {
+  g_guiControllerMenu = !g_guiControllerMenu;
+}
+
 void RenderControlsSceen(ImVec2 res) {
-  if(!s_ControllerTex)
+  if(!s_ControllerTex || !g_guiControllerMenu)
     return;
 
   static bool opened = true;
@@ -431,32 +437,37 @@ void RenderControlsSceen(ImVec2 res) {
   }
   ImGui::Image((ImTextureID)(s_ControllerTex->GetTextureID()), startSize);
 
-  ImGui::SetWindowFontScale(2.0f);
+  //ImGui::SetWindowFontScale(1.5f);
 
-  ImVec4 black(0.0f, 0.0f, 0.0f, 1.0f);
-  ImVec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-  ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
-  typedef std::list<std::pair<std::pair<ImVec2, ImVec4>, std::string>> TextPositions;
-  TextPositions textList = {
-      { {ImVec2(0.25f, 0.25f), black}, std::string("Jump") },
-      { {ImVec2(0.35f, 0.45f), white}, std::string("Look") },
-      { {ImVec2(0.35f, 0.45f), white}, std::string("Slice") },
-      { {ImVec2(0.5f, 0.35f), red}, std::string("Create") },
-      { {ImVec2(0.35f, 0.45f), white}, std::string("Destroy") },
-      { {ImVec2(0.35f, 0.45f), white}, std::string("Menu") },
-      { {ImVec2(0.35f, 0.45f), white}, std::string("Help") }
-  };
+  //ImVec4 black(0.0f, 0.0f, 0.0f, 1.0f);
+  //ImVec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+  //ImVec4 red(1.0f, 0.13f, 0.227f, 1.0f);
+  //ImVec4 green(0.32f, 1.0f, 0.15f, 1.0f);
+  //ImVec4 blue(0.161f, 0.69f, 1.0f, 1.0f);
+  //ImVec4 yellow(1.0f, 1.0f, 0.231f, 1.0f);
+  //typedef std::list<std::pair<std::pair<ImVec2, ImVec4>, std::string>> TextPositions;
+  //TextPositions textList = {
+  //    { {ImVec2(0.67f, 0.55f), green}, std::string("Jump") },
+  //    { {ImVec2(0.20f, 0.50f), red}, std::string("Move") },
+  //    { {ImVec2(0.55f, 0.62f), red}, std::string("Look") },
+  //    { {ImVec2(0.75f, 0.50f), red}, std::string("Slice") },
+  //    { {ImVec2(0.65f, 0.36f), yellow}, std::string("Create") },
+  //    { {ImVec2(0.55f, 0.49f), blue}, std::string("Remove") },
+  //    { {ImVec2(0.53f, 0.42f), white}, std::string("Reset") },
+  //    { {ImVec2(0.39f, 0.42f), white}, std::string("Help") }
+  //};
 
-  for(auto entry : textList) {
-    const ImVec2& relPos = entry.first.first;
-    const ImVec4& color = entry.first.second;
-    const std::string& text = entry.second;
-    ImVec2 pos(startSize.x * relPos.x, startSize.y * relPos.y);
-    ImGui::SetCursorPos(pos);
-    ImGui::TextColored(color, text.c_str());
-  }
+  //for(auto entry : textList) {
+  //  const ImVec2& relPos = entry.first.first;
+  //  const ImVec4& color = entry.first.second;
+  //  const std::string& text = entry.second;
+  //  ImVec2 pos(startSize.x * relPos.x, startSize.y * relPos.y);
+  //  ImGui::SetCursorPos(pos);
+  //  ImGui::TextColored(color, text.c_str());
+  //}
   ImGui::End();
 }
+
 
 void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* renderer, bool doUpdate) {
   if(ImGuiWrapper::s_bGuiDisabled) {
@@ -470,7 +481,7 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
     RenderFpsOverlay(frameTime, offset);
     //RenderVRDebugOverlay(frameTime, offset, renderer);
 
-    //RenderControlsSceen(windowSize);
+    RenderControlsSceen(windowSize);
   }
 
   //static bool opened = true;

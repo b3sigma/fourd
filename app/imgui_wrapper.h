@@ -26,6 +26,8 @@ public:
   static void Shutdown();
   static void NewFrame(float deltaTime, int renderWidth, int renderHeight);
   static void Render(float frameTime, const Vec2f& offset, Render* renderer, bool doUpdate);
+
+  static void ToggleControllerMenu();
   
 protected:
   static bool InitOpenGL();

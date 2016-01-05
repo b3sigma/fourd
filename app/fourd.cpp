@@ -39,6 +39,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "glhelper.h"
+#include "components/gui_input_router.h"
 #include "components/reset_watcher.h"
 #include "components/quaxol_modifier.h"
 
@@ -321,6 +322,7 @@ bool Initialize(int width, int height) {
 
   g_inputHandler.AddInputTarget(&(g_camera.GetComponentBus()));
   g_inputHandler.AddDefaultBindings();
+  g_camera.GetComponentBus().AddComponent(new GuiInputRouterComponent());
 
   if (g_screensaverTime > 0.0f) {
     // reset the game world after 5 minutes of inactivity
