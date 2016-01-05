@@ -1149,22 +1149,33 @@ int main(int argc, const char *argv[]) {
   std::string keepAliveFileName("");
   bool displayUsage = false;
   float pixelScale = 0.5f; //1.0f;
+  float screenSaverMoveThreshold = 0.00003f;
+  float screenSaverRotateThreshold = 0.0001f;
+  
   argh::Argh cmd_line;
-  cmd_line.addFlag(displayUsage, "--help", "Display help (you probably figured this one out)");
-  cmd_line.addFlag(displayUsage, "-h", "Display help (you probably figured this one out)");
-  cmd_line.addFlag(displayUsage, "-?", "Display help (you probably figured this one out)");
-  cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled, "--disable_ui",
-      "Disable the gui, useful for when it sucks");
-  cmd_line.addOption<float>(pixelScale, pixelScale, "--pixel_scale",
-      "How much to reduce the render target to improve fill rate");
-  cmd_line.addOption<std::string>(g_startupLevel, g_startupLevel, "--start_level", 
-      "Level name to start with, without path, with extension"); 
-  cmd_line.addFlag(g_startupAddEyeCandy, "--add_eye_candy", 
-      "Adds a bunch of shapes on startup");
-  cmd_line.addOption<std::string>(keepAliveFileName, keepAliveFileName, "--keep_alive_file_name", 
+  cmd_line.addFlag(displayUsage,
+      "--help", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(displayUsage, 
+      "-h", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(displayUsage, 
+      "-?", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled, 
+      "--disable_ui", "Disable the gui, useful for when it sucks");
+  cmd_line.addOption<float>(pixelScale, pixelScale, 
+      "--pixel_scale", "How much to reduce the render target to improve fill rate");
+  cmd_line.addOption<std::string>(g_startupLevel, g_startupLevel, 
+      "--start_level", "Level name to start with, without path, with extension"); 
+  cmd_line.addFlag(g_startupAddEyeCandy, 
+      "--add_eye_candy", "Adds a bunch of shapes on startup");
+  cmd_line.addOption<std::string>(keepAliveFileName, keepAliveFileName, 
+      "--keep_alive_file_name", 
       "Will write to this file every 5 seconds to indicate the process is alive"); 
-  cmd_line.addOption<float>(g_screensaverTime, g_screensaverTime, "--screensaver", 
-      "Enable the screensaver system");
+  cmd_line.addOption<float>(g_screensaverTime, g_screensaverTime, 
+      "--screensaver", "Enable the screensaver system");
+  cmd_line.addOption<float>(VRWrapper::s_screenSaverMoveThreshold, VRWrapper::s_screenSaverMoveThreshold, 
+      "--screensaver_move_thresh", "How much VR head movement turns off the screensaver");
+  cmd_line.addOption<float>(VRWrapper::s_screenSaverRotateThreshold, VRWrapper::s_screenSaverRotateThreshold,
+      "--screensaver_rotate_thresh", "How much VR head rotation turns off the screensaver");
   cmd_line.parse(argc, argv);
   
   printf("Screensaver was %f\n", g_screensaverTime);

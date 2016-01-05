@@ -48,6 +48,9 @@ public:
   bool m_doScreenSaver;
   bool m_hadInput;
 
+  static float s_screenSaverMoveThreshold;
+  static float s_screenSaverRotateThreshold;
+
 protected:
   static bool s_Initialized;
   static bool s_UsingVR;

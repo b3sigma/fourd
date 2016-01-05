@@ -20,6 +20,9 @@ namespace fd {
 bool VRWrapper::s_Initialized = false;
 bool VRWrapper::s_UsingVR = false;
 
+float VRWrapper::s_screenSaverMoveThreshold = 0.00003f;
+float VRWrapper::s_screenSaverRotateThreshold = 0.0001f;
+
 // TODO: move this to like ovr_vr_wrapper.cpp or something
 class OVRWrapper : public VRWrapper {
 public:
@@ -41,12 +44,16 @@ public:
 
   OVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL)
       , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
-      , m_isDebugDevice(true) {
+      , m_isDebugDevice(true)
+  {
     for(int e = 0; e < 2; e++) {
       m_eyeRenderTex[e] = NULL;
       m_eyeDepthTex[e] = NULL;
     }
+    m_doScreenSaver = false;
+    m_hadInput = false;
   }
+
   ~OVRWrapper() {
     for(int e = 0; e < 2; e++) {
       delete m_eyeRenderTex[e];
@@ -378,10 +385,7 @@ public:
         maxDeltaRot = max((oldRot - newRot).length(), maxDeltaRot);
       }
 
-      const float posThreshold = 0.00003f;
-      const float rotThreshold = 0.0001f;
-
-      if(maxDeltaPos > posThreshold || maxDeltaRot > rotThreshold) {
+      if(maxDeltaPos > s_screenSaverMoveThreshold || maxDeltaRot > s_screenSaverRotateThreshold) {
         m_hadInput = true;
       }
       
