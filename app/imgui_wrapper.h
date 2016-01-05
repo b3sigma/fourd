@@ -28,7 +28,8 @@ public:
   static void Render(float frameTime, const Vec2f& offset, Render* renderer, bool doUpdate);
 
   static void ToggleControllerMenu();
-  
+  static bool ToggleResetMenu(); // returns true if window is now shown
+
 protected:
   static bool InitOpenGL();
 

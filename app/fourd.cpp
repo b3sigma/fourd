@@ -140,10 +140,14 @@ bool SaveLevel(const char* levelName) {
   return false;
 }
 
+static std::string g_lastLevelLoaded;
 bool LoadLevel(const char* levelName) {
   Timer timer(std::string("LoadLevel"));
 
   static std::string g_currentLevel;
+  if(levelName) {
+    g_lastLevelLoaded.assign(levelName);
+  }
 
   std::string nameExt = ".txt"; // default if unspecified
 
@@ -1050,6 +1054,12 @@ void UpdatePointerEntity() {
 
 void StepFrame() {
   g_renderer.UpdateFrameTime();
+
+  if(g_camera._restartedGame) {
+    g_camera._restartedGame = false;
+    std::string levelName = g_lastLevelLoaded;
+    LoadLevel(levelName.c_str());
+  }
   
   int guiWidth = 0; // 0 means ImGui will figure it out
   int guiHeight = 0; 

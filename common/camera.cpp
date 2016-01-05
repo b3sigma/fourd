@@ -19,6 +19,7 @@ Camera::Camera()
     , _collidingLastFrame(false)
     , _nextSimpleSlicePositive(true)
     , _startingCameraCopy(NULL)
+    , _restartedGame(false)
 {
   _cameraMatrix.storeIdentity();
   _cameraPos.storeZero();
@@ -67,6 +68,7 @@ Camera::~Camera() {
 }
 
 void Camera::RestartGameState() {
+  _restartedGame = true;
   if(!_startingCameraCopy) {
     return;
   }

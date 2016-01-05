@@ -468,6 +468,39 @@ void RenderControlsSceen(ImVec2 res) {
   ImGui::End();
 }
 
+bool g_guiResetMenu = false;
+bool ImGuiWrapper::ToggleResetMenu() {
+  g_guiResetMenu = !g_guiResetMenu;
+  return g_guiResetMenu;
+}
+
+void RenderResetScreen(ImVec2 res) {
+  if(!s_ControllerTex || !g_guiResetMenu)
+    return;
+
+  static bool opened = true;
+  float sizeScale = 0.5f;
+  float inScale = (1.0f - sizeScale) * 0.5f;
+  ImVec2 startPos(inScale * res.x, inScale * res.y);
+  ImVec2 startSize(sizeScale * res.x, sizeScale * res.y);
+
+  ImGui::SetNextWindowPos(startPos);
+  if (!ImGui::Begin("reset screen", &opened, startSize, 1.0f,
+      ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
+  {
+      ImGui::End();
+      return;
+  }
+
+  ImGui::SetWindowFontScale(2.0f);
+
+  ImVec2 pos(startSize.x * 0.10f, startSize.y * 0.20f);
+  ImGui::SetCursorPos(pos);
+  ImVec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+  ImGui::TextWrapped("To reset, hit the menu button five times, quickly, when this menu screen is showing.");
+
+  ImGui::End();
+}
 
 void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* renderer, bool doUpdate) {
   if(ImGuiWrapper::s_bGuiDisabled) {
@@ -478,10 +511,11 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
   if(doUpdate) {
     
-    RenderFpsOverlay(frameTime, offset);
+    //RenderFpsOverlay(frameTime, offset);
     //RenderVRDebugOverlay(frameTime, offset, renderer);
 
     RenderControlsSceen(windowSize);
+    RenderResetScreen(windowSize);
   }
 
   //static bool opened = true;

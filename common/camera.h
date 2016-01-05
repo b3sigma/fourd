@@ -52,6 +52,7 @@ public:
   ComponentBus _componentBus;
 
   Camera* _startingCameraCopy;
+  bool _restartedGame;
 
   Camera();
   ~Camera();
