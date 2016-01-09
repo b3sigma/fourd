@@ -237,15 +237,17 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
   g_eyeCandyMeshes.emplace_back(new Mesh());
   Mesh* candy = g_eyeCandyMeshes.back().get();
   const float size = 30.0f;
+  const float smallSize = 15.0f;
+  Vec4f smallOff(13.0f, 0.0f, 0.0f, 3.0f);
   switch(type) {
     case EyeCandyQuad:
-      candy->buildQuad(size, Vec4f(), Vec4f());
+      candy->buildQuad(smallSize, smallOff, Vec4f());
       break;
     case EyeCandyCube:
-      candy->buildCube(size, Vec4f(), Vec4f());
+      candy->buildCube(smallSize, smallOff, Vec4f());
       break;
     case EyeCandyTesseract:
-      candy->buildTesseract(size, Vec4f(), Vec4f());
+      candy->buildTesseract(smallSize, smallOff, Vec4f());
       break;
     case EyeCandy16Cell:
       candy->build16cell(size, Vec4f());
@@ -282,13 +284,14 @@ void AddAllEyeCandy() {
   // yeah yeah side effects blah blah
   Shader* savedShader = g_shader;
 
-  AddEyeCandy(EyeCandyQuad, Vec4f(-50.0f, 00.0f, -50.0f, 0.0f));
-  AddEyeCandy(EyeCandyCube, Vec4f(-50.0f, 00.0f, 00.0f, 0.0f));
-  AddEyeCandy(EyeCandyTesseract, Vec4f(-50.0f, 00.0f, 50.0f, 0.0f));
-  AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 0.0f));
-  AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 200.0f, 0.0f));
+  float closeDist = -50.0f;
+  AddEyeCandy(EyeCandyQuad, Vec4f(closeDist, 00.0f, -50.0f, 15.0f));
+  AddEyeCandy(EyeCandyCube, Vec4f(closeDist, 00.0f, 00.0f, 15.0f));
+  AddEyeCandy(EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));
+  AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 5.0f));
+  AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 180.0f, 0.0f));
   AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
-  AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 200.0f, 0.0f));
+  //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 240.0f, 0.0f));
 
   g_shader = savedShader;
   //g_scene.m_pQuaxolShader = g_shader;
