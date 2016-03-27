@@ -122,7 +122,7 @@ namespace fd {
 
   class QuaxolChunk {
   public:
-    static const int c_mxSz = 16; // this means 16^4 blocks, or 32k
+    static const int c_mxSz = 16; // this means 16^4 blocks, or 64k
     // indexing [x][y][z][w] for the moment
     
     int m_cubeCount; // might not end up exact? suggestion

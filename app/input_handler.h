@@ -18,10 +18,11 @@ public:
     bool m_spamRepeats;
     int m_buttonIndex;
     bool m_isInverted;
+    bool m_isButtonContinuous;
     // sensitivity?
     // button press/repeat?
-    JoystickBinding() : m_deadzone(0.2f), m_isButton(false),
-        m_buttonIndex(0), m_isInverted(false), m_spamRepeats(false) {}
+    JoystickBinding() : m_deadzone(0.2f), m_isButton(false), m_spamRepeats(false),
+        m_buttonIndex(0), m_isInverted(false), m_isButtonContinuous(false) {}
   };
   typedef std::vector<JoystickBinding> JoyBindingList;
   JoyBindingList m_joyBindings;

@@ -50,6 +50,8 @@ Camera::Camera()
   _componentBus.RegisterSignal(
       std::string("inputForward"), this, &Camera::OnInputForward);
   _componentBus.RegisterSignal(
+      std::string("inputInside"), this, &Camera::OnInputInside);
+  _componentBus.RegisterSignal(
       std::string("inputStrafe"), this, &Camera::OnInputStrafe);
   _componentBus.RegisterSignal(
       std::string("inputLookUp"), this, &Camera::OnInputLookUp);
@@ -57,6 +59,9 @@ Camera::Camera()
       std::string("inputLookRight"), this, &Camera::OnInputLookRight);
   _componentBus.RegisterSignal(
       std::string("inputShiftSlice"), this, &Camera::OnInputShiftSlice);
+  _componentBus.RegisterSignal(
+      std::string("inputRoll"), this, &Camera::OnInputRoll);
+
   _componentBus.RegisterSignal(
       std::string("RestartGameState"), this, &Camera::RestartGameState);
 
@@ -298,6 +303,11 @@ void Camera::OnInputForward(float fDeltaTime, float amount) {
   ApplyTranslationInput(runSpeed * amount * fDeltaTime, Camera::FORWARD);
 }
 
+void Camera::OnInputInside(float fDeltaTime, float amount) {
+  const float runSpeed = 309.0f;
+  ApplyTranslationInput(runSpeed * amount * fDeltaTime, Camera::INSIDE);
+}
+
 void Camera::OnInputStrafe(float fDeltaTime, float amount) {
   const float strafeSpeed = 30.0f;
   ApplyTranslationInput(strafeSpeed * amount * fDeltaTime, Camera::RIGHT);
@@ -325,6 +335,11 @@ void Camera::OnInputShiftSlice(float fDeltaTime) {
           2.0f /* duration */, true /* worldSpace */));
 
   _nextSimpleSlicePositive = !_nextSimpleSlicePositive;
+}
+
+void Camera::OnInputRoll(float fDeltaTime, float amount) {
+  static float rollSensitivity = 0.01f;
+  ApplyRollInput(rollSensitivity * amount, Camera::INSIDE, Camera::RIGHT);
 }
 
 void Camera::SetZProjection(int width, int height, 

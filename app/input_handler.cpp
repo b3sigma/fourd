@@ -59,11 +59,12 @@ void InputHandler::AddDefaultBindings() {
   binding.m_isInverted = true;
   m_joyBindings.push_back(binding);
 
-  //binding.m_command.assign("inputForward");
-  //binding.m_buttonIndex = 2; // triggers -1 right, +1 left
-  //binding.m_isButton = false;
+  binding.m_command.assign("inputRoll");
+  //binding.m_command.assign("inputInside");
+  binding.m_buttonIndex = 2; // triggers -1 right, +1 left
+  binding.m_isButton = false;
   //binding.m_isInverted = true;
-  //m_joyBindings.push_back(binding);
+  m_joyBindings.push_back(binding);
 
   binding.m_command.assign("inputJump");
   binding.m_buttonIndex = 0;
@@ -85,14 +86,22 @@ void InputHandler::AddDefaultBindings() {
   binding.m_isButton = true;
   m_joyBindings.push_back(binding);
 
-  binding.m_command.assign("inputNextCurrentItem");
-  binding.m_buttonIndex = 4;
+  //binding.m_command.assign("inputNextCurrentItem");
+  binding.m_command.assign("inputInside");
+  binding.m_buttonIndex = 4; // shoulder
   binding.m_isButton = true;
+  binding.m_isButtonContinuous = true;
+  binding.m_isInverted = false;
+  binding.m_spamRepeats = true;
   m_joyBindings.push_back(binding);
 
-  binding.m_command.assign("inputPrevCurrentItem");
-  binding.m_buttonIndex = 5;
+  //binding.m_command.assign("inputPrevCurrentItem");
+  binding.m_command.assign("inputInside");
+  binding.m_buttonIndex = 5; // shoulder button
   binding.m_isButton = true;
+  binding.m_isButtonContinuous = true;
+  binding.m_isInverted = true;
+  binding.m_spamRepeats = true;
   m_joyBindings.push_back(binding);
 
   binding.m_command.assign("inputControlsMenu");
@@ -138,10 +147,16 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
 
         for(auto inputTarget : m_inputTargets) {
           SendAnyInputSignal(inputTarget);
-          inputTarget->SendSignal(binding.m_command,
-              SignalN<float>(), frameTime);
+          if(binding.m_isButtonContinuous) {
+            float amount = (binding.m_isInverted) ? -1.0f : 1.0f;
+            inputTarget->SendSignal(binding.m_command,
+                SignalN<float, float>(), frameTime, amount);
+          } else {
+            inputTarget->SendSignal(binding.m_command,
+                SignalN<float>(), frameTime);
+          }
         }
-      } else {
+      } else { //not a button
         if(binding.m_buttonIndex >= (int)joy.m_axes.size())
           continue; // not a possible binding
         float amount = joy.m_axes[binding.m_buttonIndex];

@@ -126,7 +126,7 @@ public:
     name(name),
     msg(msg) 
   {
-    flag = false;
+    //flag = false;
   }
 
   std::string getDefault() { return ""; }

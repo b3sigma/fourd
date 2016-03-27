@@ -1101,6 +1101,8 @@ bool IsZero(float val) { return (fabs(val) < cfThreshold); }
 
 // TODO: tests in here is totally tacky, move them.
 void RunTests() {
+//return;
+
   Vec4f a(Rand(), Rand(), Rand(), Rand());
   Vec4f b(Rand(), Rand(), Rand(), Rand());
   Vec4f c(Rand(), Rand(), Rand(), Rand());
@@ -1194,6 +1196,7 @@ int main(int argc, const char *argv[]) {
   cmd_line.parse(argc, argv);
   
   printf("Screensaver was %f\n", g_screensaverTime);
+  printf("DisabledUI was %d\n", ImGuiWrapper::s_bGuiDisabled);
 
   if(displayUsage) {
     printf("Helpy?\n%s\n", cmd_line.getUsage().c_str());

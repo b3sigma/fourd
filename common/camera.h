@@ -87,10 +87,12 @@ public:
   void ApplyTranslationInput(float amount, Direction direction);
 
   void OnInputForward(float fDeltaTime, float amount);
+  void OnInputInside(float fDeltaTime, float amount);
   void OnInputStrafe(float fDeltaTime, float amount);
   void OnInputLookUp(float fDeltaTime, float amount);
   void OnInputLookRight(float fDeltaTime, float amount);
   void OnInputShiftSlice(float fDeltaTime);
+  void OnInputRoll(float fDeltaTime, float amount);
 
   void printIt();
 
