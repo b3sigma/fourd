@@ -36,6 +36,8 @@ public:
 
   void OnStepSignal(float delta);
   void OnDeleteSelf();
+  void SetMesh(Mesh* pMesh);
+  void SetShader(Shader* pShader);
 
   bool Initialize(Mesh* pMesh, Shader* pShader, const TTextureList* textures);
 

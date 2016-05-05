@@ -37,11 +37,13 @@
 #include "render.h"
 #include "scene.h"
 #include "shader.h"
+#include "stencil_portal.h"
 #include "texture.h"
 #include "glhelper.h"
 #include "components/gui_input_router.h"
 #include "components/reset_watcher.h"
 #include "components/quaxol_modifier.h"
+#include "components/stencil_portal_component.h"
 
 #define USE_VR
 #ifdef USE_VR
@@ -73,7 +75,7 @@ GLFWwindow* g_glfwWindow = NULL;
 Mat4f g_debugHeadPose;
 float g_screensaverTime = 0.0f; // 0 is disabled
 
-bool g_startupAddEyeCandy = false;
+bool g_startupAddEyeCandy = true;
 std::string g_startupLevel = "current.bin";
 
 fd::Shader* LoadShader(const char* shaderName) {
@@ -221,6 +223,13 @@ void ToggleCameraMode(Camera::MovementMode mode) {
   }
 }
 
+void AddStencilPortals() {
+  Entity* newEntity = g_scene.AddEntity();
+  //Mesh* portalMesh = new Mesh();
+  //portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+  newEntity->GetComponentBus().AddComponent(new StencilPortalComponent());
+}
+
 enum EyeCandyTypes {
   EyeCandyQuad,
   EyeCandyCube,
@@ -280,6 +289,7 @@ void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
 }
 
 void AddAllEyeCandy() {
+  AddStencilPortals();
 
   // yeah yeah side effects blah blah
   Shader* savedShader = g_shader;
@@ -290,7 +300,7 @@ void AddAllEyeCandy() {
   AddEyeCandy(EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));
   AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 5.0f));
   AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 180.0f, 0.0f));
-  AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  //AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
   //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 240.0f, 0.0f));
 
   g_shader = savedShader;

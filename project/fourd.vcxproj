@@ -89,6 +89,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\app\components\quaxol_modifier.cpp" />
+    <ClCompile Include="..\app\components\stencil_portal_component.cpp" />
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
     <ClCompile Include="..\app\imgui_wrapper.cpp" />
@@ -97,6 +98,7 @@
     <ClCompile Include="..\app\render.cpp" />
     <ClCompile Include="..\app\scene.cpp" />
     <ClCompile Include="..\app\shader.cpp" />
+    <ClCompile Include="..\app\stencil_portal.cpp" />
     <ClCompile Include="..\app\texture.cpp" />
     <ClCompile Include="..\app\thirdparty\glew\src\glew.c" />
     <ClCompile Include="..\app\vr_wrapper.cpp" />
@@ -124,6 +126,7 @@
     <ClInclude Include="..\app\components\quaxol_modifier.h" />
     <ClInclude Include="..\app\components\reset_watcher.h" />
     <ClInclude Include="..\app\components\screensaver.h" />
+    <ClInclude Include="..\app\components\stencil_portal_component.h" />
     <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\glhelper.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
@@ -133,6 +136,7 @@
     <ClInclude Include="..\app\render.h" />
     <ClInclude Include="..\app\scene.h" />
     <ClInclude Include="..\app\shader.h" />
+    <ClInclude Include="..\app\stencil_portal.h" />
     <ClInclude Include="..\app\texture.h" />
     <ClInclude Include="..\app\vr_wrapper.h" />
     <ClInclude Include="..\app\win32_platform.h" />

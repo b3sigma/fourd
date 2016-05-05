@@ -147,10 +147,10 @@ void Scene::Step(float fDelta) {
   m_toBeDeleted.resize(0);
 }
 
-void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
+bool RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
     const Vec4f& position, const Mat4f& orientation) {
-  if(pShader == NULL) return; // should go away when we sort
-  if(pMesh == NULL) return; // should go away when we sort
+  if(pShader == NULL) return false; // should go away when we sort
+  if(pMesh == NULL) return false; // should go away when we sort
 
   pShader->StartUsing();
   pShader->SetPosition(&position);
@@ -177,6 +177,8 @@ void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
   }
   glEnd();
   pShader->StopUsing();
+
+  return true;
 }
 
 void Scene::RenderGroundPlane(Camera* pCamera) {

@@ -75,6 +75,10 @@ public:
   void OnDeleteEntity(Entity* pEntity);
   void RenderDynamicEntities(Camera* pCamera);
 
+  // trying some stuff for stencil portals, this gets called if a scene is a dependent render
+  // from it's own callgraph. 
+  Scene* RecursiveClone();
+
   // Hacky garbage, should be on the mesh/quaxol
   void BuildColorArray();
   void AddTexture(Texture* pTex);

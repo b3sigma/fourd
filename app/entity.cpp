@@ -14,9 +14,17 @@ Entity::Entity(Scene* scene)
       std::string("position"), &m_position, true);
   m_componentBus.RegisterOwnerDataPtr(
       std::string("scene"), &m_scene, true);
-  
+  m_componentBus.RegisterOwnerDataPtr(
+      std::string("mesh"), &m_pMesh, true);
+  m_componentBus.RegisterOwnerDataPtr(
+      std::string("shader"), &m_pShader, true);
+
   m_componentBus.RegisterSignal(
       std::string("DeleteSelf"), this, &Entity::OnDeleteSelf);
+  m_componentBus.RegisterSignal(
+      std::string("SetMesh"), this, &Entity::SetMesh);
+  m_componentBus.RegisterSignal(
+      std::string("SetShader"), this, &Entity::SetShader);
 
   m_orientation.storeIdentity();
   m_position.storeZero();
@@ -32,6 +40,14 @@ Entity::~Entity() {
 void Entity::OnConnected() {
   // Should do a pass through for signals down to the bus.
   RegisterSignal(std::string("Step"), this, &Entity::OnStepSignal);
+}
+
+void Entity::SetMesh(Mesh* pMesh) {
+  m_pMesh = pMesh; //so it's not owned anyway, I guess this is fine.
+}
+
+void Entity::SetShader(Shader* pShader) {
+  m_pShader = pShader; //so it's not owned anyway, I guess this is fine.
 }
 
 // try the manual thing first
