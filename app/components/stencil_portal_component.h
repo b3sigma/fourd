@@ -12,17 +12,24 @@ class Mesh;
 
 class StencilPortalComponent : public Component {
 public:
-  int m_currentQuaxolType;
+  int m_renderRecursionMax;
+  int m_renderRecursionCurrent;
 
   Mat4f* m_pOwnerOrientation; // note as this is 4d we need full 4d matrix for orientation
   Vec4f* m_pOwnerPosition; // also need full vec4 for position.
   Scene* m_pOwnerScene;
 
-public:
-  StencilPortalComponent() : m_currentQuaxolType(0) {}
+  typedef std::vector<Camera*> TCameraStack;
+  TCameraStack m_cameraStack;
+  int m_nextCameraCopyIndex;
+  Mat4f* m_targetOrientation; // note as this is 4d we need full 4d matrix for orientation
+  Vec4f* m_targetPosition; // also need full vec4 for position.
   
+public:
+  StencilPortalComponent();
+  ~StencilPortalComponent();
   virtual void OnConnected();
-  virtual void OnAfterRender();
+  virtual void OnAfterRender(Camera* pCamera);
 };
 
 }; //namespace fd

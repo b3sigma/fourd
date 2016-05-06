@@ -77,32 +77,47 @@ void Camera::RestartGameState() {
   if(!_startingCameraCopy) {
     return;
   }
-  _cameraMatrix = _startingCameraCopy->_cameraMatrix;
-  _cameraPos = _startingCameraCopy->_cameraPos;
-  _movement = _startingCameraCopy->_movement;
-  _cameraLookAt = _startingCameraCopy->_cameraLookAt;
-  _yaw = _startingCameraCopy->_yaw;
-  _pitch = _startingCameraCopy->_pitch;
-  _yawPitchTrans = _startingCameraCopy->_yawPitchTrans;
-  _yawTrans = _startingCameraCopy->_yawTrans;
-  _pushVelocity = _startingCameraCopy->_pushVelocity;
-  _collidingLastFrame = _startingCameraCopy->_collidingLastFrame;
-  _velocity = _startingCameraCopy->_velocity;
+  RestoreStateFrom(_startingCameraCopy);
+}
+
+void Camera::RestoreStateFrom(const Camera* inWriter) {
+  _renderMatrix = inWriter->_renderMatrix;
+  _renderPos = inWriter->_renderPos;
+  _cameraMatrix = inWriter->_cameraMatrix;
+  _cameraPos = inWriter->_cameraPos;
+  _movement = inWriter->_movement;
+  _cameraLookAt = inWriter->_cameraLookAt;
+  _yaw = inWriter->_yaw;
+  _pitch = inWriter->_pitch;
+  _yawPitchTrans = inWriter->_yawPitchTrans;
+  _yawTrans = inWriter->_yawTrans;
+  _pushVelocity = inWriter->_pushVelocity;
+  _collidingLastFrame = inWriter->_collidingLastFrame;
+  _velocity = inWriter->_velocity;
+}
+
+
+void Camera::DuplicateStateTo(Camera* outOverwritten) {
+  outOverwritten->_renderMatrix = _renderMatrix;
+  outOverwritten->_renderPos = _renderPos;
+  outOverwritten->_cameraMatrix = _cameraMatrix;
+  outOverwritten->_cameraPos = _cameraPos;
+  outOverwritten->_movement = _movement;
+  outOverwritten->_cameraLookAt = _cameraLookAt;
+  outOverwritten->_yaw = _yaw;
+  outOverwritten->_pitch = _pitch;
+  outOverwritten->_yawPitchTrans = _yawPitchTrans;
+  outOverwritten->_yawTrans = _yawTrans;
+  outOverwritten->_pushVelocity = _pushVelocity;
+  outOverwritten->_collidingLastFrame = _collidingLastFrame;
+  outOverwritten->_velocity = _velocity;
 }
 
 void Camera::MarkStartingPosition() {
-  _startingCameraCopy = new Camera();
-  _startingCameraCopy->_cameraMatrix = _cameraMatrix;
-  _startingCameraCopy->_cameraPos = _cameraPos;
-  _startingCameraCopy->_movement = _movement;
-  _startingCameraCopy->_cameraLookAt = _cameraLookAt;
-  _startingCameraCopy->_yaw = _yaw;
-  _startingCameraCopy->_pitch = _pitch;
-  _startingCameraCopy->_yawPitchTrans = _yawPitchTrans;
-  _startingCameraCopy->_yawTrans = _yawTrans;
-  _startingCameraCopy->_pushVelocity = _pushVelocity;
-  _startingCameraCopy->_collidingLastFrame = _collidingLastFrame;
-  _startingCameraCopy->_velocity = _velocity;
+  if(!_startingCameraCopy) {
+    _startingCameraCopy = new Camera();
+  }
+  DuplicateStateTo(_startingCameraCopy);
 }
 
 void Camera::setMovementMode(MovementMode mode) {

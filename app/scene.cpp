@@ -209,6 +209,7 @@ void Scene::RenderDynamicEntities(Camera* pCamera) {
     //TODO: sort by shader transition
     RenderMesh(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
         pEntity->m_position, pEntity->m_orientation);
+    pEntity->GetComponentBus().SendSignal("AfterRender", SignalN<Camera*>(), pCamera);
   }
 }
 

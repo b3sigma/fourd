@@ -72,9 +72,14 @@ public:
   void SetCameraPosition(Vec4f position) {
     _cameraPos = position;
   }
+  void SetCameraOrientation(const Mat4f& orientation) {
+    _cameraMatrix = orientation;
+  }
 
   void MarkStartingPosition();
   void RestartGameState();
+  void RestoreStateFrom(const Camera* inWriter);
+  void DuplicateStateTo(Camera* outOverwritten);
 
   void ApplyOrbitInput(float radians, Direction direction);
   void ApplyRotationInput(float radians, Direction target, Direction source);

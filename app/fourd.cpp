@@ -223,13 +223,6 @@ void ToggleCameraMode(Camera::MovementMode mode) {
   }
 }
 
-void AddStencilPortals() {
-  Entity* newEntity = g_scene.AddEntity();
-  //Mesh* portalMesh = new Mesh();
-  //portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
-  newEntity->GetComponentBus().AddComponent(new StencilPortalComponent());
-}
-
 enum EyeCandyTypes {
   EyeCandyQuad,
   EyeCandyCube,
@@ -240,8 +233,18 @@ enum EyeCandyTypes {
   EyeCandy600Cell,
 };
 typedef std::list<std::unique_ptr<Mesh>> MeshList;
-MeshList g_eyeCandyMeshes;
 
+MeshList g_stencilPortalMeshes;
+void AddStencilPortals() {
+  Entity* newEntity = g_scene.AddEntity();
+  g_stencilPortalMeshes.emplace_back(new Mesh());
+  Mesh* portalMesh = g_stencilPortalMeshes.back().get();
+  portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+  newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
+  newEntity->GetComponentBus().AddComponent(new StencilPortalComponent());
+}
+
+MeshList g_eyeCandyMeshes;
 void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
   g_eyeCandyMeshes.emplace_back(new Mesh());
   Mesh* candy = g_eyeCandyMeshes.back().get();
