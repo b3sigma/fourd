@@ -35,17 +35,17 @@ void StencilPortalComponent::OnConnected() {
     SelfDestruct();
   }
 
-  m_renderRecursionMax = 4;
+  m_renderRecursionMax = 1;
   m_targetOrientation = new Mat4f();
-  m_targetOrientation->storeRotation((float)PI, 0, 1); // uh, dunno
-  m_targetPosition = new Vec4f(10.0f, 10.0f, 100.0f, 10.0f);
+  m_targetOrientation->storeRotation((float)PI, 0, 2); // uh, dunno
+  m_targetPosition = new Vec4f(125.0f, 120.0f, 120.0f, 100.0f);
+  //125,120,110-130,100-105 are range from the far portal within the current layout
+  // was thinking maybe there should just be portal block types, and it fits within the range.
+  // First get the transformation orientation to work.
 
-  static fd::Vec4f shiftoffset(-120.0f, 13.0f, 17.0f, 3.0f);
-  (*m_pOwnerPosition) += shiftoffset;
-
-  //m_ownerBus->SendSignal(std::string("SetMesh"), SignalN<Mesh*>(), m_pOwnerScene->m_pQuaxolMesh);
-  //m_ownerBus->SendSignal(std::string("SetShader"), SignalN<Shader*>(), m_pOwnerScene->m_pQuaxolShader);
-
+  // This string shit is turning into a terrible mix of typed and untyped code, without any 
+  //   debugging tools. Each component bus should have a logging capability, or maybe that's
+  //   just another component that can listen to untouched messages.
   RegisterSignal(std::string("AfterRender"), this, &StencilPortalComponent::OnAfterRender);
 }
 
@@ -61,15 +61,25 @@ void StencilPortalComponent::OnAfterRender(Camera* pCamera) {
     }
     
     pCamera->DuplicateStateTo(m_cameraStack[cameraCopyIndex]);
-    pCamera->SetCameraPosition((*m_pOwnerPosition) + pCamera->getCameraPos());
-    //pCamera->SetCameraPosition(*m_targetPosition);
+    fd::Vec4f newCameraPos = (*m_targetPosition);
+    fd::Mat4f newCameraOri = (*m_targetOrientation);
+    fd::Vec4f localPortalToCamera(pCamera->getCameraPos() - (*m_pOwnerPosition));
+    //newCameraPos += newCameraOri.transform(localPortalToCamera);
+    newCameraPos += newCameraOri.inverse().transform(localPortalToCamera);
+    pCamera->SetCameraPosition(newCameraPos);
+    pCamera->SetCameraOrientation(newCameraOri);
+    
+    //pCamera->SetCameraPosition(pCamera->getCameraPos() - (*m_pOwnerPosition) + (*m_targetPosition));
+    //pCamera->SetCameraPosition(m_targetOrientation->transform(pCamera->getCameraPos()) - (*m_pOwnerPosition) 
+    //    + (*m_targetPosition));
     //pCamera->SetCameraOrientation(*m_targetOrientation);
+
     pCamera->UpdateRenderMatrix(NULL, NULL); // this looks like fucking black magic currently
     m_pOwnerScene->RenderEverything(pCamera);
     pCamera->RestoreStateFrom(m_cameraStack[cameraCopyIndex]);
     
     m_nextCameraCopyIndex--;
-    assert(m_nextCameraCopyIndex == cameraCopyIndex, "Problem with recursive rendering code?");
+    assert(m_nextCameraCopyIndex == cameraCopyIndex); //, "Problem with recursive rendering code?");
     m_renderRecursionCurrent--;
   }
 }

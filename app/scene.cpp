@@ -195,6 +195,7 @@ void Scene::RenderGroundPlane(Camera* pCamera) {
 // ugh this is all wrong, not going to be shader sorted, etc
 // but let's just do the stupid thing first
 // Also, shouldn't this be in a render class instead of scene?
+// now both actually
 void Scene::RenderEverything(Camera* pCamera) {
   RenderGroundPlane(pCamera);
 
@@ -223,6 +224,7 @@ void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
   Mat4f worldMatrix;
   worldMatrix.storeIdentity();
   pShader->SetOrientation(&worldMatrix);
+  //pShader->SetOrientation(
 
   WasGLErrorPlusPrint();
 

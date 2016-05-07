@@ -237,6 +237,10 @@ typedef std::list<std::unique_ptr<Mesh>> MeshList;
 MeshList g_stencilPortalMeshes;
 void AddStencilPortals() {
   Entity* newEntity = g_scene.AddEntity();
+  //newEntity->m_position = fd::Vec4f(-120.0f, 13.0f, 17.0f, 3.0f); //24-26, 20, 10-30, 0-4
+  newEntity->m_position = fd::Vec4f(25.0f, 20.0f, 20.0f, 2.0f); //24-26, 16-20, 10-30, 0-4 are plausible bounds for the near arch.
+  //newEntity->m_orientation.storeRotation((float)PI / 2.0f, 0, 2);
+  
   g_stencilPortalMeshes.emplace_back(new Mesh());
   Mesh* portalMesh = g_stencilPortalMeshes.back().get();
   portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
