@@ -10,8 +10,8 @@ StencilPortalComponent::StencilPortalComponent()
     : m_renderRecursionMax(3)
     , m_renderRecursionCurrent(0)
     , m_nextCameraCopyIndex(0)
-    , m_targetOrientation(NULL)
-    , m_targetPosition(NULL) {
+    , m_targetOrientation(new Mat4f())
+    , m_targetPosition(new Vec4f()) {
 }
 
 StencilPortalComponent::~StencilPortalComponent() {
@@ -36,12 +36,6 @@ void StencilPortalComponent::OnConnected() {
   }
 
   m_renderRecursionMax = 1;
-  m_targetOrientation = new Mat4f();
-  m_targetOrientation->storeRotation((float)PI, 0, 2); // uh, dunno
-  m_targetPosition = new Vec4f(125.0f, 120.0f, 120.0f, 100.0f);
-  //125,120,110-130,100-105 are range from the far portal within the current layout
-  // was thinking maybe there should just be portal block types, and it fits within the range.
-  // First get the transformation orientation to work.
 
   // This string shit is turning into a terrible mix of typed and untyped code, without any 
   //   debugging tools. Each component bus should have a logging capability, or maybe that's

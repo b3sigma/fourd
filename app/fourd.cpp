@@ -236,17 +236,53 @@ typedef std::list<std::unique_ptr<Mesh>> MeshList;
 
 MeshList g_stencilPortalMeshes;
 void AddStencilPortals() {
-  Entity* newEntity = g_scene.AddEntity();
-  //newEntity->m_position = fd::Vec4f(-120.0f, 13.0f, 17.0f, 3.0f); //24-26, 20, 10-30, 0-4
-  newEntity->m_position = fd::Vec4f(25.0f, 20.0f, 20.0f, 2.0f); //24-26, 16-20, 10-30, 0-4 are plausible bounds for the near arch.
-  //newEntity->m_orientation.storeRotation((float)PI / 2.0f, 0, 2);
-  newEntity->m_orientation.storeIdentity();
+  // 24-26, 16-20, 10-30, 0-4 are plausible bounds for the near arch.
+  // 125,120,110-130,100-105 are range from the far portal within the current layout
+  Vec4f nearPos(25.0f, 20.0f, 20.0f, 2.0f);
+  Vec4f nearExtents(2.0f, 4.0f, 20.0f, 4.0f);
+  Mat4f nearOrientation; nearOrientation.storeIdentity();
+  Vec4f farPos(125.0f, 120.0f, 120.0f, 100.0f);
+  Vec4f farExtents(2.0f, 4.0f, 20.0f, 4.0f);
+  Mat4f farOrientation;
+  farOrientation.storeRotation((float)PI, Camera::Direction::RIGHT, Camera::Direction::FORWARD);
+
+  // was thinking maybe there should just be portal block types, and it fits within the range.
+
   
-  g_stencilPortalMeshes.emplace_back(new Mesh());
-  Mesh* portalMesh = g_stencilPortalMeshes.back().get();
-  portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
-  newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
-  newEntity->GetComponentBus().AddComponent(new StencilPortalComponent());
+  {
+    Entity* newEntity = g_scene.AddEntity();
+    newEntity->m_position = farPos;
+    newEntity->m_orientation = farOrientation;
+
+    // mem will be owned by entity
+    StencilPortalComponent* portalComponent = new StencilPortalComponent();
+    *(portalComponent->m_targetPosition) = nearPos;
+    *(portalComponent->m_targetOrientation) = nearOrientation;
+
+    g_stencilPortalMeshes.emplace_back(new Mesh());
+    Mesh* portalMesh = g_stencilPortalMeshes.back().get();
+    portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+    newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
+    newEntity->GetComponentBus().AddComponent(new StencilPortalComponent());
+    newEntity->GetComponentBus().AddComponent(portalComponent); // mem now owned by entity
+  }
+
+  {
+    Entity* newEntity = g_scene.AddEntity();
+    newEntity->m_position = nearPos;
+    newEntity->m_orientation = nearOrientation;
+
+    // mem will be owned by entity
+    StencilPortalComponent* portalComponent = new StencilPortalComponent();
+    *(portalComponent->m_targetPosition) = farPos;
+    *(portalComponent->m_targetOrientation) = farOrientation;
+  
+    g_stencilPortalMeshes.emplace_back(new Mesh());
+    Mesh* portalMesh = g_stencilPortalMeshes.back().get();
+    portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+    newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
+    newEntity->GetComponentBus().AddComponent(portalComponent); // mem now owned by entity
+  }
 }
 
 MeshList g_eyeCandyMeshes;
