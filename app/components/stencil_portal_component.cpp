@@ -67,7 +67,7 @@ void StencilPortalComponent::OnAfterRender(Camera* pCamera) {
     //newCameraPos += newCameraOri.transform(localPortalToCamera);
     newCameraPos += newCameraOri.inverse().transform(localPortalToCamera);
     pCamera->SetCameraPosition(newCameraPos);
-    pCamera->SetCameraOrientation(newCameraOri);
+    pCamera->SetCameraOrientation(pCamera->getCameraMatrix() * newCameraOri);
     
     //pCamera->SetCameraPosition(pCamera->getCameraPos() - (*m_pOwnerPosition) + (*m_targetPosition));
     //pCamera->SetCameraPosition(m_targetOrientation->transform(pCamera->getCameraPos()) - (*m_pOwnerPosition) 

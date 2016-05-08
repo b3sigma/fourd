@@ -240,6 +240,7 @@ void AddStencilPortals() {
   //newEntity->m_position = fd::Vec4f(-120.0f, 13.0f, 17.0f, 3.0f); //24-26, 20, 10-30, 0-4
   newEntity->m_position = fd::Vec4f(25.0f, 20.0f, 20.0f, 2.0f); //24-26, 16-20, 10-30, 0-4 are plausible bounds for the near arch.
   //newEntity->m_orientation.storeRotation((float)PI / 2.0f, 0, 2);
+  newEntity->m_orientation.storeIdentity();
   
   g_stencilPortalMeshes.emplace_back(new Mesh());
   Mesh* portalMesh = g_stencilPortalMeshes.back().get();
@@ -935,7 +936,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       }
     } break;
     case 'V' : {
-      SetIsUsingVR(g_renderer.m_usingVR);
+      SetIsUsingVR(!g_renderer.m_usingVR);
     } break;
     case 'F' : {
       if (g_vr) {
