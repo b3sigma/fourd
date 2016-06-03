@@ -196,21 +196,24 @@ void Scene::RenderGroundPlane(Camera* pCamera) {
 // but let's just do the stupid thing first
 // Also, shouldn't this be in a render class instead of scene?
 // now both actually
-void Scene::RenderEverything(Camera* pCamera) {
+void Scene::RenderEverything(Camera* pCamera, Render* pRender) {
   RenderGroundPlane(pCamera);
 
-  RenderDynamicEntities(pCamera);
+  RenderDynamicEntities(pCamera, pRender);
 
   RenderQuaxols(pCamera, m_pQuaxolShader);
 }
 
 // TODO: if this gets used more, will probably need split between alpha/non
-void Scene::RenderDynamicEntities(Camera* pCamera) {
+void Scene::RenderDynamicEntities(Camera* pCamera, Render* pRender) {
   for(const auto pEntity : m_dynamicEntities) {
     //TODO: sort by shader transition
+    pEntity->GetComponentBus().SendSignal("BeforeRender",
+        SignalN<Camera*, Render*>(), pCamera, pRender);
     RenderMesh(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
         pEntity->m_position, pEntity->m_orientation);
-    pEntity->GetComponentBus().SendSignal("AfterRender", SignalN<Camera*>(), pCamera);
+    pEntity->GetComponentBus().SendSignal("AfterRender",
+        SignalN<Camera*, Render*>(), pCamera, pRender);
   }
 }
 

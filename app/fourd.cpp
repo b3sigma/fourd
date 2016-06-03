@@ -247,25 +247,28 @@ void AddStencilPortals() {
   farOrientation.storeRotation((float)PI, Camera::Direction::RIGHT, Camera::Direction::FORWARD);
 
   // was thinking maybe there should just be portal block types, and it fits within the range.
+  //   Then even with a few allocated block types, maybe from the back, one could have multiple
+  //   portal entries in a chunk.
 
   
-  {
-    Entity* newEntity = g_scene.AddEntity();
-    newEntity->m_position = farPos;
-    newEntity->m_orientation = farOrientation;
+  //if(0) {
+  //  Entity* newEntity = g_scene.AddEntity();
+  //  newEntity->m_position = farPos;
+  //  newEntity->m_orientation = farOrientation;
 
-    // mem will be owned by entity
-    StencilPortalComponent* portalComponent = new StencilPortalComponent();
-    *(portalComponent->m_targetPosition) = nearPos;
-    *(portalComponent->m_targetOrientation) = nearOrientation;
+  //  // mem will be owned by entity
+  //  StencilPortalComponent* portalComponent = new StencilPortalComponent();
+  //  *(portalComponent->m_targetPosition) = nearPos;
+  //  *(portalComponent->m_targetOrientation) = nearOrientation;
 
-    g_stencilPortalMeshes.emplace_back(new Mesh());
-    Mesh* portalMesh = g_stencilPortalMeshes.back().get();
-    portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
-    newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
-    newEntity->GetComponentBus().AddComponent(new StencilPortalComponent());
-    newEntity->GetComponentBus().AddComponent(portalComponent); // mem now owned by entity
-  }
+  //  g_stencilPortalMeshes.emplace_back(new Mesh());
+  //  Mesh* portalMesh = g_stencilPortalMeshes.back().get();
+  //  //portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+  //  portalMesh->buildTesseract(Vec4f(-1.0f, -10.0f, -10.0f, -2.0f),
+  //                             Vec4f(-1.0f, 10.0f, 10.0f, 2.0f));
+  //  newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
+  //  newEntity->GetComponentBus().AddComponent(portalComponent); // mem now owned by entity
+  //}
 
   {
     Entity* newEntity = g_scene.AddEntity();
@@ -279,8 +282,10 @@ void AddStencilPortals() {
   
     g_stencilPortalMeshes.emplace_back(new Mesh());
     Mesh* portalMesh = g_stencilPortalMeshes.back().get();
-    portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
-    newEntity->Initialize(portalMesh, LoadShader("ColorBlendClipped"), NULL);
+    //portalMesh->buildTesseract(10.0f, Vec4f(0,0,0,0), Vec4f(0,0,0,0));
+    portalMesh->buildTesseract(Vec4f(-1.0f, -10.0f, -10.0f, -2.0f),
+                               Vec4f(-1.0f, 10.0f, 10.0f, 2.0f));
+    newEntity->Initialize(portalMesh, LoadShader("Portal"), NULL);
     newEntity->GetComponentBus().AddComponent(portalComponent); // mem now owned by entity
   }
 }

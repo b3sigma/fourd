@@ -31,6 +31,9 @@ Render::Render()
 }
 
 Render::~Render() {
+
+  RemoveAllSceneEntries();
+
   delete m_overdrawColor;
   //delete m_overdrawDepth;
   delete m_renderColor;
@@ -170,7 +173,18 @@ Camera* Render::GetFirstCamera() {
 }
 
 void Render::AddScene(Scene* pScene) {
-  m_scenes.push_back(pScene);
+  Component* pSceneHandler = new Component();
+  pScene->GetComponentBus().AddComponent(pSceneHandler);
+  //pScene->GetComponentBus().
+  m_scenes.emplace_back(std::make_pair(pScene, new Component()));
+  //m_scenes.push_back(pScene);
+}
+
+void Render::RemoveAllSceneEntries() {
+  for(auto scenePair : m_scenes) {
+    delete scenePair.second;
+  }
+  m_scenes.clear();
 }
 
 void Render::RenderScene(Camera* pCamera, Scene* pScene,
@@ -178,6 +192,11 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
   if(m_multiPass && m_pSlicedQuaxol && m_pOverdrawQuaxol
       && pRenderDepth && pRenderColor) {
     // 1st pass of color, depth to ([eyefbo,colorfbo], [eyedepth,depthfbo])
+
+
+    glClear(GL_STENCIL_BUFFER_BIT);
+    m_nextStencilMask = 1;
+
     
     glDisable(GL_BLEND);
     glEnable(GL_ALPHA_TEST);
@@ -257,7 +276,7 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     glDepthMask(GL_TRUE);
 
   } else {
-    pScene->RenderEverything(pCamera);
+    pScene->RenderEverything(pCamera, this);
   }
 }
 
@@ -301,22 +320,25 @@ void Render::RenderAllScenesPerCamera(
   }
 
   for(const auto pCamera : m_cameras) {
-    for(auto pScene : m_scenes) {
+    for(auto pScenePair : m_scenes) {
+      auto pScene = pScenePair.first;
       RenderScene(pCamera, pScene, pRenderColor, pRenderDepth);
     }
   }
 
   if(m_multiPass) {
+    // if problems with color of eye candy, may need post composition alpha entities list
+    for(const auto pCamera : m_cameras) {
+      for(auto pScenePair : m_scenes) {
+        auto pScene = pScenePair.first;
+        pScene->RenderDynamicEntities(pCamera, this);
+      }
+    }
+
     RenderCompose(pColorDestination, pRenderColor, m_overdrawColor); 
 
     // restore previous settings
     ToggleAlphaDepthModes(m_alphaDepthMode);
-
-    for(const auto pCamera : m_cameras) {
-      for(auto pScene : m_scenes) {
-        pScene->RenderDynamicEntities(pCamera);
-      }
-    }
   }
 }
   
@@ -388,6 +410,14 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
   }
 
   //printf("switched to %s\n", modeName.c_str());
+}
+
+void Render::StencilSomething() {
+//  glClearStencil(
+//    
+//GLAPI void GLAPIENTRY glStencilFunc (GLenum func, GLint ref, GLuint mask);
+//GLAPI void GLAPIENTRY glStencilMask (GLuint mask);
+//GLAPI void GLAPIENTRY glStencilOp (GLenum fail, GLenum zfail, GLenum zpass);
 }
 
 bool Render::InitializeComposeVerts() {

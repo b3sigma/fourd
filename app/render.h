@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <tuple>
+#include <memory>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -18,6 +19,7 @@
 namespace fd {
 
 class Camera;
+class Component;
 class Scene;
 class Shader;
 class Texture;
@@ -48,8 +50,8 @@ class Render {
   typedef std::vector<Camera*> TCameraList;
   TCameraList m_cameras; //not owned
 
-  typedef std::vector<Scene*> TSceneList;
-  TSceneList m_scenes; // not owned
+  typedef std::vector<std::pair<Scene*, Component*> > TSceneList;
+  TSceneList m_scenes; // scene not owned
 
   Shader* m_pOverdrawQuaxol;
   Shader* m_pSlicedQuaxol;
@@ -66,7 +68,11 @@ class Render {
   ::fd::Timer timer_;
   double _lastTotalTime;
   double _frameTime;
-  
+
+  // the plan is to increment this after portal recursions
+  int m_nextStencilMask;
+
+
 public:  
   Vec4f m_clearColor;
   bool m_multiPass;
@@ -76,6 +82,7 @@ public:
   int m_viewWidth; //buffer dims or view dims are wrong
   int m_viewHeight;
   bool m_usingVR;
+
 
 
 public:
@@ -94,6 +101,7 @@ public:
   void AddCamera(Camera* pCamera);
   Camera* GetFirstCamera();
   void AddScene(Scene* pScene);
+  void RemoveAllSceneEntries();
 
   void RenderAllScenesPerCamera(Texture* pRenderColor, Texture* pRenderDepth);
   void RenderScene(Camera* pCamera, Scene* pScene, Texture* pRenderColor, Texture* pRenderDepth);
@@ -111,6 +119,10 @@ public:
   EAlphaDepthModes m_alphaDepthMode = ENumAlphaDepthModes;
 
   void ToggleAlphaDepthModes(EAlphaDepthModes mode = EToggleModes);
+
+  void StencilSomething();
+  int GetNextStencilMask() { return m_nextStencilMask; }
+  void IncNextStencilMask() { m_nextStencilMask++; }
 
   struct ComposeVert {
     float x, y;

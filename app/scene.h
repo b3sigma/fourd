@@ -64,7 +64,7 @@ public:
 
   // ugh this is all wrong, not going to be shader sorted, etc
   // but let's just do the stupid thing first
-  void RenderEverything(Camera* pCamera);
+  void RenderEverything(Camera* pCamera, Render* pRender);
   void Step(float fDelta);
   
   // Let the scene do the allocation to allow for mem opt
@@ -73,7 +73,7 @@ public:
   Entity* AddEntity();
   void RemoveEntity(Entity* pEntity);
   void OnDeleteEntity(Entity* pEntity);
-  void RenderDynamicEntities(Camera* pCamera);
+  void RenderDynamicEntities(Camera* pCamera, Render* pRender);
 
   // trying some stuff for stencil portals, this gets called if a scene is a dependent render
   // from it's own callgraph. 
@@ -84,6 +84,8 @@ public:
   void AddTexture(Texture* pTex);
 
   void RenderGroundPlane(Camera* pCamera);
+
+  ComponentBus& GetComponentBus() { return m_componentBus; }
 
 protected:
   // horrible way to index textures

@@ -260,6 +260,9 @@
     <ClInclude Include="..\app\components\stencil_portal_component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\app\components\render_provider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">
