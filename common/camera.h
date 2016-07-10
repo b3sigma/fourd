@@ -24,13 +24,13 @@ public:
   float _wNear;
   float _wFar;
   // a different method than fov, near size / far size
-  float _wScreenSizeRatio;  
+  float _wScreenSizeRatio;
   bool _wProjectionEnabled;
- 
+
   enum Direction {
     RIGHT = 0, UP = 1, FORWARD = 2, INSIDE = 3,
   };
-  
+
   enum MovementMode {
     LOOK = 1, ORBIT = 2, WALK = 3,
   };
@@ -64,7 +64,7 @@ public:
   //}
 
   void UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset);
-  void SetZProjection(int width, int height, 
+  void SetZProjection(int width, int height,
       float zFov, float zNear, float zFar);
   void SetWProjection(float wNear, float wFar, float wScreenSizeRatio,
       float animateTime = 0.0f);
@@ -115,9 +115,6 @@ public:
   MovementMode getMovementMode() const { return _movement; }
   void setMovementMode(MovementMode mode);
 
-  void* operator new(size_t size) { return _aligned_malloc(size, 16); }
-  void operator delete(void* p) { _aligned_free(p); }
-
   void Step(float fDeltaTime) {
     // after all this component stuff,
     // now I want to not do it this way and instead do crazy things
@@ -132,6 +129,9 @@ private:
   void RenormalizeCamera(Direction changeBasis);
   void PickBasisFromForward(const Direction changeBasis, Direction& firstOther,
       Direction& secondOther);
+
+public:
+    ALIGNED_ALLOC_NEW_DEL_OVERRIDE
 };
 
 } // namespace fd

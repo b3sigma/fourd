@@ -1,14 +1,14 @@
+#include <algorithm>
 #include <assert.h>
+#include <functional>
+#include <map>
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <map>
-#include <memory>
-#include <algorithm>
-#include <functional>
 #include "mesh.h"
 #include "fourmath.h"
-#include "thirdparty\jenn3d\polytopes.h"
+#include "thirdparty/jenn3d/polytopes.h"
 
 using namespace ::fd;
 
@@ -164,7 +164,7 @@ void Mesh::buildReferenceTesseract(float size, Vec4f offset, Vec4f step) {
 //    12  13
 //    14  15
 // The purpose of this is for copying into the canonical cubes for quaxol
-// connectivity. 
+// connectivity.
 // assumptions about tris:
 // x+, x-, y+, y-, z+, z-, w+, w-
 // each taking 6 * 6 indices
@@ -715,7 +715,7 @@ void Mesh::addPolyVerts(float radius, Vec4f center, Vec4f normalRight, Vec4f nor
 int64 Mesh::Polygon::GetHash() {
   if(!_hashIsDirty)
     return _hash;
-  
+
   // Intentionally ignoring the normal and other stuff as they wouldn't
   // produce a different set of rendered triangles (gave up on windings).
   IndexList sortedIndices(_indVerts);
@@ -739,7 +739,7 @@ int64 Mesh::Cell::GetHash() {
       return l->GetHash() < r->GetHash();
     }
   } customPolyComp;
-  
+
   // Intentionally ignoring the normal and other stuff as they wouldn't
   // produce a different set of rendered triangles (gave up on windings).
   Polygons sortedPolys(_polys);
@@ -762,14 +762,14 @@ int64 Mesh::Cell::GetHash() {
 //  all edges to poly
 //  make normal from edges
 Mesh::Polygon* Mesh::addPolygon(float baseLen, const Vec4f& baseVert,
-    const Vec4f& planeX, const Vec4f& planeY, const Vec4f& normal, 
+    const Vec4f& planeX, const Vec4f& planeY, const Vec4f& normal,
     int vertsPerPoly) {
   Polygon* poly = new Polygon(*this);
   float interiorAngle = 2.0f * (float)PI / vertsPerPoly;
 
   float radius = baseLen * 0.5f / sinf(interiorAngle * 0.5f);
   float dropLen = radius * cosf(interiorAngle * 0.5f);
-  poly->_center = baseVert + (planeY * (baseLen * 0.5f)) + (planeX * dropLen); 
+  poly->_center = baseVert + (planeY * (baseLen * 0.5f)) + (planeX * dropLen);
 
   // gross because this obviously already exists.
   poly->_indVerts.push_back(addUniqueVert(baseVert));
@@ -820,7 +820,7 @@ Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
     float windingSignFlip) {
   Cell* cell = new Cell(*this);
   cell->_polys.push_back(startPoly);
-  
+
 #ifdef _DEBUG
   int startupVerts = (int)_verts.size();
   printf("Adding new cell winding:%f\nnormal:", windingSignFlip);
@@ -871,12 +871,12 @@ Mesh::Cell* Mesh::addCell(float baseLen, Polygon* startPoly,
       }
 
       Vec4f newVert(pos + (oldPolyNormal * baseLen));
-      int newVertIndex = addUniqueVert(newVert);
+      addUniqueVert(newVert);
       Vec4f newNext = (newVert - pos).normalized();
       Vec4f newPrev = oldNext;
       Vec4f newPolyNormal = oldPrev;
 
-      Polygon* newPoly = addPolygon(baseLen, pos, 
+      Polygon* newPoly = addPolygon(baseLen, pos,
           newNext, newPrev, newPolyNormal, polyVerts);
       if(newPoly == NULL) continue;
 
@@ -929,14 +929,14 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
     int vertsPerPoly, int polysPerCellVert, int cellsPerEdge) {
   clearCurrent();
   cleanupPolysAndCells(); // safety!
-  
+
   Vec4f arbitraryPlaneX(1.0f, 0.0f, 0.0f, 0.0f);
   Vec4f arbitraryPlaneY(0.0f, 1.0f, 0.0f, 0.0f);
   Vec4f arbitraryPlaneZ(0.0f, 0.0f, 1.0f, 0.0f);
   Vec4f arbitraryPlaneW(0.0f, 0.0f, 0.0f, 1.0f);
 
   Polygon* basePoly = addPolygon(baseLen, start, arbitraryPlaneX, arbitraryPlaneY, arbitraryPlaneZ, vertsPerPoly);
-  Cell* baseCell = addCell(baseLen, basePoly, arbitraryPlaneW, vertsPerPoly, 
+  Cell* baseCell = addCell(baseLen, basePoly, arbitraryPlaneW, vertsPerPoly,
       polysPerCellVert, 1.0f);
   Cells cells;
   cells.push_back(baseCell);
@@ -947,7 +947,7 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
     unfinishedPolys.insert(std::make_pair(poly, baseCell));
   }
 
-  // so gross... 
+  // so gross...
   // I think the massive downside of this approach is I'm not even sure if
   // a shape is closed and thus will complete for some sets of params...
   // (even theoretically).
@@ -994,7 +994,7 @@ void Mesh::buildPolytope(float baseLen, Vec4f start,
       polyPair.second->AddUniqueTriangles();
     }
   //}
-  
+
   cleanupPolysAndCells();
   cleanupUniqueTriangles();
 }
@@ -1033,11 +1033,11 @@ void Mesh::Polygon::AddUniqueTriangles() {
   int end = minIndexsIndex;
   int prev = (minIndexsIndex + stepDir + polyVerts) % polyVerts;
   int current = (prev + stepDir + polyVerts) % polyVerts;
-  
+
   do {
     int64 triHash = makeUniqueTriCode(root, _indVerts[prev], _indVerts[current]);
     if(_mesh._uniqueTris.find(triHash) == _mesh._uniqueTris.end()) {
-      _mesh._uniqueTris.insert(std::make_pair(triHash, 1)); // why is this a map? 
+      _mesh._uniqueTris.insert(std::make_pair(triHash, 1)); // why is this a map?
       _mesh.addTri(root, _indVerts[prev], _indVerts[current]);
     }
     prev = current;
@@ -1053,7 +1053,7 @@ void Mesh::cleanupPolysAndCells() {
     delete polyPair.second;
   }
   _polys.clear();
-  
+
   for(auto cellPair : _cells) {
     delete cellPair.second;
   }
@@ -1090,20 +1090,20 @@ void Mesh::buildGeneralized16cell(float radius, Vec4f offset) {
   addPolyVerts(radius, offset, right, forward, polyVerts);
 
   // for a cell only
-  const int facesPerVert = 3; 
+  //const int facesPerVert = 3;
 
   for(int vert = 0; vert < polyVerts; vert++) {
     int nextIndex = (vert + 1) % polyVerts;
     int prevIndex = (vert - 1 + polyVerts) % polyVerts;
 
-    
+
     const Vec4f& pos = _verts[vert];
     const Vec4f& prev = _verts[prevIndex];
     const Vec4f& next = _verts[nextIndex];
 
     Vec4f prevRay = prev - pos;
     Vec4f nextRay = next - pos;
-    Vec4f centerRay = (prevRay + nextRay) * 0.5f;
+    //Vec4f centerRay = (prevRay + nextRay) * 0.5f;
 
     Vec4f perpRay = prevRay.cross(nextRay, inward);
     perpRay.storeNormalized();
@@ -1188,8 +1188,8 @@ public:
 
     Mesh::VecList& _verts = mesh->_verts;
     Mesh::IndexList& _indices = mesh->_indices;
-    
-    int numVerts = (int)graph->points.size(); 
+
+    int numVerts = (int)graph->points.size();
     _verts.resize(numVerts);
     for(int v = 0; v < numVerts; v++) {
       const jenn::Vect& p = graph->points[v];
@@ -1200,7 +1200,7 @@ public:
 
     int numFaces = (int)graph->faces.size();
     // not sure if the assumption that all faces have the same length is always valid
-    int numIndicesGuess = numFaces * (graph->faces[0].size() - 2) * 3; // tri-list a polygon 
+    int numIndicesGuess = numFaces * (graph->faces[0].size() - 2) * 3; // tri-list a polygon
     _indices.resize(0);
     _indices.reserve(numIndicesGuess);
     for(int f = 0; f < numFaces; f++) {
@@ -1214,7 +1214,7 @@ public:
       }
     }
 
-    printf("Graph had %d faces, %d verts, made  %d indices %d tris\n", 
+    printf("Graph had %d faces, %d verts, made  %d indices %d tris\n",
         graph->faces.size(), graph->points.size(), _indices.size(), _indices.size() / 3);
 
     return true;
@@ -1255,21 +1255,21 @@ void Mesh::buildCaylayEnumerated(float radius, Vec4f offset, int enumDir) {
 
 #if 0 // currently abandoned approach to generic polytope creation
   {3,3,4} {4,3,3}, {5,3,3}
-  {P,F,C} 
+  {P,F,C}
   make a poly
   for each vert, make a node
   for each node pair, make an edge
   for each edge pair, connect to a polygon
 
-  now for each node that isn't full
-    fill vert by creating to (F+1) verts 
+  now for each node that isnt full
+    fill vert by creating to (F+1) verts
     create new vert according to angle math
     for new vert
       start new node, hook to prev via edge
-      for each prev's edge,
+      for each prevs edge,
         start new polygon or connect to unfinished coplanar
         maybe finish polygon
-    
+
   difficulty with all of this is windings seem like they can go in different \
     directions easily and then connections will be disconnected
 
@@ -1284,7 +1284,7 @@ void Mesh::buildCaylayEnumerated(float radius, Vec4f offset, int enumDir) {
   class Node {
   public:
     Mesh& _mesh;
-  
+
     // polys this node is part of
     Polygons _shapes; // not owned
     // connected nodes
@@ -1328,7 +1328,7 @@ void Mesh::buildCaylayEnumerated(float radius, Vec4f offset, int enumDir) {
   addPolyVerts(radius, offset, right, forward, polyVerts);
 
   // for a cell only
-  const int facesPerVert = 3; 
+  const int facesPerVert = 3;
 
   Nodes nodeStorage;
   //nodeStorage.reserve(polyVerts); // yeah I dunno
@@ -1343,7 +1343,7 @@ void Mesh::buildCaylayEnumerated(float radius, Vec4f offset, int enumDir) {
      nodeStorage.push_back(node);
      Node* prevNode = nodeStorage[prevIndex];
      prevNode->ConnectNode(node, true);
-     
+
      polygon->AddEdge(prevNode, node);
   }
 
@@ -1356,7 +1356,7 @@ void Mesh::buildCaylayEnumerated(float radius, Vec4f offset, int enumDir) {
     }
 
 
-  
+
     const Vec4f& pos = _verts[vert];
     const Vec4f& prev = _verts[prevIndex];
     const Vec4f& next = _verts[nextIndex];

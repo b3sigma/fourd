@@ -2,6 +2,7 @@
 
 #include "../common/fourmath.h"
 #include "../common/component.h"
+#include "../common/mem_helpers.h"
 
 namespace fd {
 
@@ -20,7 +21,7 @@ public:
 
   ComponentBus m_componentBus;
   Scene* m_scene;
-  
+
   // TODO: abstract this stuff into mesh component?
   MeshBuffer* m_pMeshBuffer;
   Mesh* m_pMesh; // not owned
@@ -41,8 +42,7 @@ public:
 
   ComponentBus& GetComponentBus() { return m_componentBus; }
 
-  void* operator new(size_t size) { return _aligned_malloc(size, 16); }
-  void operator delete(void* p) { _aligned_free(p); }
+  ALIGNED_ALLOC_NEW_DEL_OVERRIDE
 };
 
 }; // namespace fd

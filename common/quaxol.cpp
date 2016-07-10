@@ -44,9 +44,9 @@ bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* off
 
     int autoType = (local.w * 4 + (local.x % 3)) % 3;
 
-    Block& block = GetBlock(local.x, local.y, local.z, local.w);
-    block.present = !startFilled;
-    block.type = autoType;
+    Block& fetchBlock = GetBlock(local.x, local.y, local.z, local.w);
+    fetchBlock.present = !startFilled;
+    fetchBlock.type = autoType;
   }
 
   UpdateRendering();
@@ -126,9 +126,9 @@ void CanonicalCube::addFlaggedCube(IndexList& indices, VertDirs& vertDirs, unsig
   addFlaggedQuad(indices, vertDirs, flags, e, f, g, h);
 }
 
-//          |   \\       \
-//          |     \\      \
-// --> x    v y     v z    \ 
+//          |   \\       \?
+//          |     \\      \?
+// --> x    v y     v z    \?
 //                          v w
 // 00  01
 // 02  03
@@ -182,12 +182,12 @@ void CanonicalCube::populateVerts(float size, QVertList& packVerts, VecList& ver
   for (int i = 0; i < numVerts; i++) {
     int possibleDim = dim - 1;
     const int& mask = i;
-    
+
     QuaxolVert packVert;
     packVert._position = 0;
     packVert._uv_ao = 0;
     Vec4f vert;
-    
+
     unsigned char dirs = 0;
     while (possibleDim >= 0) {
       if (mask & (1 << possibleDim)) {
@@ -270,7 +270,7 @@ void QuaxolChunk::BuildCanonicalCubesByDir(float blockSize) {
     int startIndex = d * indicesPerCube;
     int endIndex = (d+1) * indicesPerCube;
     assert(endIndex <= (int)tesseract._indices.size());
-    
+
     typedef std::map<int, int> OldToNewHash;
     OldToNewHash oldToNew;
     // note: this is the index into the array of indices

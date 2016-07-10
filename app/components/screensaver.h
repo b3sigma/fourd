@@ -6,7 +6,7 @@
 
 namespace fd {
 
-// the screensaver kills itself if it receives any input signal, 
+// the screensaver kills itself if it receives any input signal,
 // otherwise it spins the view around
 class ScreenSaverComponent : public Component {
 public:
@@ -18,7 +18,7 @@ public:
   float m_randomTime;
 
 public:
-  ScreenSaverComponent() 
+  ScreenSaverComponent()
       : m_randomTotalTime(10.0f)
       , m_randomTime(0.0f) {
     m_randomRot.storeIdentity();
@@ -27,16 +27,16 @@ public:
   virtual void OnConnected() {
     static std::string BDATpos("position");
     static std::string BDATorient("orientation");
-      
+
     if(!m_ownerBus->GetOwnerData(BDATorient, true, &m_pOwnerOrientation)
         || !m_ownerBus->GetOwnerData(BDATpos, true, &m_pOwnerPosition)) {
       assert(false);
       SelfDestruct();
     }
 
-    RegisterSignal(std::string("Step"), this, 
+    RegisterSignal(std::string("Step"), this,
         &ScreenSaverComponent::OnStepSignal);
-    RegisterSignal(std::string("AnyInput"), this, 
+    RegisterSignal(std::string("AnyInput"), this,
         &ScreenSaverComponent::OnAnyInput);
   }
 
@@ -63,9 +63,7 @@ public:
     *m_pOwnerOrientation = (*m_pOwnerOrientation) * m_randomRot;
   }
 
-  void* operator new(size_t size) { return _aligned_malloc(size, 16); }
-  void operator delete(void* p) { _aligned_free(p); }
-
+  ALIGNED_ALLOC_NEW_DEL_OVERRIDE
 };
 
 }; //namespace fd

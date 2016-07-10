@@ -1,3 +1,4 @@
+#include <float.h>
 #include <math.h>
 
 #include "physics.h"
@@ -79,13 +80,13 @@ bool Physics::SphereToQuaxols(const QuaxolChunk& chunk,
   localPos /= chunk.m_blockSize;
 
   // to support non-uniform blocksize, need local ellipse or world ellipse
-  assert(chunk.m_blockSize.x == chunk.m_blockSize.y 
+  assert(chunk.m_blockSize.x == chunk.m_blockSize.y
       && chunk.m_blockSize.x == chunk.m_blockSize.w
       && chunk.m_blockSize.x == chunk.m_blockSize.z);
-  float localRadius = radius / chunk.m_blockSize.x; 
-  
+  float localRadius = radius / chunk.m_blockSize.x;
+
   Vec4f localHitPos;
-  if(!LocalSphereToQuaxolChunk(chunk, localPos, localRadius, 
+  if(!LocalSphereToQuaxolChunk(chunk, localPos, localRadius,
       &localHitPos, hitNormal)) {
     return false;
   }
@@ -98,7 +99,7 @@ bool Physics::SphereToQuaxols(const QuaxolChunk& chunk,
   return true;
 }
 
-bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk, 
+bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
     const Vec4f& position, float radius,
     Vec4f* hitPos, Vec4f* hitNormal) {
 
@@ -135,7 +136,7 @@ bool Physics::LocalSphereToQuaxolChunk(const QuaxolChunk& chunk,
 
           if(!chunk.IsPresent(x, y, z, w))
             continue;
-          
+
           //if(PhysicsHelp::SphereToAlignedBox(
           if(PhysicsHelp::SphereToAlignedBoxMinkowski(
               minBox, maxBox, position, radius, &currentHit, &currentNormal)) {
@@ -174,9 +175,9 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
 
   Vec4f localPos(position);
   localPos -= chunk.m_position;
-  
+
   Vec4f localRay(ray);
-  
+
   // scale down from boxsize to allow integer local coords
   // actually why are we doing non-integer stuff anyway??
   // oh right, didn't start with quaxols... probably should change that
@@ -303,7 +304,7 @@ bool Physics::RayCastToPresentQuaxol(const Vec4f& position, const Vec4f& ray,
 
 
 inline int GetSign(float val) {
-  if(signbit(val)) return -1;
+  if(std::signbit(val)) return -1;
   else return 1;
 }
 
@@ -406,7 +407,7 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
 
 void Physics::LineDraw4D(const Vec4f& start, const Vec4f& ray,
     DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback) {
-  
+
   int sign[4];
   for(int c = 0; c < 4; c++) {
     sign[c] = GetSign(ray[c]);
@@ -502,7 +503,7 @@ void Physics::RunTests() {
   s_testQuaxols.resize(0);
   pos.set(1.5f, 1.5f, 0.0f, 0.0f);
   ray.set(2.0f, 0.0f, 0.0f, 0.0f);
-  physTest.LineDraw4D(pos, ray, stepCallback); 
+  physTest.LineDraw4D(pos, ray, stepCallback);
   assert(s_testQuaxols.size() == 3);
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 1);
   assert(s_testQuaxols[1].x == 2 && s_testQuaxols[1].y == 1);
@@ -511,7 +512,7 @@ void Physics::RunTests() {
   s_testQuaxols.resize(0);
   pos.set(1.5f, 1.5f, 0.0f, 0.0f);
   ray.set(-2.0f, 1.0f, 0.0f, 0.0f); // draw from (1.5,1.5) to (-0.5,2.5)
-  physTest.LineDraw4D(pos, ray, stepCallback); 
+  physTest.LineDraw4D(pos, ray, stepCallback);
   assert(s_testQuaxols.size() == 4); //(1,1), (0,1), (-1,1), (-1,2)
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 1);
   //assert(s_testQuaxols[1].x == 2 && s_testQuaxols[1].y == 1);
@@ -520,7 +521,7 @@ void Physics::RunTests() {
   s_testQuaxols.resize(0);
   pos.set(1.5f, 1.5f, 0.0f, 0.0f);
   ray.set(-1.0f, -2.0f, 0.0f, 0.0f); // draw from (1.5,1.5) to (0.5,-0.5)
-  physTest.LineDraw4D(pos, ray, stepCallback); 
+  physTest.LineDraw4D(pos, ray, stepCallback);
   assert(s_testQuaxols.size() == 4); //(1,1), (1,0), (1,-1)
   assert(s_testQuaxols[0].x == 1 && s_testQuaxols[0].y == 1);
   //assert(s_testQuaxols[1].x == 2 && s_testQuaxols[1].y == 1);
@@ -611,7 +612,7 @@ void Physics::RunTests() {
   pos.set(25.7389202f, 9.39026356f, 36.6651955f, 4.50000000f);
   ray.set(-432.569427f, -739.241638f, -516.141785f, -0.000000000f);
   assert(true == physTest.RayCastChunk(testChunk, pos, ray, &hitDist));
-  
+
   pos.set(0.500032365f, 82.7353592f, 142.041000f, 167.218506f);
   ray.set(-0.000243353134f, 426.009521f, -328.929626f, -842.804993f);
   physTest.RayCastChunk(testChunk, pos, ray, &hitDist);
@@ -661,7 +662,7 @@ void Physics::RunTests() {
   quaxols.emplace_back(2, 1, 1, 1);
   quaxols.emplace_back(2, 2, 1, 1);
   assert(true == testChunk.LoadFromList(&quaxols, NULL /*offset*/));
-  
+
   pos.set(15.0f, 15.0f, 20.0f, 15.0f);
   float radius = 20.0f;
   Vec4f hitPos;

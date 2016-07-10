@@ -2,7 +2,9 @@
 
 #ifdef WIN32
 #include <windows.h>
-#endif // WIN32
+#else //linux
+#include <time.h>
+#endif // os
 
 #include <string>
 
@@ -17,7 +19,8 @@ namespace fd {
     LARGE_INTEGER _start;
     static double _frequency;
 #else
-#pragma error "TODO: portable timer class"
+    timespec _start;
+    static double _invFrequency;
 #endif
 
   public:
@@ -27,13 +30,17 @@ namespace fd {
 
     Timer()
     {
-      if (_frequency == 1.0) {
-        LARGE_INTEGER frequency;
-        frequency.QuadPart = 2;
-        // TODO: handle systems where there is no qpc
-        QueryPerformanceFrequency(&frequency);
-        _frequency = static_cast<double>(frequency.QuadPart);
-      }
+      #ifdef WIN32
+        if (_frequency == 1.0) {
+          LARGE_INTEGER frequency;
+          frequency.QuadPart = 2;
+          // TODO: handle systems where there is no qpc
+          QueryPerformanceFrequency(&frequency);
+          _frequency = static_cast<double>(frequency.QuadPart);
+        }
+      #else
+        _invFrequency = 1.0 / 1000000000.0;
+      #endif //WIN32
       Start();
     }
 
@@ -44,19 +51,26 @@ namespace fd {
     }
 
     void Start() {
-      QueryPerformanceCounter(&_start);
+      #ifdef WIN32
+        QueryPerformanceCounter(&_start);
+      #else //linux
+        clock_gettime(CLOCK_MONOTONIC_RAW, &_start);
+      #endif //os
     }
 
     double GetElapsed() {
-      LARGE_INTEGER current;
-      if (SUCCEEDED(QueryPerformanceCounter(&current))) {
-        _elapsed = static_cast<double>(current.QuadPart - _start.QuadPart) / _frequency;
-      }
-
+      #ifdef WIN32
+        LARGE_INTEGER current;
+        if (SUCCEEDED(QueryPerformanceCounter(&current))) {
+          _elapsed = static_cast<double>(current.QuadPart - _start.QuadPart) / _frequency;
+        }
+      #else // linux
+        timespec current;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &current);
+        _elapsed = static_cast<double>(current.tv_nsec - _start.tv_nsec) * _invFrequency;
+      #endif //os
       return _elapsed;
     }
   };
 
 };
-
-

@@ -1,10 +1,12 @@
 #pragma once
 
+#include <float.h>
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
 #include "../eigen/Eigen/Geometry"
 #include "../eigen/Eigen/LU"
+#include "mem_helpers.h"
 
 namespace fd {
 
@@ -302,7 +304,7 @@ public:
   void operator *= (const FdMat& r) {
     *this = *this * r;
   }
-  
+
   FdMat operator * (const FdMat& m) const {
     FdMat r;
     // holy fuck sticks really?
@@ -388,8 +390,7 @@ public:
     viewTarget.d(3).set(0, 0, 0, 1);
   }
 
-  void* operator new(size_t size) { return _aligned_malloc(size, 16); }
-  void operator delete(void* p) { _aligned_free(p); }
+  ALIGNED_ALLOC_NEW_DEL_OVERRIDE
 };
 
 typedef Matrix4<float> Mat4f;
@@ -468,7 +469,7 @@ public:
 };
 
 typedef Quaternion<float> Quatf;
- 
+
 // This comes from setting three "unit quaternions" like
 // q_i = (0,1,0,0), q_j = (0,0,1,0), q_k = (0,0,0,1)
 // and then multiplying through q * q_i * q_conj where

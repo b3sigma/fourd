@@ -10,7 +10,7 @@ SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst %.cpp,build/%.o,$(SRC))
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 
-COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g
+COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-unknown-pragmas
 LIBRARIES = -lX11 -lXi -lXmu -lglut -lGL -lGLU -lm -lCg -lCgGL
 LINK_FLAGS = $(LIBRARIES)
 
