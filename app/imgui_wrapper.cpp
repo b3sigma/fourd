@@ -257,7 +257,7 @@ bool ImGuiWrapper::InitOpenGL() {
 
   std::unique_ptr<Shader> shader(new Shader());
   if(!shader->LoadFromFile(
-      "Imgui", "data\\uivImgui.glsl", "data\\uifImgui.glsl")) {
+      "Imgui", "data/uivImgui.glsl", "data/uifImgui.glsl")) {
     return false;
   }
   s_UIRender = shader.release();
@@ -313,7 +313,7 @@ bool ImGuiWrapper::InitOpenGL() {
   io.Fonts->ClearTexData();
 
   s_ControllerTex = new Texture();
-  if(!s_ControllerTex->LoadFromFile("data\\textures\\controller_diagram.png"))
+  if(!s_ControllerTex->LoadFromFile("data/textures/controller_diagram.png"))
     return false;
 
   return true;

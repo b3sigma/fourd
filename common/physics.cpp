@@ -474,7 +474,7 @@ void Physics::RunTests() {
   Vec4f rayDown(0.0f, -10.0f, 0.0f, 0.0f);
   float dist = 0.0f;
   assert(true == physTest.RayCastGround(posTest, rayDown, &dist));
-  assert(dist == 1.0f); // may need to do some float threshold compares
+  assert((float)abs((float)(dist - 1.0f)) < 0.00001f); // may need to do some float threshold compares
 
   //posTest.set(20.0f, 0.0f, 11.0f, 0.0f);
   posTest.set(20.0f, 11.0f, 0.0f, 0.0f);

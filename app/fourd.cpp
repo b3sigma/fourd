@@ -83,7 +83,7 @@ std::string g_startupLevel = "current.bin";
 
 fd::Shader* LoadShader(const char* shaderName) {
   static std::string g_currentShader;
-  std::string shaderDir = "data\\";
+  std::string shaderDir = "data/";
   std::string vertPrefix = std::string("vert");
   std::string fragPrefix = std::string("frag");
   std::string ext = std::string(".glsl");
@@ -189,8 +189,9 @@ bool LoadLevel(const char* levelName) {
     //g_scene.AddLoadedChunk(&chunks);
     printf("Level (%s) loaded!\n",
         fullName.c_str());
-    printf("Had %d verts and %d tris\n", g_scene.m_pQuaxolChunk->m_verts.size(),
-        g_scene.m_pQuaxolChunk->m_indices.size() / 3);
+    printf("Had %d verts and %d tris\n",
+        (int)g_scene.m_pQuaxolChunk->m_verts.size(),
+        (int)g_scene.m_pQuaxolChunk->m_indices.size() / 3);
 
     g_currentLevel = baseNameWithExt;
     return true;
@@ -1162,7 +1163,7 @@ void glfwErrorCallback(int error, const char* description) {
 }
 
 // Soooo tacky!
-#define RUN_TESTS
+//#define RUN_TESTS
 
 int main(int argc, const char *argv[]) {
 
