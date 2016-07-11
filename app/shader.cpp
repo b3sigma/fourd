@@ -3,12 +3,12 @@
 #include <Windows.h>
 #endif // WIN32
 
-
-#define STB_DEFINE
-#pragma warning(push)
-#pragma warning(disable: 4996)  // disable warning about _s functions
-#include "../stb/stb.h"
-#pragma warning(pop)
+//
+// #define STB_DEFINE
+// #pragma warning(push)
+// #pragma warning(disable: 4996)  // disable warning about _s functions
+// #include "../stb/stb.h"
+// #pragma warning(pop)
 
 #define FD_SIMPLE_FILE_IMPLEMENTATION
 #include "../common/fd_simple_file.h"
@@ -49,11 +49,11 @@ void Shader::Release() {
   //}
 }
 
-Shader::Shader() 
+Shader::Shader()
     : m_programId(0)
     , m_shaderType(0)
     //, m_attribs(NULL)
-    //, m_uniforms(NULL) 
+    //, m_uniforms(NULL)
 {
   s_test_shader_refs++;
 }
@@ -74,7 +74,7 @@ void Shader::InitCameraParamHandles() {
   m_handles[UWorldPosition] = getUniform("worldPosition");
   m_handles[UTexDiffuse0] = getUniform("texDiffuse0");
 
-  // camera 
+  // camera
   m_handles[UCameraPosition] = getUniform("cameraPosition");
   m_handles[UCameraMatrix] = getUniform("cameraMatrix");
   m_handles[UProjectionMatrix] = getUniform("projectionMatrix");
@@ -90,18 +90,18 @@ void Shader::SetPosition(const Vec4f* pPosition) const {
   glUniform4fv(m_handles[UWorldPosition], 1, pPosition->raw());
 }
 
-void Shader::SetCameraParams(const Camera* pCamera) const {  
+void Shader::SetCameraParams(const Camera* pCamera) const {
   assert(pCamera != NULL);
 
   // This global state with using is error prone
   //StartUsing();
-  glUniform4fv(m_handles[UCameraPosition], 1, 
+  glUniform4fv(m_handles[UCameraPosition], 1,
       pCamera->getRenderPos().raw());
-  glUniformMatrix4fv(m_handles[UCameraMatrix], 1, GL_TRUE, 
+  glUniformMatrix4fv(m_handles[UCameraMatrix], 1, GL_TRUE,
       pCamera->getRenderMatrix().raw());
   // Sure is weird that this one isn't transposed...
   // Thinking we are doing inconsistent row/col in the projection creation
-  glUniformMatrix4fv(m_handles[UProjectionMatrix], 1, GL_FALSE, 
+  glUniformMatrix4fv(m_handles[UProjectionMatrix], 1, GL_FALSE,
       pCamera->_zProjectionMatrix.raw());
 
   // This isn't even used so far..
@@ -197,7 +197,7 @@ bool Shader::FinishProgram(const char* refName) {
   }
 
   glLinkProgram(programId);
-  
+
   for (auto shaderId : m_subShaders) {
     glDetachShader(programId, shaderId);
   }
@@ -218,7 +218,7 @@ bool Shader::FinishProgram(const char* refName) {
   return true;
 }
 
-bool Shader::LoadFromFile(const char* refName, 
+bool Shader::LoadFromFile(const char* refName,
     const char* vertexFile, const char* pixelFile) {
   if(!AddSubShader(vertexFile, GL_VERTEX_SHADER))
     return false;
@@ -230,7 +230,7 @@ bool Shader::LoadFromFile(const char* refName,
 
   m_refName.assign(refName);
   AddToShaderHash();
-  
+
   return true;
 }
 
@@ -260,7 +260,7 @@ bool Shader::CheckGLShaderLinkStatus(
   glGetProgramiv(programId, GL_LINK_STATUS, &linkSuccess);
   if(WasGLErrorPlusPrint() || linkSuccess != GL_TRUE) {
     printf("program linking failed name:%s err:%d\n", refName, linkSuccess);
-    
+
     GLint errorLength;
     glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &errorLength);
     std::string error;
@@ -290,7 +290,8 @@ bool Shader::AddSubShader(const char* filename, GLenum shaderType) {
     return false;
 
   const char* bufferString = buffer.c_str();
-  glShaderSource(shaderId, 1, (const GLchar* const*)&(bufferString), NULL);
+  glShaderSource(shaderId, 1, (const GLchar**)&(bufferString), NULL);
+  // glShaderSource(shaderId, 1, (const GLchar* const*)&(bufferString), NULL);
   glCompileShader(shaderId);
 
   if(!CheckGLShaderCompileStatus(shaderId, filename)) {
@@ -363,8 +364,8 @@ bool Shader::GetIsUsing() const {
 //}
 //
 //stb_define_hash_base(STB_noprefix, TShaderHash, STB_nofields,
-//  shader_hash_, shader_hash_, 0.85f, const char*, 
-//  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
+//  shader_hash_, shader_hash_, 0.85f, const char*,
+//  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL,
 //  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
 //  string_key_hash_str_cmp, string_key_hash_str_cmp,
 //  return stb_hash(k); , Shader*, STB_nullvalue, NULL);
@@ -375,8 +376,8 @@ bool Shader::GetIsUsing() const {
 //#define HANDLE_HASH_NULL ((GLint)(-1))
 //
 //stb_define_hash_base(STB_noprefix, THandleHash, STB_nofields,
-//  handle_hash_, handle_hash_, 0.85f, const char*, 
-//  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL, 
+//  handle_hash_, handle_hash_, 0.85f, const char*,
+//  STR_KEY_HASH_EMPTY, STR_KEY_HASH_DEL,
 //  string_key_hash_str_copy, string_key_hash_str_del, STB_nosafe,
 //  string_key_hash_str_cmp, string_key_hash_str_cmp,
 //  return stb_hash(k); , GLint, STB_nullvalue, HANDLE_HASH_NULL);
@@ -445,7 +446,7 @@ bool Shader::RunTests() {
   //  char* name = new char[256];
   //  sprintf_s(&(name[0]), sizeof(char[256]), "shady%d", test);
   //  Shader* pShader = new Shader();
-  //  
+  //
   //  assert(0 == shader_hash_update(pTestHash, name, pShader));
   //  assert(1 == shader_hash_add(pTestHash, name, pShader));
   //  assert(0 == shader_hash_add(pTestHash, name, pShader));
@@ -466,7 +467,7 @@ bool Shader::RunTests() {
 
   //  if(1 == shader_hash_add(pTestHash, name, pShader)) {
   //    assert(shader_hash_get(pTestHash, name) == pShader);
-  //    
+  //
   //    Shader* pToDelete = NULL;
   //    shader_hash_remove(pTestHash, std::string(name).c_str(), &pToDelete);
   //    assert(pShader == pToDelete);
@@ -497,4 +498,3 @@ bool Shader::RunTests() {
 
 
 }
-

@@ -2,8 +2,8 @@
 
 #include "render.h"
 
-#include "..\common\camera.h"
-#include "..\common\misc_defs.h"
+#include "../common/camera.h"
+#include "../common/misc_defs.h"
 #include "glhelper.h"
 #include "scene.h"
 #include "shader.h"
@@ -11,7 +11,7 @@
 
 namespace fd {
 
-Render::Render() 
+Render::Render()
     : _frameTime(0.0)
     , _lastTotalTime(0.0)
     , m_multiPass(true)
@@ -39,12 +39,12 @@ Render::~Render() {
   delete m_pSlicedQuaxol;
   delete m_pComposeRenderTargets;
 }
-  
+
 bool Render::Initialize(int width, int height) {
   m_bufferWidth = width;
   m_bufferHeight = height;
   UpdateViewHeightFromBuffer();
-  
+
   std::unique_ptr<Shader> overdraw(new Shader());
   overdraw->AddDynamicMeshCommonSubShaders();
   if(!overdraw->LoadFromFileDerivedNames("OverdrawRainbow")) {
@@ -65,7 +65,7 @@ bool Render::Initialize(int width, int height) {
     return false;
   }
   m_pComposeRenderTargets = compose.release();
-  
+
   if(!ResizeRenderTargets(width, height))
     return false;
 
@@ -133,7 +133,7 @@ void Render::SetIsUsingVR(bool usingVR) {
   m_usingVR = usingVR;
   UpdateViewHeightFromBuffer();
 }
-  
+
 void Render::UpdateFrameTime() {
   double totalTime = GetTotalTime();
   _frameTime = totalTime - _lastTotalTime;
@@ -157,7 +157,7 @@ double Render::GetFrameTime() {
 double Render::GetTotalTime() {
   return timer_.GetElapsed();
 }
-  
+
 void Render::AddCamera(Camera* pCamera) {
   m_cameras.push_back(pCamera);
 }
@@ -178,11 +178,11 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
   if(m_multiPass && m_pSlicedQuaxol && m_pOverdrawQuaxol
       && pRenderDepth && pRenderColor) {
     // 1st pass of color, depth to ([eyefbo,colorfbo], [eyedepth,depthfbo])
-    
+
     glDisable(GL_BLEND);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GEQUAL, 0.2f);
-    
+
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
@@ -206,7 +206,7 @@ void Render::RenderScene(Camera* pCamera, Scene* pScene,
     //float wRange = pCamera->_wFar - pCamera->_wNear;
     //float wPreNear = (1.0f - sliceAmount) * 0.5f * wRange;
     //pCamera->SetWProjection(savedWnear + wPreNear, savedWfar - wPreNear, 1.0f /*ratio*/);
-    
+
     pScene->RenderQuaxols(pCamera, m_pSlicedQuaxol);
     pScene->RenderGroundPlane(pCamera);
 
@@ -307,7 +307,7 @@ void Render::RenderAllScenesPerCamera(
   }
 
   if(m_multiPass) {
-    RenderCompose(pColorDestination, pRenderColor, m_overdrawColor); 
+    RenderCompose(pColorDestination, pRenderColor, m_overdrawColor);
 
     // restore previous settings
     ToggleAlphaDepthModes(m_alphaDepthMode);
@@ -319,7 +319,7 @@ void Render::RenderAllScenesPerCamera(
     }
   }
 }
-  
+
 void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
   if(mode == EToggleModes) {
     mode = (EAlphaDepthModes)(((int)m_alphaDepthMode + 1) % ((int)ENumAlphaDepthModes));
@@ -332,7 +332,7 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
       glEnable(GL_BLEND);
       glAlphaFunc(GL_ALWAYS, 0.0f);
       glDisable(GL_ALPHA_TEST);
-        
+
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
       glDepthFunc(GL_ALWAYS);
@@ -368,7 +368,7 @@ void Render::ToggleAlphaDepthModes(EAlphaDepthModes mode) {
       glEnable(GL_BLEND);
       glEnable(GL_ALPHA_TEST);
       glAlphaFunc(GL_GEQUAL, 0.2f);
-  
+
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
       glDepthFunc(GL_LESS);
@@ -413,7 +413,7 @@ void Render::RenderCompose(Texture* pDestination,
   }
 
   m_pComposeRenderTargets->StartUsing();
-  
+
   //GLint texCoordIndex = glGetAttribLocation(
   //    m_pComposeRenderTargets->getProgramId(), "vertCoord");
   GLint hSolid = m_pComposeRenderTargets->getUniform("texSolid");
@@ -450,7 +450,7 @@ void Render::RenderCompose(Texture* pDestination,
 
 void Render::ToggleMultipassMode(bool multiPass, int width, int height) {
   m_multiPass = multiPass;
-  
+
   if(m_multiPass) {
     ResizeRenderTargets(width, height);
   } else {

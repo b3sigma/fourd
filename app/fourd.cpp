@@ -25,6 +25,7 @@
 #include "../common/physics_help.h"
 #include "../common/player_capsule_shape.h"
 #include "../common/raycast_shape.h"
+#include "../common/types.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/camera_follow.h"
 #include "../common/components/periodic_motion.h"
@@ -47,9 +48,13 @@
 #ifdef USE_VR
 #include "vr_wrapper.h"
 #endif // USE_VR
+
 #include "platform_interface.h"
+
 #ifdef WIN32
 #include "win32_platform.h"
+#else //LinuxPlatform
+#include "linux_platform.h"
 #endif //WIN32
 
 using namespace ::fd;
@@ -160,7 +165,7 @@ bool LoadLevel(const char* levelName) {
     }
   } else {
     std::string nameBase(levelName);
-    
+
     std::string binExt(".bin");
     size_t binExtStart = nameBase.rfind(binExt);
     if(binExtStart != std::string::npos) {
@@ -302,7 +307,7 @@ bool Initialize(int width, int height) {
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
   tesseract.buildTesseract(g_blockSize, Vec4f(0,0,0,0.0f), Vec4f(0,0,0,0));
- 
+
   // Set up some reasonable defaults
   g_camera.SetZProjection(_width, _height, 90.0f /* fov */,
       0.1f /* zNear */, 10000.0f /* zFar */);
@@ -569,7 +574,7 @@ void AddRaycastEntity() {
   if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
     Entity* pEntity = g_scene.AddEntity();
     // ugh need like a mesh manager and better approach to shader handling
-    
+
     pEntity->Initialize(&tesseract, LoadShader("ColorBlendClipped"), NULL);
     //pEntity->Initialize(&tesseract, g_shader, NULL);
     //pEntity->m_orientation.storeScale(10.0f);
@@ -593,9 +598,9 @@ void AddTesseractLine() {
   DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> delegate;
   delegate.Bind(AddTesseractLineCallback);
   g_scene.m_pPhysics->LineDraw4D(cameraPos, ray, delegate);
-  
+
   QuaxolSpec offset(0,0,0,0);
-  g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);  
+  g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);
 }
 
 void SetIsUsingVR(bool usingVR) {
@@ -718,10 +723,10 @@ void AsciiKeyUpdate(int key, bool isShift) {
     case '|' : {
       g_renderer.ToggleMultipassMode(!g_renderer.m_multiPass, _width, _height);
       if(!g_renderer.m_multiPass) {
-        g_camera.SetWProjection(0.0f /*near*/, g_camera._wFar, 
+        g_camera.SetWProjection(0.0f /*near*/, g_camera._wFar,
             g_camera._wScreenSizeRatio, 1.0f /*animTime*/);
       } else {
-        g_camera.SetWProjection(-1.0f * g_camera._wFar, g_camera._wFar, 
+        g_camera.SetWProjection(-1.0f * g_camera._wFar, g_camera._wFar,
             g_camera._wScreenSizeRatio, 1.0f /*animTime*/);
       }
       //if(g_scene.m_pQuaxolChunk) {
@@ -1004,15 +1009,15 @@ void RaycastToOpenQuaxol() {
       addBlock.buildTesseract(g_blockSize, Vec4f(), Vec4f());
       openEntity->Initialize(&addBlock, g_shader, NULL);
     }
-    
+
     openEntity->m_position = hitPos;
     openEntity->m_pShader = g_shader;
   } else {
     if(openEntity) {
-      openEntity->m_pShader = NULL;      
+      openEntity->m_pShader = NULL;
     }
   }
-  
+
 }
 
 void RaycastToCollsion() {
@@ -1026,7 +1031,7 @@ void RaycastToCollsion() {
   if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
     hitPos = position + ray.normalized() * dist;
   }
-  
+
   if(!g_pointerEntity) {
     g_pointerEntity = g_scene.AddEntity();
     g_pointerEntity->Initialize(&tesseract, g_shader, NULL);
@@ -1063,18 +1068,18 @@ void StepFrame() {
     std::string levelName = g_lastLevelLoaded;
     LoadLevel(levelName.c_str());
   }
-  
+
   int guiWidth = 0; // 0 means ImGui will figure it out
-  int guiHeight = 0; 
+  int guiHeight = 0;
   if(g_vr && g_vr->IsUsingVR()) {
     g_vr->GetPerEyeRenderSize(guiWidth, guiHeight);
   }
   ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(), guiWidth, guiHeight);
-  
+
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
-  
+
   if(g_vr && g_vr->IsUsingVR() && g_vr->m_doScreenSaver) {
     if(g_vr->m_hadInput) {
       g_inputHandler.SendAnyInputSignal(&(g_camera.GetComponentBus()));
@@ -1166,33 +1171,33 @@ int main(int argc, const char *argv[]) {
   float pixelScale = 0.5f; //1.0f;
   float screenSaverMoveThreshold = 0.00003f;
   float screenSaverRotateThreshold = 0.0001f;
-  
+
   argh::Argh cmd_line;
   cmd_line.addFlag(displayUsage,
       "--help", "Display help (you probably figured this one out)");
-  cmd_line.addFlag(displayUsage, 
+  cmd_line.addFlag(displayUsage,
       "-h", "Display help (you probably figured this one out)");
-  cmd_line.addFlag(displayUsage, 
+  cmd_line.addFlag(displayUsage,
       "-?", "Display help (you probably figured this one out)");
-  cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled, 
+  cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled,
       "--disable_ui", "Disable the gui, useful for when it sucks");
-  cmd_line.addOption<float>(pixelScale, pixelScale, 
+  cmd_line.addOption<float>(pixelScale, pixelScale,
       "--pixel_scale", "How much to reduce the render target to improve fill rate");
-  cmd_line.addOption<std::string>(g_startupLevel, g_startupLevel, 
-      "--start_level", "Level name to start with, without path, with extension"); 
-  cmd_line.addFlag(g_startupAddEyeCandy, 
+  cmd_line.addOption<std::string>(g_startupLevel, g_startupLevel,
+      "--start_level", "Level name to start with, without path, with extension");
+  cmd_line.addFlag(g_startupAddEyeCandy,
       "--add_eye_candy", "Adds a bunch of shapes on startup");
-  cmd_line.addOption<std::string>(keepAliveFileName, keepAliveFileName, 
-      "--keep_alive_file_name", 
-      "Will write to this file every 5 seconds to indicate the process is alive"); 
-  cmd_line.addOption<float>(g_screensaverTime, g_screensaverTime, 
+  cmd_line.addOption<std::string>(keepAliveFileName, keepAliveFileName,
+      "--keep_alive_file_name",
+      "Will write to this file every 5 seconds to indicate the process is alive");
+  cmd_line.addOption<float>(g_screensaverTime, g_screensaverTime,
       "--screensaver", "Enable the screensaver system");
-  cmd_line.addOption<float>(VRWrapper::s_screenSaverMoveThreshold, VRWrapper::s_screenSaverMoveThreshold, 
+  cmd_line.addOption<float>(VRWrapper::s_screenSaverMoveThreshold, VRWrapper::s_screenSaverMoveThreshold,
       "--screensaver_move_thresh", "How much VR head movement turns off the screensaver");
   cmd_line.addOption<float>(VRWrapper::s_screenSaverRotateThreshold, VRWrapper::s_screenSaverRotateThreshold,
       "--screensaver_rotate_thresh", "How much VR head rotation turns off the screensaver");
   cmd_line.parse(argc, argv);
-  
+
   printf("Screensaver was %f\n", g_screensaverTime);
 
   if(displayUsage) {
@@ -1212,7 +1217,7 @@ int main(int argc, const char *argv[]) {
   g_vr = VRWrapper::CreateVR();
   if(g_screensaverTime > 0.0f && g_vr) {
     g_vr->m_doScreenSaver = true;
-  } 
+  }
 
   glfwSetErrorCallback(glfwErrorCallback);
 
@@ -1268,7 +1273,7 @@ int main(int argc, const char *argv[]) {
 
   g_platformWindow = ::fd::Platform::Init(windowTitle, startWidth, startHeight);
   g_platformWindow->m_glfwWindow = g_glfwWindow; // some days it's like fuck it, let's do it the wrong way
-  
+
   glewExperimental=TRUE;
   GLenum err;
   if((err = glewInit()) != GLEW_OK) {
@@ -1282,7 +1287,7 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
   //glfwSetKeyCallback(g_glfwWindow, Key); // If not using ImGui, put this back.
-  
+
   g_vr->InitializeWindow(g_platformWindow, pixelScale);
 
   glfwSetCursorPosCallback(g_glfwWindow, PassiveMotion);
@@ -1293,7 +1298,7 @@ int main(int argc, const char *argv[]) {
     SetIsUsingVR(true);
     glfwSetInputMode(g_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   }
-  
+
   if(!Initialize(startWidth, startHeight)) {
     printf("Initialized failed\n");
     return -1;
@@ -1310,8 +1315,9 @@ int main(int argc, const char *argv[]) {
 
     if(!keepAliveFileName.empty()) {
       if(g_renderer.GetTotalTime() >= keepAliveNext) {
-        keepAliveNext = g_renderer.GetTotalTime() + keepAliveTime; 
-        fd_file_write_vec(keepAliveFileName.c_str(), std::vector<unsigned char>('!'));
+        keepAliveNext = g_renderer.GetTotalTime() + keepAliveTime;
+        std::vector<unsigned char> bang('!');
+        fd_file_write_vec(keepAliveFileName.c_str(), bang);
       }
     }
 

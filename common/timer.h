@@ -38,8 +38,6 @@ namespace fd {
           QueryPerformanceFrequency(&frequency);
           _frequency = static_cast<double>(frequency.QuadPart);
         }
-      #else
-        _invFrequency = 1.0 / 1000000000.0;
       #endif //WIN32
       Start();
     }

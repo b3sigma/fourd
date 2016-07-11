@@ -2,7 +2,7 @@
 
 // needed for callback defs
 #include <GLFW/glfw3.h>
-#include "..\common\fourmath.h"
+#include "../common/fourmath.h"
 
 namespace fd {
 

@@ -1,3 +1,5 @@
+#ifdef WIN32
+
 #include "platform_interface.h"
 #include "win32_platform.h"
 
@@ -31,7 +33,7 @@ namespace fd {
 PlatformWindow* Platform::Init(
     const char* windowName, int width, int height) {
   assert(Win32Platform::s_Platform == NULL);
- 
+
   Win32Platform::s_Platform = new Win32Platform();
 
   PlatformWindow* pWindow = new PlatformWindow();
@@ -50,7 +52,7 @@ void Platform::Shutdown() {
   Win32Platform::s_Platform = NULL;
 }
 
-bool Platform::GetNextFileName(const char* fileMatch, 
+bool Platform::GetNextFileName(const char* fileMatch,
     const char* currentFile, std::string& foundFile) {
   if(!fileMatch) return false;
 
@@ -62,7 +64,7 @@ bool Platform::GetNextFileName(const char* fileMatch,
   }
 
   foundFile.assign(&findData.cFileName[0]);
-  
+
   if(!currentFile) {
     return true; //first match is fine
   }
@@ -114,7 +116,7 @@ BOOL CALLBACK MonitorEnumProcCallback(
 int PlatformWindow::GetNumDisplays() {
   MonitorsInfo monitorsInfo;
   EnumDisplayMonitors(NULL /*hdc*/, NULL /*clipRect*/,
-      MonitorEnumProcCallback, (LPARAM)&monitorsInfo); 
+      MonitorEnumProcCallback, (LPARAM)&monitorsInfo);
 
   int numPrimary = 0;
   MONITORINFOEX monitorInfo;
@@ -141,7 +143,7 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
       MonitorEnumProcCallback, (LPARAM)&monitors);
 
   RECT bestMonitorRect;
-  bool foundPrimary = false;  
+  bool foundPrimary = false;
   RECT otherMonitorRect;
   bool foundOther = false;
 
@@ -150,7 +152,7 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
   for(int m = 0; m < monitors.m_numMonitors; ++m) {
     if(!GetMonitorInfo(monitors.m_hMonitors[m], &monitorInfo))
       continue;
-    if(strstr(name, monitorInfo.szDevice) 
+    if(strstr(name, monitorInfo.szDevice)
         || strstr(monitorInfo.szDevice, name)) {
       bestMonitorRect = monitorInfo.rcMonitor;
       foundPrimary = true; // this is the target, always set
@@ -188,19 +190,19 @@ void PlatformWindow::ToggleFullscreenByMonitorName(const char* name) {
     if(monitor) {
       const GLFWvidmode* vidMode = glfwGetVideoMode(monitor);
       glfwSetWindowMonitor(m_glfwWindow, monitor,
-          vidMode->width, vidMode->height, GLFW_DONT_CARE);        
+          vidMode->width, vidMode->height, GLFW_DONT_CARE);
     }
   } else {
     glfwSetWindowMonitor(m_glfwWindow, NULL /*monitor*/,
-        m_width, m_height, GLFW_DONT_CARE);   
+        m_width, m_height, GLFW_DONT_CARE);
 
-    //glutLeaveFullScreen();    
+    //glutLeaveFullScreen();
     //if(foundOther) {
     //  SetWindowPos(m_hWnd, HWND_TOPMOST,
     //      otherMonitorRect.left, otherMonitorRect.top, m_width, m_height,
     //      SWP_SHOWWINDOW | SWP_NOZORDER | SWP_FRAMECHANGED);
     //}
-  } 
+  }
 
   // recapture with new size/pos
   if(wasCursorCaptured) {
@@ -247,3 +249,5 @@ void PlatformWindow::CaptureCursor(bool capture) {
 }
 
 } // namespace fd
+
+#endif //WIN32

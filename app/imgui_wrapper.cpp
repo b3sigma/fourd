@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <GL/glew.h>
-#include <imgui.h>
+#include "../imgui/imgui.h"
 #include <GLFW/glfw3.h>
 
 #include "imgui_wrapper.h"
@@ -204,7 +204,7 @@ static void ImGuiSetClipboardText(const char* text) {
   glfwSetClipboardString(ImGuiWrapper::s_glfwWindow, text);
 }
 
-  
+
 bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
     GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback) {
   s_glfwWindow = glfwWindow;
@@ -294,7 +294,7 @@ bool ImGuiWrapper::InitOpenGL() {
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  
+
   unsigned char* pixels;
   int width, height;
   io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);   // Load as RGBA 32-bits for OpenGL3 demo because it is more likely to be compatible with user's existing shader.
@@ -372,7 +372,7 @@ void ImGuiWrapper::NewFrame(float deltaTime, int renderWidth, int renderHeight) 
   } else {
     io.MousePos = ImVec2(-1, -1);
   }
-  
+
   //glfwSetInputMode(s_glfwWindow, GLFW_CURSOR,
   //    io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 
@@ -510,7 +510,7 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
   ImVec2 windowSize((float)renderer->m_viewWidth, (float)renderer->m_viewHeight);
 
   if(doUpdate) {
-    
+
     //RenderFpsOverlay(frameTime, offset);
     //RenderVRDebugOverlay(frameTime, offset, renderer);
 
@@ -534,5 +534,5 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
   ImGui::Render();
 }
-  
+
 }; // namespace fd

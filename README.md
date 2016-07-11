@@ -15,40 +15,45 @@ Getting:
 Running on Windows:
 * open up the .sln in under ./project/, build, run
 
-Running on Linux (haven't done this in a while, likely broken):
+Running on Linux (commands assumed from fourd dir):
+* sudo aptitude install cmake libglew-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxmu-dev
+* Next we need to build glfw. (Needless detail note: as there wasn't a package available, I had to build from source. As of this writing there is still no package for my distro, but if you would rather use your distro I think it was only a fullscreen bug that is probably already fixed in the mainline.
+** cd glfw && mkdir build && cd build && cmake ..
+** For any issues cmake reports, aptitude install the package or get it from source
+** make && sudo make install && cd ../..
 * make
 * ./fourd
 
 Controls UI:
-w/s = forward/backward
-a/d = strafe left/right
-q/e = strafe up/down
-r/f = inward/outward
-t/g = roll left/right
-y/h = rotate between inside right
-u/j = rotate between inside up
-i/k = animated pi/2 rotation between inside right (seems like miegakure button)
-o/l = animated pi/2 rotation between inside up
+* w/s = forward/backward
+* a/d = strafe left/right
+* q/e = strafe up/down
+* r/f = inward/outward
+* t/g = roll left/right
+* y/h = rotate between inside right
+* u/j = rotate between inside up
+* i/k = animated pi/2 rotation between inside right (seems like miegakure button)
+* o/l = animated pi/2 rotation between inside up
 
 VR:
-V = enable VR (rift only)
-F = fullscreen
+* V = enable VR (rift only)
+* F = fullscreen
 
 Rendering UI:
-0-9&* load different base shapes and different levels. (Default is quaxols in 4d.)
-!-^) load different shaders and alpha/depth options
-% loads settings for a nearly flat sliced w-projection
-x/c Decrease/increase near w-plane
-v/b Decrease/increase far w-plane
-n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
-] toggles w-ortho and w-projection (w-ortho can also be set by far/near ratio=1)
+* 0-9&* load different base shapes and different levels. (Default is quaxols in 4d.)
+* !-^) load different shaders and alpha/depth options
+* % loads settings for a nearly flat sliced w-projection
+* x/c Decrease/increase near w-plane
+* v/b Decrease/increase far w-plane
+* n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
+* ] toggles w-ortho and w-projection (w-ortho can also be set by far/near ratio=1)
 
 Action UI (vague due to being in flux):
-z add quaxol
-Z remove quaxol
-X add bunch of quaxols in a line
-` lock mouse to window
-Esc quit
+* z add quaxol
+* Z remove quaxol
+* X add bunch of quaxols in a line
+* ` lock mouse to window
+* Esc quit
 
 Minimal TODOs:
 * Better fix for solid/blendy interaction alignment
