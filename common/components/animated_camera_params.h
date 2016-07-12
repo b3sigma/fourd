@@ -10,7 +10,7 @@
 //      new AnimatedCameraParams(-10.0f, 10.0f, 0.5f, 1.0f));
 //}
 namespace fd {
-  
+
 template <typename T>
 class InterpValue {
 public:
@@ -26,7 +26,7 @@ public:
 
 class AnimatedCameraParams : public Component {
 protected:
-  
+
   InterpValue<float> _wNear;
   InterpValue<float> _wFar;
   InterpValue<float> _wScreenSizeRatio;
@@ -40,7 +40,7 @@ protected:
   float* _wScreenSizeRatioOwner;
 
 public:
-  AnimatedCameraParams(float wNear, float wFar, float wScreenSizeRatio, 
+  AnimatedCameraParams(float wNear, float wFar, float wScreenSizeRatio,
       float duration)
       : _wNear(0.0f, wNear)
       , _wFar(0.0f, wFar)
@@ -70,16 +70,16 @@ public:
   }
 
   void OnStepSignal(float delta) {
-    float timeDiff = abs(fmod(_duration - _current, _duration + 0.00001f));
+    float timeDiff = fabs(fmod(_duration - _current, _duration + 0.00001f));
     float stepAmount = (::std::min)(timeDiff, delta);
 
     _current += stepAmount;
-    
+
     float interp = _current / _duration;
     *_wNearOwner = _wNear.GetCurrent(interp);
     *_wFarOwner = _wFar.GetCurrent(interp);
     *_wScreenSizeRatioOwner = _wScreenSizeRatio.GetCurrent(interp);
-    
+
     if(_current >= _duration && _duration > 0.0f) {
       // just make sure we end up at the right spot
       *_wNearOwner = _wNear.GetCurrent(1.0f);

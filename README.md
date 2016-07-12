@@ -18,9 +18,11 @@ Running on Windows:
 Running on Linux (commands assumed from fourd dir):
 * sudo aptitude install cmake libglew-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxmu-dev
 * Next we need to build glfw. (Needless detail note: as there wasn't a package available, I had to build from source. As of this writing there is still no package for my distro, but if you would rather use your distro I think it was only a fullscreen bug that is probably already fixed in the mainline.
-** cd glfw && mkdir build && cd build && cmake ..
-** For any issues cmake reports, aptitude install the package or get it from source
-** make && sudo make install && cd ../..
+* cd glfw && mkdir build && cd build && cmake ..
+* For any issues cmake reports, aptitude install the package or get it from source
+* make && sudo make install
+* That should have installed glfw, so now we should be able to finish compiling fourd, so
+* cd ../..
 * make
 * ./fourd
 

@@ -25,6 +25,7 @@
 #include "../common/physics_help.h"
 #include "../common/player_capsule_shape.h"
 #include "../common/raycast_shape.h"
+#include "../common/timer.h"
 #include "../common/types.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/camera_follow.h"
@@ -78,7 +79,7 @@ GLFWwindow* g_glfwWindow = NULL;
 Mat4f g_debugHeadPose;
 float g_screensaverTime = 0.0f; // 0 is disabled
 
-bool g_startupAddEyeCandy = false;
+bool g_startupAddEyeCandy = true;
 std::string g_startupLevel = "current.bin";
 
 fd::Shader* LoadShader(const char* shaderName) {
@@ -132,7 +133,7 @@ fd::Shader* LoadShader(const char* shaderName) {
   return pShader;
 }
 
-std::string g_levelPath = "data\\levels\\";
+std::string g_levelPath = "data/levels/";
 bool SaveLevel(const char* levelName) {
   std::string nameExt = ".bin";
   std::string fullname = g_levelPath + std::string(levelName) + nameExt;
@@ -390,10 +391,10 @@ bool Initialize(int width, int height) {
   {
     Timer texTimer(std::string("texture loading"));
     std::vector<std::string> texList = {
-      "data\\textures\\wood.png",
-      "data\\textures\\thatch.png",
-      "data\\textures\\concrete_brick.png",
-      "data\\textures\\orientedTexture.png",
+      "data/textures/wood.png",
+      "data/textures/thatch.png",
+      "data/textures/concrete_brick.png",
+      "data/textures/orientedTexture.png",
     };
 
     for (auto texName : texList) {
@@ -1075,7 +1076,9 @@ void StepFrame() {
   if(g_vr && g_vr->IsUsingVR()) {
     g_vr->GetPerEyeRenderSize(guiWidth, guiHeight);
   }
-  ImGuiWrapper::NewFrame((float)g_renderer.GetFrameTime(), guiWidth, guiHeight);
+  float frameTime = (float)g_renderer.GetFrameTime();
+  // printf("Frametime was %f\n", frameTime);
+  ImGuiWrapper::NewFrame(frameTime, guiWidth, guiHeight);
 
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
@@ -1156,6 +1159,7 @@ void RunTests() {
   Camera::RunTests();
   Physics::RunTests();
   PhysicsHelp::RunTests();
+  Timer::RunTests();
 }
 
 void glfwErrorCallback(int error, const char* description) {
@@ -1163,7 +1167,7 @@ void glfwErrorCallback(int error, const char* description) {
 }
 
 // Soooo tacky!
-//#define RUN_TESTS
+#define RUN_TESTS
 
 int main(int argc, const char *argv[]) {
 
@@ -1199,7 +1203,7 @@ int main(int argc, const char *argv[]) {
       "--screensaver_rotate_thresh", "How much VR head rotation turns off the screensaver");
   cmd_line.parse(argc, argv);
 
-  printf("Screensaver was %f\n", g_screensaverTime);
+  printf("eyecandy was %d\n", g_startupAddEyeCandy);
 
   if(displayUsage) {
     printf("Helpy?\n%s\n", cmd_line.getUsage().c_str());
@@ -1289,7 +1293,9 @@ int main(int argc, const char *argv[]) {
   }
   //glfwSetKeyCallback(g_glfwWindow, Key); // If not using ImGui, put this back.
 
-  g_vr->InitializeWindow(g_platformWindow, pixelScale);
+  if(g_vr) {
+    g_vr->InitializeWindow(g_platformWindow, pixelScale);
+  }
 
   glfwSetCursorPosCallback(g_glfwWindow, PassiveMotion);
 

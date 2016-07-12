@@ -240,7 +240,7 @@ bool Physics::RayCastChunk(const QuaxolChunk& chunk,
 
   if(outDistance) {
     Vec4f hitDelta = (localHitPos - unclippedLocalPos) * chunk.m_blockSize;
-    *outDistance = abs(hitDelta.length());
+    *outDistance = fabs(hitDelta.length());
   }
   if(outNormal) {
     *outNormal = localHitNormal;
@@ -342,10 +342,10 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
   for(int c = 0; c < 4; c++) {
     if (normal[c] != 0.0f) {
       // we will add this to the counter whenever we take a step
-      step[c] = abs(1.0f / normal[c]);
+      step[c] = fabs(1.0f / normal[c]);
        // start out with the right number of "steps" based on start position
       if(clampDir[c] != 0.0f) {
-        stepCounter[c] = (1.0f - abs(clampDir[c])) * step[c];
+        stepCounter[c] = (1.0f - fabs(clampDir[c])) * step[c];
       } else {
         if(sign[c] < 0.0f) {
           stepCounter[c] = 0.0f;
@@ -422,9 +422,9 @@ void Physics::LineDraw4D(const Vec4f& start, const Vec4f& ray,
   for(int c = 0; c < 4; c++) {
     if (normal[c] != 0.0f) {
       // we will add this to the counter whenever we take a step
-      step[c] = abs(1.0f / normal[c]);
+      step[c] = fabs(1.0f / normal[c]);
        // start out with the right number of "steps" based on start position
-      stepCounter[c] = (1.0f - abs(clampDir[c])) * step[c];
+      stepCounter[c] = (1.0f - fabs(clampDir[c])) * step[c];
     } else {
       step[c] = 0.0f;
       stepCounter[c] = FLT_MAX;
@@ -474,7 +474,7 @@ void Physics::RunTests() {
   Vec4f rayDown(0.0f, -10.0f, 0.0f, 0.0f);
   float dist = 0.0f;
   assert(true == physTest.RayCastGround(posTest, rayDown, &dist));
-  assert((float)abs((float)(dist - 1.0f)) < 0.00001f); // may need to do some float threshold compares
+  assert((float)fabs((float)(dist - 1.0f)) < 0.00001f); // may need to do some float threshold compares
 
   //posTest.set(20.0f, 0.0f, 11.0f, 0.0f);
   posTest.set(20.0f, 11.0f, 0.0f, 0.0f);

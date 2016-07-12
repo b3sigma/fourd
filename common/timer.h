@@ -28,7 +28,7 @@ namespace fd {
       m_message = message;
     }
 
-    Timer()
+    Timer() : _elapsed(0.0)
     {
       #ifdef WIN32
         if (_frequency == 1.0) {
@@ -65,10 +65,13 @@ namespace fd {
       #else // linux
         timespec current;
         clock_gettime(CLOCK_MONOTONIC_RAW, &current);
-        _elapsed = static_cast<double>(current.tv_nsec - _start.tv_nsec) * _invFrequency;
+        _elapsed = static_cast<double>(current.tv_sec - _start.tv_sec);
+        _elapsed += static_cast<double>(current.tv_nsec - _start.tv_nsec) * _invFrequency;
       #endif //os
       return _elapsed;
     }
+
+    static bool RunTests();
   };
 
 };

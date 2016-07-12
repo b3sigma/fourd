@@ -173,7 +173,7 @@ bool Shader::Reload() {
 }
 
 bool Shader::LoadFromFileDerivedNames(const char* refName) {
-  const static std::string shaderDir = "data\\";
+  const static std::string shaderDir = "data/";
   const static std::string vertPrefix = std::string("vert");
   const static std::string fragPrefix = std::string("frag");
   const static std::string ext = std::string(".glsl");
@@ -274,7 +274,7 @@ bool Shader::CheckGLShaderLinkStatus(
 }
 
 bool Shader::AddDynamicMeshCommonSubShaders() {
-  return AddSubShader("data\\cvCommonTransform.glsl", GL_VERTEX_SHADER);
+  return AddSubShader("data/cvCommonTransform.glsl", GL_VERTEX_SHADER);
 }
 
 bool Shader::AddSubShader(const char* filename, GLenum shaderType) {

@@ -28,6 +28,7 @@ Render::Render()
     , m_viewHeight(0)
     , m_usingVR(false)
 {
+  timer_.Start();
 }
 
 Render::~Render() {
@@ -61,7 +62,7 @@ bool Render::Initialize(int width, int height) {
 
   std::unique_ptr<Shader> compose(new Shader());
   if(!compose->LoadFromFile(
-      "Compose", "data\\uivCompose.glsl", "data\\uifCompose.glsl")) {
+      "Compose", "data/uivCompose.glsl", "data/uifCompose.glsl")) {
     return false;
   }
   m_pComposeRenderTargets = compose.release();

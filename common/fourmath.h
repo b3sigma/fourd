@@ -147,10 +147,10 @@ public:
 	}
 
   bool approxEqual(const Vec& c, T threshold) const {
-	  return abs(x - c.x) < threshold
-	      && abs(y - c.y) < threshold
-        && abs(z - c.z) < threshold
-        && abs(w - c.w) < threshold;
+	  return fabs(x - c.x) < threshold
+	      && fabs(y - c.y) < threshold
+        && fabs(z - c.z) < threshold
+        && fabs(w - c.w) < threshold;
   }
 
 	void printIt() const {
@@ -461,10 +461,10 @@ public:
 
   // TODO: doesn't handle double coverage, should it?
   bool approxEqual(const Quaternion& p, float threshold) const {
-    return abs(r - p.r) < threshold
-        && abs(i - p.i) < threshold
-        && abs(j - p.j) < threshold
-        && abs(k - p.k) < threshold;
+    return fabs(r - p.r) < threshold
+        && fabs(i - p.i) < threshold
+        && fabs(j - p.j) < threshold
+        && fabs(k - p.k) < threshold;
   }
 };
 

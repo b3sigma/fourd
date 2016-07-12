@@ -11,7 +11,7 @@ OBJ       := $(patsubst %.cpp,build/%.o,$(SRC))
 INCLUDES  := $(addprefix -I,$(SRC_DIR))
 
 # -Wall -Wextra
-COMPILE_FLAGS = -std=c++11  -g -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-unknown-pragmas -Wno-reorder
+COMPILE_FLAGS = -std=c++11  -g -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-reorder
 LIBRARIES = -lm -lGL -lGLU -lglfw3 -lGLEW -lX11 -lXxf86vm -lXrandr -lpthread -lXi -lXmu -ldl -lXinerama -lXcursor
 LINK_FLAGS = $(LIBRARIES)
 

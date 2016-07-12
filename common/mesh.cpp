@@ -1214,7 +1214,7 @@ public:
       }
     }
 
-    printf("Graph had %d faces, %d verts, made  %d indices %d tris\n",
+    printf("Graph had %lu faces, %lu verts, made  %lu indices %lu tris\n",
         graph->faces.size(), graph->points.size(), _indices.size(), _indices.size() / 3);
 
     return true;

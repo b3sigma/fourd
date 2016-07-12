@@ -265,7 +265,7 @@ bool ImGuiWrapper::InitOpenGL() {
   //std::unique_ptr<Shader> shaderVR(new Shader());
   //shaderVR->AddDynamicMeshCommonSubShaders();
   //if(!shaderVR->LoadFromFile(
-  //    "ImguiVR", "data\\uivImguiVR.glsl", "data\\uifImguiVR.glsl")) {
+  //    "ImguiVR", "data/uivImguiVR.glsl", "data/uifImguiVR.glsl")) {
   //  return false;
   //}
   //s_UIRenderVR = shaderVR.release();
@@ -435,7 +435,7 @@ void RenderControlsSceen(ImVec2 res) {
       ImGui::End();
       return;
   }
-  ImGui::Image((ImTextureID)(s_ControllerTex->GetTextureID()), startSize);
+  ImGui::Image(reinterpret_cast<ImTextureID>(s_ControllerTex->GetTextureID()), startSize);
 
   //ImGui::SetWindowFontScale(1.5f);
 

@@ -18,8 +18,8 @@ bool PhysicsHelp::RayToPlane(
     return false; // both on same side, no collision
   } else {
     if(outCollisionPoint || outDistance) {
-      float percentToCollision = abs(startDotPlane)
-          / (abs(startDotPlane) + abs(endDotPlane));
+      float percentToCollision = fabs(startDotPlane)
+          / (fabs(startDotPlane) + fabs(endDotPlane));
       if(outCollisionPoint) {
         *outCollisionPoint = start;
         *outCollisionPoint += (ray * percentToCollision);

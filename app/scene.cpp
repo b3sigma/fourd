@@ -57,7 +57,7 @@ bool Scene::Initialize() {
   }
 
   m_pQuaxolAtlas = new Texture();
-  if(!m_pQuaxolAtlas->LoadFromFile("data\\textures\\atlas.png")) {
+  if(!m_pQuaxolAtlas->LoadFromFile("data/textures/atlas.png")) {
     return false;
   }
 
