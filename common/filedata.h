@@ -1,9 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <type_traits>
 
 namespace fd {
-  
+
   class FileData {
   public:
     typedef std::vector<unsigned char> DataVec;
@@ -17,7 +18,7 @@ namespace fd {
 
   public:
     FileData() : m_raw(NULL), m_dataSize(0), m_currentRead(0) {}
-    FileData(unsigned char* data, size_t dataSize) 
+    FileData(unsigned char* data, size_t dataSize)
         : m_raw(data), m_dataSize(dataSize), m_currentRead(0) {}
     ~FileData() { }
 
@@ -34,7 +35,7 @@ namespace fd {
         return false;
       val = *(T*)(&m_raw[m_currentRead]);
       m_currentRead += size;
-      
+
       return true;
     }
 
@@ -48,14 +49,19 @@ namespace fd {
 
     template <class TT> struct ConstRemover { typedef TT typeval; };
     template <class TT> struct ConstRemover<const TT> { typedef TT typeval; };
-    
+
     template <typename T>
     void write(T& val) {
       size_t size = sizeof(val);
       size_t current = m_ownedData.size();
       m_ownedData.resize(current + size);
       unsigned char* dataPtr = &m_ownedData[current];
-      auto typedPtr = const_cast<ConstRemover<T>::typeval *>((T*)dataPtr);
+      typename std::remove_const<T>::type * typedPtr = NULL;
+      typedPtr = (decltype(typedPtr))((void*)dataPtr);
+      // auto typedPtr = (std::remove_const<T>::type *)dataPtr;
+      // auto typedPtr = const_cast<std::remove_const<T>::type *>((T*)dataPtr);
+      // if this works in msvc, get rid of the constremover
+      // auto typedPtr = const_cast<ConstRemover<T>::typeval *>((T*)dataPtr);
       *typedPtr = val;
     }
 

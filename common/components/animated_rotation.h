@@ -25,7 +25,7 @@ protected:
 
 
 public:
-  AnimatedRotation(float radians, int targetDir, int sourceDir, 
+  AnimatedRotation(float radians, int targetDir, int sourceDir,
       float duration, bool worldRotation)
       : _radians(radians)
       , _targetDirection(targetDir)
@@ -53,7 +53,7 @@ public:
   void OnStepSignal(float delta) {
     assert(_pOwnerMatrix != NULL);
 
-    float timeDiff = abs(fmod(_duration - _current, _duration + 0.00001f));
+    float timeDiff = fabs(fmod(_duration - _current, _duration + 0.00001f));
     float stepAmount = (::std::min)(timeDiff, delta);
 
     Mat4f rot;

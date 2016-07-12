@@ -18,7 +18,7 @@
 
 namespace fd {
 
-Scene::Scene() 
+Scene::Scene()
   : m_pQuaxolShader(NULL)
   , m_pQuaxolMesh(NULL)
   , m_pQuaxolBuffer(NULL)
@@ -57,7 +57,7 @@ bool Scene::Initialize() {
   }
 
   m_pQuaxolAtlas = new Texture();
-  if(!m_pQuaxolAtlas->LoadFromFile("data\\textures\\atlas.png")) {
+  if(!m_pQuaxolAtlas->LoadFromFile("data/textures/atlas.png")) {
     return false;
   }
 
@@ -67,7 +67,7 @@ bool Scene::Initialize() {
   //if(!m_pQuaxolShader->LoadFromFileDerivedNames("ColorBlendClipped")) {
     return false;
   }
- 
+
   return true;
 }
 
@@ -130,12 +130,12 @@ Entity* Scene::AddEntity() {
 
 void Scene::RemoveEntity(Entity* pEntity) {
   m_dynamicEntities.erase(
-      std::remove(m_dynamicEntities.begin(), m_dynamicEntities.end(), pEntity), 
+      std::remove(m_dynamicEntities.begin(), m_dynamicEntities.end(), pEntity),
       m_dynamicEntities.end());
 }
 
 void Scene::OnDeleteEntity(Entity* pEntity) {
-  m_toBeDeleted.push_back(pEntity);  
+  m_toBeDeleted.push_back(pEntity);
 }
 
 void Scene::Step(float fDelta) {
@@ -245,7 +245,8 @@ void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
   GLint hTexCoord = glGetAttribLocation(pShader->getProgramId(), "vertCoord");
   //GLint hTexCoord = pShader->getAttrib("vertCoord");
 
-  pShader->SetPosition(&Vec4f(0, 0, 0, 0));
+  static Vec4f zero(0,0,0,0);
+  pShader->SetPosition(&zero);
   GLuint colorHandle = pShader->GetColorHandle();
 
   glBegin(GL_TRIANGLES);
@@ -267,24 +268,24 @@ void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
     const Vec4f& c = verts[indices[currentIndex++]];
 
     if (colorHandle != -1) {
-      float minW = min(a.w, min(b.w, c.w));
+      float minW = (std::min)(a.w, (std::min)(b.w, c.w));
       int colorIndex = ((int)abs(minW)) % m_colorArray.size();
       glVertexAttrib4fv(colorHandle, m_colorArray[colorIndex].raw());
     }
 
     if (hTexCoord != -1) {
       const float invTexSteps = 1.0f / 16.0f;
-      int firstTriOffset = tri % 2; 
-      glVertexAttrib2f(hTexCoord, 
-          (float)((vA._uvInd % 8) + 0) * invTexSteps, 
+      int firstTriOffset = tri % 2;
+      glVertexAttrib2f(hTexCoord,
+          (float)((vA._uvInd % 8) + 0) * invTexSteps,
           (float)((vA._uvInd / 8) + firstTriOffset) * invTexSteps);
       glVertex4fv(a.raw());
-      glVertexAttrib2f(hTexCoord, 
-          (float)((vB._uvInd % 8) + 1) * invTexSteps, 
+      glVertexAttrib2f(hTexCoord,
+          (float)((vB._uvInd % 8) + 1) * invTexSteps,
           (float)((vB._uvInd / 8) + 0) * invTexSteps);
       glVertex4fv(b.raw());
-      glVertexAttrib2f(hTexCoord, 
-          (float)((vC._uvInd % 8) + firstTriOffset) * invTexSteps, 
+      glVertexAttrib2f(hTexCoord,
+          (float)((vC._uvInd % 8) + firstTriOffset) * invTexSteps,
           (float)((vC._uvInd / 8) + 1) * invTexSteps);
       glVertex4fv(c.raw());
     } else {
@@ -296,7 +297,7 @@ void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {
   glEnd();
 
   pShader->StopUsing();
-  
+
 }
 
 void Scene::RenderQuaxolsIndividually(Camera* pCamera, Shader* pShader) {
@@ -317,7 +318,7 @@ void Scene::RenderQuaxolsIndividually(Camera* pCamera, Shader* pShader) {
     SetTexture(0, hTex0);
   }
 
-  for (auto quaxol : m_quaxols) {  
+  for (auto quaxol : m_quaxols) {
     const QuaxolSpec& q = quaxol;
 
     float shift_amount = 10.0f;
@@ -384,8 +385,8 @@ void Scene::BuildColorArray() {
   m_colorArray.reserve(numSteps);
   for (int steps = 0; steps < numSteps; steps++) {
     m_colorArray.push_back(Vec4f(
-      (float)((steps + 2) % 3) / 2.0f, 
-      (float)(steps + 1) / (float)numSteps, 
+      (float)((steps + 2) % 3) / 2.0f,
+      (float)(steps + 1) / (float)numSteps,
       (float)((steps + 3) % 5) / 4.0f,
       1));
   }

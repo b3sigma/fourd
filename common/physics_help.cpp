@@ -1,3 +1,4 @@
+#include <float.h>
 #include "physics_help.h"
 
 namespace fd {
@@ -17,8 +18,8 @@ bool PhysicsHelp::RayToPlane(
     return false; // both on same side, no collision
   } else {
     if(outCollisionPoint || outDistance) {
-      float percentToCollision = abs(startDotPlane)
-          / (abs(startDotPlane) + abs(endDotPlane));
+      float percentToCollision = fabs(startDotPlane)
+          / (fabs(startDotPlane) + fabs(endDotPlane));
       if(outCollisionPoint) {
         *outCollisionPoint = start;
         *outCollisionPoint += (ray * percentToCollision);
@@ -54,7 +55,7 @@ bool PhysicsHelp::RayToAlignedBox(
   Vec4f bestPoint;
   Vec4f bestHitNormal;
   bool foundPoint = false;
-      
+
   float borderThreshold = 0.0001f;
   const Vec4f toleranceVect(
       borderThreshold, borderThreshold, borderThreshold, borderThreshold);
@@ -110,7 +111,7 @@ bool PhysicsHelp::SphereToPlane(
   if(dotToPlane - planeOffset > radius) {
     return false;
   }
-  
+
   Vec4f hitPoint(pos);
   hitPoint -= planeNormal * (dotToPlane - planeOffset);
   if(outPoint) {
@@ -138,7 +139,7 @@ bool PhysicsHelp::SphereToAlignedBoxMinkowski(
     hadCollision = true;
     withinNonMinkowski = true;
   }
-  
+
   //// so enlarge in each direction to do easy minkowski cases
   //for(int c = 0; c < 4; c++) {
   //  Vec4f kowMin(min);
@@ -194,7 +195,7 @@ bool PhysicsHelp::SphereToAlignedBoxMinkowski(
     }
   }
 
-  if(outNormal) { 
+  if(outNormal) {
     if(projectedNormal.lengthSq() > 0.0f) {
       *outNormal = projectedNormal.normalized();
     } else { // within the tesseract, just use the delta?
@@ -205,7 +206,7 @@ bool PhysicsHelp::SphereToAlignedBoxMinkowski(
         // right in the middle of box, totally undefined so return up
         // person who wanted to redefine up, but ran into a bug <1% of the time,
         // and just found this bit of code, fuck you :)
-        *outNormal = Vec4f(0.0f, 1.0f, 0.0f, 0.0f); 
+        *outNormal = Vec4f(0.0f, 1.0f, 0.0f, 0.0f);
       }
     }
   }
@@ -252,14 +253,14 @@ bool PhysicsHelp::SphereToAlignedBoxMinkowski(
   //  //  Vec4f boxMid = (min + max) * 0.5f;
   //  //  Vec4f localCoord = pos - boxMid;
   //  //  float boxRadius = ((max + radiusVec) - boxMid).length();
-  //  //  float shrinkRatio = boxRadius / (radius + boxRadius); 
+  //  //  float shrinkRatio = boxRadius / (radius + boxRadius);
   //  //  Vec4f shrunkLocalCoord(localCoord);
   //  //  shrunkLocalCoord *= shrinkRatio;
   //  //  Vec4f rayInward = shrunkLocalCoord - localCoord;
   //  //  float shrinkEpsilon = 0.001f; // actually makes it slinkly less shrunk
   //  //  localCoord *= (1.0f + shrinkEpsilon);
 
-  //  //  if(!PhysicsHelp::RayToAlignedBox(min, max, 
+  //  //  if(!PhysicsHelp::RayToAlignedBox(min, max,
   //  //      localCoord + boxMid, rayInward,
   //  //      NULL /*dist*/, outPoint)) {
   //  //    assert(false); // huh, that should have worked
@@ -276,7 +277,7 @@ bool PhysicsHelp::SphereToAlignedBox(
     const Vec4f& min, const Vec4f& max,
     const Vec4f& pos, float radius,
     Vec4f* outPoint, Vec4f* outNormal) {
-  
+
   if(WithinBox(min, max, pos)) {
     // might be better to return a point in the direction of the box
     // center to facilitate pushing out
@@ -301,7 +302,7 @@ bool PhysicsHelp::SphereToAlignedBox(
 
   // these are all over the place and all different
   // yet another ticking death bomb
-  float borderThreshold = 0.0001f; 
+  float borderThreshold = 0.0001f;
   const Vec4f toleranceVect(
       borderThreshold, borderThreshold, borderThreshold, borderThreshold);
   Vec4f toleranceMin(min - toleranceVect);
@@ -343,7 +344,7 @@ bool PhysicsHelp::SphereToAlignedBox(
       //// then we will do the box test against just that point
       //Vec4f closes
 
-      //  
+      //
       // bool validHit = true;
       //for(int c = 0; c < 4; c++) {
       //  if(c == compIndex) continue;
@@ -358,19 +359,19 @@ bool PhysicsHelp::SphereToAlignedBox(
 
 
       float originToHitDist = (hitPos - planeOrigin).length();
-      float distToBox = originToHitDist - radius - planeOriginToCornerDist; 
+      float distToBox = originToHitDist - radius - planeOriginToCornerDist;
       if(distToBox > 0.0f) {
         continue;
       }
 
-      //Vec4f boxHitPos = 
+      //Vec4f boxHitPos =
 
       float collisionDistSq = (pos - hitPos).lengthSq();
       if(collisionDistSq < smallestDistSq) {
         smallestDistSq = collisionDistSq;
         bestPoint = hitPos;
         bestHitNormal = plane;
-        foundPoint = true;      
+        foundPoint = true;
       }
 
     }
@@ -394,7 +395,7 @@ void PhysicsHelp::RunTests() {
 
   Vec4f hitPoint;
   assert(true == SphereToPlane(pos, radius, planeNormal, planeOffset, &hitPoint));
-  
+
   pos = Vec4f(1.5f, 1.5f, 20.0f, 1.5f);
   assert(false == SphereToPlane(pos, radius, planeNormal, planeOffset, &hitPoint));
 

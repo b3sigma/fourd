@@ -29,9 +29,9 @@ public:
 
   void PreBusDelete() {
     // if the bus is deleting, don't do destructor callback stuff
-    m_ownerBus = NULL; 
+    m_ownerBus = NULL;
   }
-  
+
   void RegisterBus(ComponentBus* bus) {
     m_ownerBus = bus;
   }
@@ -49,13 +49,16 @@ public:
   typedef std::vector<std::pair<size_t, DelegateMemento>> TRegisteredSignals;
   TRegisteredSignals _registeredSignals;
 
+  // template<typename TSlotClass, typename... TVarArgs>
+  // void RegisterSignal(const std::string& name, TSlotClass* pClass,
+  //     void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
+  //   // need to store this delegate and then unconnect later...
+  //   auto signalDelegatePair = m_ownerBus->RegisterSignal(name, pClass, pFunc);
+  //   _registeredSignals.push_back(signalDelegatePair);
+  // }
   template<typename TSlotClass, typename... TVarArgs>
-  void RegisterSignal(const std::string& name, TSlotClass* pClass,
-      void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
-    // need to store this delegate and then unconnect later...
-    auto signalDelegatePair = m_ownerBus->RegisterSignal(name, pClass, pFunc);
-    _registeredSignals.push_back(signalDelegatePair);
-  }
+  inline void RegisterSignal(const std::string& name, TSlotClass* pClass,
+      void (TSlotClass::* pFunc)(TVarArgs... varParameters));
 };
 typedef std::vector<Component*> TComponentList;
 
@@ -63,13 +66,13 @@ class ComponentBus {
 protected:
   class RegData {
   public:
-    RegData() : _data(NULL), 
-        _type_hash(0), 
+    RegData() : _data(NULL),
+        _type_hash(0),
         _isPermanentStorage(false),
         _busOwned(false) {}
-    RegData(void* data, const std::string& name, 
+    RegData(void* data, const std::string& name,
         size_t type_hash,
-        bool permanentStorage) 
+        bool permanentStorage)
         : _data(data), _name(name),
         _type_hash(type_hash),
         _isPermanentStorage(permanentStorage),
@@ -190,7 +193,7 @@ public:
 
   void RemoveComponent(Component* baby) {
     _components.erase(
-        std::remove(_components.begin(), _components.end(), baby), 
+        std::remove(_components.begin(), _components.end(), baby),
         _components.end());
   }
 
@@ -235,7 +238,7 @@ public:
   }
 
   template<typename TSignalClass, typename... TSignalParams>
-  void SendSignal(const std::string& name, 
+  void SendSignal(const std::string& name,
       TSignalClass signal, TSignalParams... signalParams) {
     size_t signalHash = HashSignalParamsAndName(
         name, typeid(signal).hash_code());
@@ -246,12 +249,13 @@ public:
   }
 
   template<typename TSlotClass, typename... TVarArgs>
-  std::pair<size_t, DelegateMemento> RegisterSignal(const std::string& name, TSlotClass* pClass,
+  std::pair<size_t, DelegateMemento> RegisterSignal(
+      const std::string& name, TSlotClass* pClass,
       void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
 
     // So we use the function signature plus the signal name to generate
     // a hash that references the specific signal.
-    size_t hashVal = HashSignalParamsAndName(name, 
+    size_t hashVal = HashSignalParamsAndName(name,
         typeid(SignalN<TVarArgs...>).hash_code());
 
     SignalN<TVarArgs...>* pSignaler;
@@ -265,7 +269,8 @@ public:
       pSignaler = (SignalN<TVarArgs...>*)signalerIt->second;
     }
 
-    SignalN<TVarArgs...>::_Delegate delegate = pSignaler->Connect(pClass, pFunc); 
+    typename SignalN<TVarArgs...>::_Delegate delegate =
+        pSignaler->Connect(pClass, pFunc);
     return std::make_pair(hashVal, delegate.GetMemento());
   }
 
@@ -299,10 +304,20 @@ public:
     if(m_ownerBus) {
       for(auto sigDelegatePair : _registeredSignals) {
         m_ownerBus->UnregisterSignal(
-            sigDelegatePair.first, sigDelegatePair.second);        
+            sigDelegatePair.first, sigDelegatePair.second);
       }
     }
     _registeredSignals.resize(0);
+  }
+
+  template<typename TSlotClass, typename... TVarArgs>
+  inline void Component::RegisterSignal(
+      const std::string& name,
+      TSlotClass* pClass,
+      void (TSlotClass::* pFunc)(TVarArgs... varParameters)) {
+    // need to store this delegate and then unconnect later...
+    auto signalDelegatePair = m_ownerBus->RegisterSignal(name, pClass, pFunc);
+    _registeredSignals.push_back(signalDelegatePair);
   }
 
 

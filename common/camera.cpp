@@ -6,16 +6,16 @@
 using namespace ::fd;
 
 Camera::Camera()
-    : _movement(ORBIT)
-    , _yaw(0.0f)
-    , _pitch(0.0f)
-    , _zNear(0.1f)
+    : _zNear(0.1f)
     , _zFar(1000.0f)
     , _zFov(90.0f)
     , _wNear(0.0f)
     , _wFar(40.0f)
     , _wScreenSizeRatio(0.5)
     , _wProjectionEnabled(true)
+    , _movement(ORBIT)
+    , _yaw(0.0f)
+    , _pitch(0.0f)
     , _collidingLastFrame(false)
     , _nextSimpleSlicePositive(true)
     , _startingCameraCopy(NULL)
@@ -302,7 +302,7 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
     //addSpeed *= sign;
     float addSpeed = trySpeed * maxScalar;
 
-    Vec4f newPushVel = _pushVelocity + (_renderMatrix[direction] * addSpeed);
+    //Vec4f newPushVel = _pushVelocity + (_renderMatrix[direction] * addSpeed);
 
     _pushVelocity += _renderMatrix[direction] * addSpeed;
     //_pushVelocity += _renderMatrix[direction] * (amount * acceleration * airMoveMultiplier);
@@ -357,7 +357,7 @@ void Camera::OnInputRoll(float fDeltaTime, float amount) {
   ApplyRollInput(rollSensitivity * amount, Camera::INSIDE, Camera::RIGHT);
 }
 
-void Camera::SetZProjection(int width, int height, 
+void Camera::SetZProjection(int width, int height,
     float zFov, float zNear, float zFar) {
 
   _screenBounds.x() = width;
@@ -424,7 +424,8 @@ void TestSignals() {
   g_targetCount = 0;
   DelegateN<int, int, int, char*> callerMore;
   callerMore.Bind(&t1, &_internal::Target::TargetMoreArgs);
-  callerMore(20, 100, "blah");
+  char blah[] = "blah";
+  callerMore(20, 100, blah);
   assert(g_targetCount == 120);
 
   Slotty slotty;
@@ -456,7 +457,7 @@ public:
       SelfDestruct();
     }
   }
-  
+
   void OnAnySignal() {
     _ticksToDie--;
     if(_ticksToDie <= 0) {
@@ -484,7 +485,7 @@ void Camera::RunTests() {
   Mat4f identity;
   identity.storeIdentity();
   Camera* pCamera;
-  
+
   //pCamera = new Camera();
   //assert(pCamera->_cameraMatrix == identity);
   //pCamera->GetComponentBus().AddComponent(
@@ -550,4 +551,3 @@ void Camera::RunTests() {
   delete pCamera;
 
 }
-
