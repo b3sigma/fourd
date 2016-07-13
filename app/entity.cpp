@@ -1,9 +1,10 @@
 #include "entity.h"
 #include "texture.h"
+#include "scene.h"
 
 namespace fd {
 
-Entity::Entity(Scene* scene) 
+Entity::Entity(Scene* scene)
     : m_pMesh(NULL)
     , m_pShader(NULL)
     , m_scene(scene)
@@ -14,7 +15,7 @@ Entity::Entity(Scene* scene)
       std::string("position"), &m_position, true);
   m_componentBus.RegisterOwnerDataPtr(
       std::string("scene"), &m_scene, true);
-  
+
   m_componentBus.RegisterSignal(
       std::string("DeleteSelf"), this, &Entity::OnDeleteSelf);
 
@@ -24,10 +25,10 @@ Entity::Entity(Scene* scene)
 
 Entity::~Entity() {
   if(m_ownerBus) {
-    m_ownerBus->SendSignal(std::string("EntityDeleted"), 
+    m_ownerBus->SendSignal(std::string("EntityDeleted"),
         SignalN<Entity*>(), this);
   }
-} 
+}
 
 void Entity::OnConnected() {
   // Should do a pass through for signals down to the bus.
@@ -36,11 +37,11 @@ void Entity::OnConnected() {
 
 // try the manual thing first
 void Entity::OnStepSignal(float delta) {
-  m_componentBus.Step(delta);  
+  m_componentBus.Step(delta);
 }
 
 void Entity::OnDeleteSelf() {
-  m_ownerBus->SendSignal(std::string("DeleteEntity"), 
+  m_ownerBus->SendSignal(std::string("DeleteEntity"),
       SignalN<Entity*>(), this);
 }
 

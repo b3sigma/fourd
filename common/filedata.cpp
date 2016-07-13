@@ -1,8 +1,10 @@
-#include "filedata.h"
-
 #include <memory>
 #include <stdio.h>
+#include <string.h>
+
+#include "filedata.h"
 #include "fd_simple_file.h"
+
 
 namespace fd {
 

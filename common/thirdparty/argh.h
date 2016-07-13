@@ -18,7 +18,7 @@ public:
   virtual std::string getName() = 0;
   virtual std::string getMessage() = 0;
   virtual void setValue(std::string const& val) = 0;
-  
+
   bool getParsed() { return parsed; }
   virtual void setParsed(bool parsed) { this->parsed = parsed; }
 
@@ -30,10 +30,10 @@ template<typename T>
 class OptionImpl : public Option {
 public:
   OptionImpl(T& var, T default_val, std::string const& name, std::string const& msg) :
-    var(var), 
-    default_val(default_val), 
-    name(name), 
-    msg(msg) 
+    var(var),
+    default_val(default_val),
+    name(name),
+    msg(msg)
   { var = default_val; }
 
   virtual std::string getDefault() { std::stringstream ss; ss << default_val; return ss.str(); }
@@ -64,22 +64,22 @@ class MultiOptionImpl : public Option
 {
 public:
   MultiOptionImpl(std::vector<T>& var, std::string const& default_vals, std::string const& name, std::string const& msg, char delim) :
-    var(var), 
+    var(var),
     default_vals(default_vals),
-    name(name), 
+    name(name),
     msg(msg),
     delim(delim)
   {
     setValue(default_vals);
   }
 
-  std::string getDefault() 
-  {  
-    std::stringstream ss; 
+  std::string getDefault()
+  {
+    std::stringstream ss;
     ss << "\"";
     ss << default_vals;
     ss << "\"";
-    return ss.str(); 
+    return ss.str();
   }
 
   std::string getName() { return name; }
@@ -124,8 +124,9 @@ public:
   FlagImpl(bool& flag, std::string const& name, std::string const& msg) :
     flag(flag),
     name(name),
-    msg(msg) 
+    msg(msg)
   {
+    //let it be the default value passed in!
     //flag = false;
   }
 
@@ -164,7 +165,9 @@ public:
     options.push_back(new OptionImpl<T>(var, default_val, name, msg));
   }
 
+#ifdef WIN32
   template<>
+#endif //WIN32
   void addOption(std::string& var, std::string const& default_val, std::string const& name, std::string const& msg) {
     options.push_back(new OptionStringImpl(var, default_val, name, msg));
   }
@@ -174,7 +177,9 @@ public:
     options.push_back(new MultiOptionImpl<T>(var, default_vals, name, msg, delim));
   }
 
+#ifdef WIN32
   template<>
+#endif //WIN32
   void addMultiOption(std::vector<std::string>& var, std::string const& default_vals, std::string const& name, std::string const& msg) {
     options.push_back(new MultiOptionStringImpl(var, default_vals, name, msg, delim));
   }
@@ -191,10 +196,10 @@ public:
     std::stringstream ret;
     ret << std::left;
     for (auto o : options) {
-      ret 
-        << std::setw(name_space)    << o->getName() 
-        << std::setw(default_space) << o->getDefault() 
-        << std::setw(msg_space)     << o->getMessage() 
+      ret
+        << std::setw(name_space)    << o->getName()
+        << std::setw(default_space) << o->getDefault()
+        << std::setw(msg_space)     << o->getMessage()
         << std::endl;
     }
     return ret.str();

@@ -3,11 +3,13 @@
 
 #include <memory>
 
+#ifdef WIN32
 #include <Windows.h>
-// uh, weird this is manual
+// looks like oculus is windows only at this point anyway...
 #define OVR_OS_WIN32
 #include "OVR_CAPI.h"
 #include "OVR_CAPI_GL.h"
+#endif
 
 #include "glhelper.h"
 #include "render.h"
@@ -23,20 +25,21 @@ bool VRWrapper::s_UsingVR = false;
 float VRWrapper::s_screenSaverMoveThreshold = 0.00003f;
 float VRWrapper::s_screenSaverRotateThreshold = 0.0001f;
 
+#if defined(WIN32)
 // TODO: move this to like ovr_vr_wrapper.cpp or something
 class OVRWrapper : public VRWrapper {
 public:
   PlatformWindow* m_pWindow;
   ovrHmd m_HMD; // actually a pointer...
   bool m_isDebugDevice;
-  
+
   Texture* m_eyeRenderTex[2];
   Texture* m_eyeDepthTex[2];
 
   ovrEyeRenderDesc m_eyeDesc[2];
   ovrPosef m_eyeRenderPose[2];
   ovrPosef m_lastEyeRenderPose[2];
-  
+
   int m_eyeRenderWidth;
   int m_eyeRenderHeight;
 
@@ -94,10 +97,10 @@ public:
 
     return true;
   }
-  
+
   virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) {
     m_pWindow = pWindow;
-    
+
     const float pixelsPerDisplayPixel = pixelScale; //0.25f; // 1.0f;
     bool createSuccess = true;
     for (int e = 0; e < 2; e++) {
@@ -118,7 +121,7 @@ public:
       printf("VR Render/depth target creation failed\n");
       return false;
     }
-    
+
     ovrGLConfig config;
     config.OGL.Header.API = ovrRenderAPI_OpenGL;
     config.OGL.Header.BackBufferSize = m_HMD->Resolution;
@@ -131,7 +134,7 @@ public:
         | ovrDistortionCap_Overdrive;
     ovrHmd_ConfigureRendering(m_HMD, &config.Config, ovrDistortionCaps,
         m_HMD->DefaultEyeFov, m_eyeDesc);
-    
+
     ovrHmd_AttachToWindow(m_HMD, m_pWindow->m_hWnd,
         NULL /*destRect*/, NULL /*srcRect*/);
 
@@ -179,7 +182,7 @@ public:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  
+
   virtual void SetDebugHeadOrientation(const Mat4f* matrix) {
     m_debugHeadPose = matrix;
   }
@@ -194,7 +197,7 @@ public:
     if(m_debugHeadPose) {
       localEye = *m_debugHeadPose;
     }
-    
+
     const float worldScale = 20.0f;
     static bool simpleEyeOffset = true;
     if(simpleEyeOffset) {
@@ -220,7 +223,7 @@ public:
       //static Vec4f sign(1.0f, 1.0f, 1.0f, 1.0f);
       static Vec4f sign(-1.0f, 1.0f, 1.0f, 1.0f);
       Vec4f ovrEyePos(localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
-      
+
       // TODO: try to convert ovr into local using simple sign switch
       // then independently do eye and forehead transformations
       Vec4f ovrForehead;
@@ -232,9 +235,9 @@ public:
 
       ovrEyePos *= worldScale;
       Vec4f localOffset(
-          ovrEyePos[transposer[0]] * sign.x, 
-          ovrEyePos[transposer[1]] * sign.y, 
-          ovrEyePos[transposer[2]] * sign.z, 
+          ovrEyePos[transposer[0]] * sign.x,
+          ovrEyePos[transposer[1]] * sign.y,
+          ovrEyePos[transposer[2]] * sign.z,
           0.0f);
 
       static float amount = (float)PI / 2.0f;
@@ -249,10 +252,10 @@ public:
         localOffset = matArbitrary.transform(localOffset);
       } else if (doArbitrary < 0) {
         localOffset = matArbitrary.transpose().transform(localOffset);
-      } else { 
+      } else {
         // do nothing
       }
-      
+
       static int doLocalTrans = 0;
       Vec4f eyeSpaceOffset = localOffset;
       if(doLocalTrans > 0) {
@@ -295,25 +298,25 @@ public:
         renderOffset = matPostArbitrary.transform(renderOffset);
       } else if (doPostArbitrary < 0) {
         renderOffset = matPostArbitrary.transpose().transform(renderOffset);
-      } else { 
+      } else {
         // do nothing
       }
-      
+
       static int finalTransposer[4] = {0, 1, 2, 3};
       static Vec4f finalSign(1.0f, 1.0f, 1.0f, 1.0f);
-    
+
       Vec4f finalOffset(
-          renderOffset[finalTransposer[0]] * finalSign.x, 
-          renderOffset[finalTransposer[1]] * finalSign.y, 
-          renderOffset[finalTransposer[2]] * finalSign.z, 
-          renderOffset[finalTransposer[3]] * finalSign.w); 
+          renderOffset[finalTransposer[0]] * finalSign.x,
+          renderOffset[finalTransposer[1]] * finalSign.y,
+          renderOffset[finalTransposer[2]] * finalSign.z,
+          renderOffset[finalTransposer[3]] * finalSign.w);
 
       const float derpEyes[2] = { -0.6f, 0.6f };
       Vec4f derpEye = (pCamera->_renderMatrix[Camera::RIGHT] * (derpEyes[eye]));
 
       //pCamera->_renderPos = pCamera->_cameraPos + finalOffset;
       pCamera->UpdateRenderMatrix(&localEye, &finalOffset);
-    
+
       static int framecount = 0;
       if(eye == 0) {
         framecount++;
@@ -336,7 +339,7 @@ public:
         }
       }
     }
-    
+
     ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
       0.2f /*zNear*/, 1000.0f /*zFar*/, true /*rightHanded*/);
     pCamera->_zProjectionMatrix.storeFromTransposedArray(&ovrProj.M[0][0]);
@@ -374,7 +377,7 @@ public:
       float maxDeltaPos = 0.0f;
       float maxDeltaRot = 0.0f;
       for(int i = 0; i < 2; i++) {
-        
+
         Vec4f oldPos(m_lastEyeRenderPose[i].Position.x, m_lastEyeRenderPose[i].Position.y, m_lastEyeRenderPose[i].Position.z, 0.0f);
         Vec4f newPos(m_eyeRenderPose[i].Position.x, m_eyeRenderPose[i].Position.y, m_eyeRenderPose[i].Position.z, 0.0f);
         maxDeltaPos = max((oldPos - newPos).length(), maxDeltaPos);
@@ -388,9 +391,9 @@ public:
       if(maxDeltaPos > s_screenSaverMoveThreshold || maxDeltaRot > s_screenSaverRotateThreshold) {
         m_hadInput = true;
       }
-      
+
       //printf("VR input:%d pos:%f rot:%f\n", m_hadInput, maxDeltaPos, maxDeltaRot);
-      
+
     }
   }
 
@@ -430,7 +433,7 @@ public:
     return true;
   }
 
-  virtual bool GetTotalRenderSize(int& width, int& height) const { 
+  virtual bool GetTotalRenderSize(int& width, int& height) const {
     if(!m_HMD) return false;
     width = m_HMD->Resolution.w;
     height = m_HMD->Resolution.h;
@@ -454,5 +457,11 @@ VRWrapper* VRWrapper::CreateVR() {
 
   return vrWrapper.release();
 }
+#else //linux_platform
+VRWrapper* VRWrapper::CreateVR() {
+  return NULL;
+}
+#endif  //defined(WIN32)
+
 
 }; // namespace fd

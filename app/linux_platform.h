@@ -1,8 +1,7 @@
 #pragma once
 
-#ifdef WIN32
+#ifndef WIN32 // pretty sure linux and windows are the only OSs ever
 
-#include <Windows.h>
 #include "platform_interface.h"
 #include <string>
 
@@ -14,7 +13,7 @@ namespace fd {
 class PlatformWindow {
 private:
 public:
-  HWND m_hWnd;
+  // HWND m_hWnd;
   int m_width;
   int m_height;
   bool m_fullscreen;
@@ -31,4 +30,4 @@ public:
 
 } // namespace fd
 
-#endif //def WIN32
+#endif //n def WIN32

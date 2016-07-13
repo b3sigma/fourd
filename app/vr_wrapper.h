@@ -2,13 +2,13 @@
 
 #include <string>
 #include "platform_interface.h"
-#include "..\common\fourmath.h"
+#include "../common/fourmath.h"
 
 namespace fd {
 
 class Camera;
 class Texture;
-  
+
 // Interface class for actual vr.
 // Probably silly as ovr is only game in town currently, which means the 2nd
 // kind of thing will still be hard.
@@ -20,12 +20,12 @@ public:
 
   // so with glfw, ovr must happen first, then glfw, then ovr window
   virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) { return false; }
-  
+
   virtual void StartFrame() {}
   virtual void StartLeftEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
   virtual void StartRightEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
   virtual void FinishFrame() {}
-  
+
   virtual std::string GetDeviceName() { return std::string(""); }
   virtual bool GetIsDebugDevice() { return true; }
 
@@ -42,7 +42,7 @@ public:
   virtual void SetDebugHeadOrientation(const Mat4f* matrix) {}
 
   virtual ~VRWrapper() {}
-  
+
 public:
   // nothing like late am deadline coding to add public vars
   bool m_doScreenSaver;

@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <memory>
+#include <errno.h>
+#include <string.h>
 
 #include "fd_simple_file.h"
 #include "filedata.h"
@@ -12,10 +14,15 @@ namespace fd {
 #pragma warning(push)
 #pragma warning(disable: 4996) //strerror whining
     FILE* hFile;
+    #if defined(_MSC_VER)
     errno_t err;
     if (0 != (err = fopen_s(&hFile, filename, "rt"))) {
+    #else
+    if (0 != (hFile = fopen(filename, "rt"))) {
+      int err = errno;
+    #endif
       printf("Opening %s failed with err:%s", filename, strerror(err));
-      return false;
+      return NULL;
     }
 #pragma warning(pop)
 
@@ -25,7 +32,11 @@ namespace fd {
     // Note: before you do anything more complicated than this,
     // check out capnproto. Probably less efficient than direct binary
     // fread and such, but probably much more flexible and versioning resistant.
+    #if defined(_MSC_VER)
     while (4 == fscanf_s(hFile, "%d %d %d %d\n", &q.x, &q.y, &q.z, &q.w)) {
+    #else
+    while (4 == fscanf(hFile, "%d %d %d %d\n", &q.x, &q.y, &q.z, &q.w)) {
+    #endif
       quaxols.push_back(q);
     }
     fclose(hFile);
@@ -38,7 +49,7 @@ namespace fd {
   }
 
   QuaxolChunk* ChunkLoader::LoadFromFile(const char* filename) {
-  
+
     if(strstr(filename, ".txt")) {
       return LoadFromTextFile(filename);
     } else {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdio.h>
-#include <gl/glew.h>
+#include <GL/glew.h>
 
 //#ifdef _DEBUG
 inline bool WasGLErrorPlusPrint() {

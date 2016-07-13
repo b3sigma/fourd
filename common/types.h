@@ -1,5 +1,10 @@
 #pragma once
 
+#ifndef TRUE
+#define TRUE (1)
+#endif
+
+
 #ifndef int64
 typedef long long int64;
 #endif
