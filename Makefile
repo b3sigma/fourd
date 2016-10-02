@@ -2,7 +2,7 @@ CC        := g++
 LD        := g++
 
 BIN_NAME  := fourd
-MODULES   := common common/components common/thirdparty/jenn3d imgui app app/components
+MODULES   := common common/components common/thirdparty/jenn3d imgui app app/components pyvis
 SRC_DIR   := $(MODULES)
 BUILD_DIR := $(addprefix build/,$(MODULES))
 
@@ -12,7 +12,7 @@ INCLUDES  := $(addprefix -I,$(SRC_DIR))
 
 # -Wall -Wextra
 COMPILE_FLAGS = -std=c++11  -g -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-reorder
-LIBRARIES = -lm -lGL -lGLU -lglfw3 -lGLEW -lX11 -lXxf86vm -lXrandr -lpthread -lXi -lXmu -ldl -lXinerama -lXcursor
+LIBRARIES = -lm -lGL -lGLU -lglfw3 -lGLEW -lX11 -lXxf86vm -lXrandr -lpthread -lXi -lXmu -ldl -lXinerama -lXcursor -lpython2.7
 LINK_FLAGS = $(LIBRARIES)
 
 

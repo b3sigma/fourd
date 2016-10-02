@@ -33,6 +33,7 @@
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
 #include "../common/thirdparty/argh.h"
+#include "../pyvis/pyvis.h"
 #include "entity.h"
 #include "imgui_wrapper.h"
 #include "input_handler.h"
@@ -1168,7 +1169,8 @@ void glfwErrorCallback(int error, const char* description) {
   printf("GLFW Error: %d :  %s\n", error, description);
 }
 
-// Soooo tacky!
+// At first I thought this was tacky, but they are so fast and it reminds
+// me they are going and relevant so it's sort of okay?
 #define RUN_TESTS
 
 int main(int argc, const char *argv[]) {
@@ -1322,6 +1324,7 @@ int main(int argc, const char *argv[]) {
 
   while(true) {
     StepFrame();
+    fd::SillyPythonTest();
     Draw(g_glfwWindow);
 
     if(!keepAliveFileName.empty()) {
