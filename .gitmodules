@@ -14,5 +14,5 @@
 	path = glfw
 	url = https://github.com/b3sigma/glfw
 [submodule "PIMCPy"]
-	path = PIMCPy
+	path = pyvis/PIMCPy
 	url = https://github.com/b3sigma/PIMCPy.git
