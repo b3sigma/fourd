@@ -1091,6 +1091,10 @@ void StepFrame() {
     }
   }
 
+#ifdef FD_USE_PYTHON_HOOK
+  fd::PathIntegralSingleStep();
+#endif //FD_USE_PYTHON_HOOK
+
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
@@ -1324,7 +1328,6 @@ int main(int argc, const char *argv[]) {
 
   while(true) {
     StepFrame();
-    fd::SillyPythonTest();
     Draw(g_glfwWindow);
 
     if(!keepAliveFileName.empty()) {

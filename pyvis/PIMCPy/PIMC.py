@@ -1,3 +1,4 @@
+# Following http://web.engr.illinois.edu/~bkclark/PIMCTutorial/tutorial.pdf
 import numpy
 ##import pylab
 from PIMCHelp import *
