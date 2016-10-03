@@ -13,3 +13,6 @@
 [submodule "glfw"]
 	path = glfw
 	url = https://github.com/b3sigma/glfw
+[submodule "PIMCPy"]
+	path = PIMCPy
+	url = https://github.com/b3sigma/PIMCPy.git
