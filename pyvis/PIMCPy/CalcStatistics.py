@@ -58,5 +58,5 @@ def StdError(data):
     return sqrt(var/Neff)
 
 def Stats(data):
-    return (Mean(data), StdError(data), Kappa(data))
-    
+    if len(data) > 0 :
+        return (Mean(data), StdError(data), Kappa(data))    

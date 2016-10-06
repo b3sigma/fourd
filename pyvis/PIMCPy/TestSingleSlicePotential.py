@@ -7,14 +7,13 @@ import random
 import numpy
 from PIMC import *
 
-
 def CalcSingleSlicePotential() :
   tau=0.5
   lam=0.5
-  numTimeSlices=50
+  numTimeSlices=5
   numParticles=2
 
-  n = numpy.array(arange(0.0, 100.0,1.0))
+  n = numpy.array(arange(0.0, 100.0, 1.0))
   E = 0.5 + n
   beta = tau * numTimeSlices
   expBetaE = numpy.exp(-beta*E)
@@ -24,6 +23,16 @@ def CalcSingleSlicePotential() :
   Path=PathClass(numpy.zeros((numTimeSlices,numParticles,3),float),tau,lam)
   Path.SetPotential(HarmonicOscillator)
   Path.SetCouplingConstant(0.0)
-  print PIMC(5000,Path,SingleSliceMove)
+  return PIMC(200,Path,SingleSliceMove)
 
-CalcSingleSlicePotential()
+#print CalcSingleSlicePotential()
+
+energyTraces = []
+def ScriptCreate() :
+  energyTraces.append(CalcSingleSlicePotential())
+  return []
+
+def ScriptStep() :
+  print "Had %d traces!\n" % (len(energyTraces))
+  print energyTraces
+  return energyTraces

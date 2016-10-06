@@ -1,3 +1,5 @@
+#include <memory>
+#include <vector>
 #include "pyvis.h" // has FD_USE_PYTHON_HOOK 
 
 #ifdef FD_USE_PYTHON_HOOK
@@ -9,112 +11,177 @@
 namespace fd {
 
 class PyVis {
-    public:
-    PyObject* mainDict;
+public:
+    PyObject* potentialDict; 
+    PyObject* potentialMod;
+    PyObject* potentialStep;
 
+    PyVis() : potentialDict(NULL), potentialMod(NULL), potentialStep(NULL) {}
+    ~PyVis() {
+        Py_CLEAR(potentialStep);
+        Py_CLEAR(potentialDict);
+        Py_CLEAR(potentialMod);
+    }
 };
 
-static PyVis* g_sPyVis = NULL;
-
-bool PathIntegralSingleStep() {
-    static double sLastElapsed;
-    static Timer sPyPerf;
-    Timer huh("python time");
-    sPyPerf.Start();
-
-    if(!g_sPyVis) {
-        g_sPyVis = new PyVis();
-        Py_Initialize();
+struct ScopePyClear {
+    PyObject*& pyObj;
+    ScopePyClear(PyObject*& obj) : pyObj(obj) {
+        printf("made a ScopePyClear!\n");
     } 
-    if(0 == Py_IsInitialized())
-        return false;
+    ~ScopePyClear() { Py_CLEAR(pyObj); 
+        printf("boomed a ScopePyClear!\n");
+    }
+};
+
+// // from http://the-witness.net/news/2012/11/scopeexit-in-c11/
+// template <typename F>
+// struct ScopeExit {
+//     ScopeExit(F f) : f(f) {}
+//     ~ScopeExit() { f(); }
+//     F f;
+// };
+
+// template <typename F>
+// ScopeExit<F> MakeScopeExit(F f) {
+//     return ScopeExit<F>(f);
+// };
+
+// #define SCOPE_EXIT(code) \
+//     auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([=](){code;})
 
 
-    // // Put the current dir on the path to load a local module
+static PyVis* g_PyVis = NULL;
+bool PyVisInterface::InitPython() {
+    if(0 != Py_IsInitialized() || g_PyVis != NULL)
+        return true;
+
+    std::unique_ptr<PyVis> pyVis(new PyVis()); 
+
+    Py_Initialize();
+    // PyObject* mainModule = PyImport_AddModule("__main__");
+    // //ScopePyClear mmClear(mainModule);
+    // if(!mainModule || !PyModule_Check(mainModule)) { 
+    //     printf("Error loading python main module:\n");
+    //     Py_CLEAR(mainModule);
+    //     PyErr_Print();
+    //     return false;
+    // }
+    
+    // PyRun_SimpleString("print 'Then...'");
+    
+    // PyObject* mainDict = PyModule_GetDict(mainModule);
+    // pyVis->mainDict = mainDict;
+    // if(!mainDict || !PyDict_Check(mainDict)) {
+    //     printf("Error loading python main dictionary:\n");
+    //     PyErr_Print();
+    //     return false; 
+    // }
+    // Py_CLEAR(mainModule);
+    
     PyObject* systemModule = PyImport_ImportModule("sys");
+    if(!systemModule || !PyModule_Check(systemModule)) {
+        printf("Error loading python module sys:\n");
+        PyErr_Print();
+        Py_CLEAR(systemModule);
+        return false;
+    }
+
+
     PyObject* sysPath = PyObject_GetAttrString(systemModule, "path");
+    if(!sysPath || !PyList_Check(sysPath)) {
+        printf("Error loading python sys path:\n");
+        PyErr_Print();
+        Py_CLEAR(sysPath);
+        return false;
+    }
+    PyList_Append(sysPath, PyString_FromString("pyvis"));
     PyList_Append(sysPath, PyString_FromString("pyvis/PIMCPy"));
 
-    // PyObject* mainModule = PyImport_AddModule("__main__");
-    // PyObject* mainDict = PyModule_GetDict(mainModule);
+    PyObject* potentialMod = PyImport_ImportModuleEx("TestSingleSlicePotential",
+            /*globals*/ NULL, /*locals*/ NULL, /*fromlist*/ NULL);
+    pyVis->potentialMod = potentialMod;
+    if(!potentialMod || !PyModule_Check(potentialMod)) {
+        printf("Error loading TestSingleSlicePotential Module\n");
+        if(PyErr_Occurred()) { PyErr_Print(); }
+        Py_CLEAR(potentialMod);
+        return false;
+    }
     
+    PyObject* potentialDict = PyModule_GetDict(potentialMod);
+    pyVis->potentialDict = potentialDict;
+    if(!potentialDict || !PyDict_Check(potentialDict)) {
+        printf("Error loading python main dictionary:\n");
+        PyErr_Print();
+        return false; 
+    }
 
-    // PyRun_String("lastPythonTime = 0.0", /*startToken*/ 0, mainDict, mainDict);
-    // PyObject* newValue = PyFloat_FromDouble(sLastElapsed);
-    // lastPyhonTy
+    PyRun_String("ScriptCreate()", Py_eval_input, potentialDict, potentialDict);
+    PyRun_SimpleString("print 'afterbutThen...'");
 
-    //PyObject* pimcModule = PyImport_ImportModule("TestSingleSlicePotential");
-    PyRun_SimpleString("import TestSingleSlicePotential");
-    PyRun_SimpleString("import PIMC");
-    PyRun_SimpleString("import numpy");
-    
-    PyRun_SimpleString("print 'sqrt is %f' % (numpy.sqrt(13))");
-    //PyRun_SimpleString("TestSingleSlicePotential.CalcSingleSlicePotential()");
+    PyObject* scriptStep = PyDict_GetItemString(potentialDict, "ScriptStep");
+    pyVis->potentialStep = scriptStep;
+    if(!scriptStep || !PyCallable_Check(scriptStep)) {
+        printf("Error loading python potential step function linkage:\n");
+        PyErr_Print();
+        return false; 
+    }
 
-    // char currentTime[256];
-    // snprintf(currentTime, sizeof(currentTime) - 1, "lastPythonTime = %f", sLastElapsed);
-    // currentTime[sizeof(currentTime) - 1] = '\0'; // seriously?
-    // std::string terriblePassing(currentTime);
-    // PyRun_SimpleString(terriblePassing.c_str());
+    if(0 == Py_IsInitialized()) {
+        return false;
+    }
 
-    // PyRun_SimpleString("print('fuck you %d %f' % (13, 1.0/3))");
-
-
-    // Py_Finalize(); // lol
-
-    sLastElapsed = sPyPerf.GetElapsed();
+    g_PyVis = pyVis.release();
     return true;
 }
 
-bool HereIsWhereWeWouldLikeWriteSomeTestCodeCommaTotally() {
-   static double sLastElapsed;
-    static Timer sPyPerf;
-    Timer huh("python time");
-    sPyPerf.Start();
+void PyVisInterface::ShutdownPython() {
+    delete g_PyVis;
+    g_PyVis = NULL;
 
-    if(!g_sPyVis) {
-        g_sPyVis = new PyVis();
-        Py_Initialize();
-    } 
-    if(0 == Py_IsInitialized())
+    Py_Finalize();
+}
+
+
+bool PyVisInterface::PathIntegralSingleStep(NumberList& output) {
+    Timer slowness("python time");
+    // SCOPE_EXIT(printf("does this scope_exit thing even work?\n"));
+    if(!g_PyVis || !g_PyVis->potentialDict || !g_PyVis->potentialStep)
         return false;
 
+    printf("precallobject\n");
+    PyObject* result = PyObject_CallObject(g_PyVis->potentialStep, /* args */ NULL);
+    ScopePyClear clearResult(result);
 
-    // // Put the current dir on the path to load a local module
-    PyObject* systemModule = PyImport_ImportModule("sys");
-    PyObject* sysPath = PyObject_GetAttrString(systemModule, "path");
-    PyList_Append(sysPath, PyString_FromString("pyvis"));
+    if(result && PyList_Check(result)) {
+        int numResults = (int)PyList_Size(result);
+        output.reserve(output.size() + numResults);
+        for(int i = 0; i < numResults; i++) {
+            PyObject* item = PyList_GetItem(result, i);
+            ScopePyClear clearItem(item);
+            if(!item || PyFloat_Check(item)) continue;
 
-    PyObject* mainModule = PyImport_AddModule("__main__");
-    PyObject* mainDict = PyModule_GetDict(mainModule);
-    
+            output.push_back(PyFloat_AsDouble(item));
+        }
+    }
 
-    // PyRun_String("lastPythonTime = 0.0", /*startToken*/ 0, mainDict, mainDict);
-    // PyObject* newValue = PyFloat_FromDouble(sLastElapsed);
-    // lastPyhonTy
+    return true;
+}
 
-    // PyObject* pimcModule = PyImport_ImportModule("testpy");
-    PyRun_SimpleString("import testpy");
+bool PyVisInterface::RunTests() {
+    return true; // so... the init/shutdown thing only works once?
+
+    assert(InitPython() == true);
+    ShutdownPython();
+    assert(InitPython() == true);
+
     PyRun_SimpleString("import numpy");
-    
-    PyRun_SimpleString("lastPythonTime = 0.0");
-    PyRun_SimpleString("print 'sqrt is %f' % (numpy.sqrt(13))");
-    PyRun_SimpleString("print('PRE FUNC lastPythonTime is %f' % (lastPythonTime))");
-    PyRun_SimpleString("testpy.FunctionInTestPy()");
-    PyRun_SimpleString("print('AFTER lastPythonTime is %f' % (lastPythonTime))");
-    
-    // char currentTime[256];
-    // snprintf(currentTime, sizeof(currentTime) - 1, "lastPythonTime = %f", sLastElapsed);
-    // currentTime[sizeof(currentTime) - 1] = '\0'; // seriously?
-    // std::string terriblePassing(currentTime);
-    // PyRun_SimpleString(terriblePassing.c_str());
 
-    // PyRun_SimpleString("print('fuck you %d %f' % (13, 1.0/3))");
+    PyRun_SimpleString("print 'Python is wokring, numpy.sqrt gives %f' % (numpy.sqrt(13))");
+    // actually testing something would be pretty cool
 
+    ShutdownPython();
 
-    // Py_Finalize(); // lol
-
-    sLastElapsed = sPyPerf.GetElapsed();
     return true;
 }
 

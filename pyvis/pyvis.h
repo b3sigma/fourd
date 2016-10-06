@@ -8,7 +8,17 @@ namespace fd {
 
 #ifdef FD_USE_PYTHON_HOOK
 
-bool PathIntegralSingleStep();
+class PyVisInterface {
+  public:
+    static bool InitPython();
+    static void ShutdownPython();
+
+    static bool RunTests();
+
+    typedef std::vector<double> NumberList;
+    static bool PathIntegralSingleStep(NumberList& output);
+
+};
 
 #endif //FD_USE_PYTHON_HOOK
 

@@ -108,12 +108,12 @@ def PIMC(numSteps,Path,myMove):
    for steps in range(0,numSteps):
          (accepted,attempted)=myMove(Path,accepted,attempted)
          DisplaceMove(Path)
-         if steps % observableSkip==0 and steps>1000:
+         if steps % observableSkip==0 : # and steps>1000:
              EnergyTrace.append(Path.Energy())
              PairCorrelationFunction(Path,PairHistogram)
              CalcDensity(Path,DensityHistogram)
    
-   print EnergyTrace
+   #print EnergyTrace
    print CalcStatistics.Stats(numpy.array(EnergyTrace))
    #pylab.plot(EnergyTrace)
    #pylab.show()
@@ -128,7 +128,7 @@ def PIMC(numSteps,Path,myMove):
    #pylab.savefig("broken.png")
    
    print "Accepted Percentage: ",accepted/attempted
-   WriteArray("Canonical.txt",Path.beads)
+   #WriteArray("Canonical.txt",Path.beads)
    return EnergyTrace
 
 

@@ -306,6 +306,13 @@ void AddAllEyeCandy() {
 }
 
 bool Initialize(int width, int height) {
+
+#if defined(FD_USE_PYTHON_HOOK) 
+  if(!fd::PyVisInterface::InitPython())
+    return false;
+#endif //defined(FD_USE_PYTHON_HOOK)     
+
+
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
@@ -1091,21 +1098,44 @@ void StepFrame() {
     }
   }
 
-#ifdef FD_USE_PYTHON_HOOK
-  fd::PathIntegralSingleStep();
-#endif //FD_USE_PYTHON_HOOK
 
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
+#if defined(FD_USE_PYTHON_HOOK) 
+  static bool doneOnce = false;
+  static fd::PyVisInterface::NumberList numbers;
+  if(!doneOnce) { //uuuughhh
+    doneOnce = true;
+    numbers.resize(0);
+    fd::PyVisInterface::PathIntegralSingleStep(numbers);
+    printf("Made it out alive!\nHere are the numbers:\n");
+    for(auto n : numbers) { printf(" %f", n); }
+    printf("\nwowthatwasgreat\n");
+  }
+  // TODO: quaxol scalar writer
+#endif //FD_USE_PYTHON_HOOK
+
   UpdatePointerEntity();
 }
 
+// Happens before tests... so hopefully everything here is great!
 void StaticInitialize() {
   Timer staticTimer(std::string("StaticInitialize"));
 
   QuaxolChunk::BuildCanonicalCubesByDir(g_blockSize);
   QuaxolChunk::BuildCanonicalCubesByFlag(g_blockSize);
+}
+
+void MainLoopShutdown() {
+  ImGuiWrapper::Shutdown();
+  glfwTerminate();
+  delete g_vr;
+  g_vr = NULL;
+
+#if defined(FD_USE_PYTHON_HOOK) 
+  fd::PyVisInterface::ShutdownPython();
+#endif //defined(FD_USE_PYTHON_HOOK)     
 }
 
 float Rand() { return (float)rand() / (float)RAND_MAX; }
@@ -1167,6 +1197,9 @@ void RunTests() {
   Physics::RunTests();
   PhysicsHelp::RunTests();
   Timer::RunTests();
+  #if defined(FD_USE_PYTHON_HOOK)
+  assert(PyVisInterface::RunTests() == true);
+  #endif // FD_USE_PYTHON_HOOK
 }
 
 void glfwErrorCallback(int error, const char* description) {
@@ -1344,10 +1377,8 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  ImGuiWrapper::Shutdown();
-  glfwTerminate();
 
-  delete g_vr;
+  MainLoopShutdown();
 
   return 0;
 }
