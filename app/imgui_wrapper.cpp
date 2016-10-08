@@ -19,7 +19,7 @@
 #include "render.h"
 #include "shader.h"
 #include "texture.h"
-//#include "imgui_console.h"
+#include "imgui_console.h"
 
 namespace fd {
 
@@ -207,7 +207,8 @@ static void ImGuiSetClipboardText(const char* text) {
 
 
 bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
-    GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback) {
+    GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback,
+    ConsoleInterface::OnCommandCallback consoleCallback) {
   s_glfwWindow = glfwWindow;
 
   ImGuiIO& io = ImGui::GetIO();
@@ -250,8 +251,8 @@ bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
   if(!InitOpenGL())
     return false;
 
-  // if(!ConsoleInterface::Init())
-  //   return false;
+  if(!ConsoleInterface::Init(consoleCallback))
+    return false;
 
   return true;
 }
@@ -324,7 +325,7 @@ bool ImGuiWrapper::InitOpenGL() {
 }
 
 void ImGuiWrapper::Shutdown() {
-  // ConsoleInterface::Shutdown();
+  ConsoleInterface::Shutdown();
 
   if (g_VaoHandle) glDeleteVertexArrays(1, &g_VaoHandle);
   if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
@@ -538,7 +539,7 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
   //  ImGui::ShowTestWindow(&showTestWindow);
   //}
 
-  // ConsoleInterface::Render();
+  ConsoleInterface::Render();
 
   ImGui::Render();
 }

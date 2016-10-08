@@ -22,6 +22,8 @@ class PyVisInterface {
 
     static bool PathIntegralSingleStep(QuaxolChunk& output);
 
+    static bool RunOneLine(const char* command);
+
 };
 
 #endif //FD_USE_PYTHON_HOOK

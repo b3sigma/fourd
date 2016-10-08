@@ -35,6 +35,7 @@
 #include "../common/thirdparty/argh.h"
 #include "../pyvis/pyvis.h"
 #include "entity.h"
+#include "imgui_console.h"
 #include "imgui_wrapper.h"
 #include "input_handler.h"
 #include "render.h"
@@ -1210,6 +1211,11 @@ void RunTests() {
   #endif // FD_USE_PYTHON_HOOK
 }
 
+void ConsoleCommandCallback(const char* command) {
+  printf("the command was %s\n", command);
+  PyVisInterface::RunOneLine(command);
+}
+
 void glfwErrorCallback(int error, const char* description) {
   printf("GLFW Error: %d :  %s\n", error, description);
 }
@@ -1337,7 +1343,8 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
 
-  if(!ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/))
+  if(!ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/,
+      ConsoleCommandCallback))
   {
     printf("Imgui init fail\n");
     return -1;

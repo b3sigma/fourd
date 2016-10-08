@@ -48,18 +48,19 @@ public:
     typedef std::map<std::string, PyObject*> HashToPython;
 
     HashToPython _modules;
-    HashToPython _dictionaries;
+    HashToPython _dictionaries; // borrowed references, don't decref
 
-    PyObject* scriptStep;
+    PyObject* scriptStep; // borrowed ref, don't decref
+    PyObject* consoleGlobalContextDict; // weak ref, don't decref
+    PyObject* consoleLocalContextDict; // weak ref, don't decref
 
-    PyVis() : scriptStep(NULL) {}
+    PyVis() : scriptStep(NULL)
+        , consoleGlobalContextDict(NULL)
+        , consoleLocalContextDict(NULL) {}
     ~PyVis() {
-        DecRefPythonObjects(_dictionaries);
-        _dictionaries.clear();
+        _dictionaries.clear(); // borrowed refs
         DecRefPythonObjects(_modules);
         _modules.clear();
-
-        Py_DECREF(scriptStep);
     }
 
     PyObject* GetModule(std::string moduleName) {
@@ -96,13 +97,7 @@ public:
         }
         _modules.insert(std::make_pair(moduleName, module));
         
-        PyObject* dict = PyModule_GetDict(module);
-        if(!dict || !PyDict_Check(dict)) {
-            printf("Error loading python dictionary from module:%s\n", moduleName.c_str());
-            PyErr_Print();
-            Py_DECREF(dict);
-            return NULL; 
-        }
+        PyObject* dict = PyModule_GetDict(module); // borrowed reference
         _dictionaries.insert(std::make_pair(moduleName, dict));
         return module;
     }
@@ -115,12 +110,9 @@ public:
         int numResults = (int)PyList_Size(list);
         numbers.reserve(numbers.size() + numResults);
         for(int i = 0; i < numResults; i++) {
-            PyObject* item = PyList_GetItem(list, i);
-            ScopePyDecRef clearItem(item);
-            if(!item || !PyFloat_Check(item)) {
+            PyObject* item = PyList_GetItem(list, i); // borrowed ref
+            if(!item || !PyFloat_Check(item))
                 continue;
-            }
-
             numbers.push_back(PyFloat_AsDouble(item));
         }
 
@@ -143,14 +135,18 @@ bool PyVisInterface::InitPython() {
     std::unique_ptr<PyVis> pyVis(new PyVis()); 
 
     Py_Initialize();
+    PyErr_Print();
+
+    PyObject* mainModule = pyVis->LoadModule("__main__");
+    pyVis->consoleGlobalContextDict = mainModule; 
     // PyObject* mainModule = PyImport_AddModule("__main__");
-    // //ScopePyDecRef mmClear(mainModule);
-    // if(!mainModule || !PyModule_Check(mainModule)) { 
-    //     printf("Error loading python main module:\n");
-    //     Py_DECREF(mainModule);
-    //     PyErr_Print();
-    //     return false;
-    // }
+    if(!mainModule || !PyModule_Check(mainModule)) { 
+        printf("Error loading python main module:\n");
+        // Py_DECREF(mainModule);
+        PyErr_Print();
+        return false;
+    }
+    PyErr_Print();
     
     // PyRun_SimpleString("print 'Then...'");
     
@@ -161,7 +157,6 @@ bool PyVisInterface::InitPython() {
     //     PyErr_Print();
     //     return false; 
     // }
-    // Py_DECREF(mainModule);
     
     PyObject* systemModule = PyImport_ImportModule("sys");
     if(!systemModule || !PyModule_Check(systemModule)) {
@@ -170,6 +165,7 @@ bool PyVisInterface::InitPython() {
         Py_DECREF(systemModule);
         return false;
     }
+    PyErr_Print();
     
     PyObject* sysPath = PyObject_GetAttrString(systemModule, "path");
     if(!sysPath || !PyList_Check(sysPath)) {
@@ -180,19 +176,22 @@ bool PyVisInterface::InitPython() {
     }
     PyList_Append(sysPath, PyString_FromString("pyvis"));
     PyList_Append(sysPath, PyString_FromString("pyvis/PIMCPy"));
+    PyErr_Print();
 
     std::string scriptName("EmbeddedBinding");
     if(!pyVis->LoadModule(scriptName)) {
         return false;
     }
+    PyErr_Print();
 
     PyObject* scriptDict = pyVis->GetDict(scriptName);
-    PyRun_String("ScriptCreate()", Py_eval_input, scriptDict, scriptDict);
+    PyRun_String("ScriptCreate()", Py_eval_input, mainModule, scriptDict);
+    pyVis->consoleLocalContextDict = scriptDict;
 
-    PyObject* scriptStep = PyDict_GetItemString(scriptDict, "ScriptStep");
-    pyVis->scriptStep = scriptStep;
+    PyObject* scriptStep = PyDict_GetItemString(scriptDict, "ScriptStep"); // borrowed ref
+    pyVis->scriptStep = scriptStep;  // borrowed ref
     if(!scriptStep || !PyCallable_Check(scriptStep)) {
-        printf("Error loading python potential step function linkage:\n");
+        printf("Error loading python potential step function linkage: no ScriptStep()\n");
         PyErr_Print();
         return false; 
     }
@@ -201,6 +200,7 @@ bool PyVisInterface::InitPython() {
         return false;
     }
 
+    PyErr_Print();
     g_PyVis = pyVis.release();
     return true;
 }
@@ -209,8 +209,7 @@ void PyVisInterface::ShutdownPython() {
     delete g_PyVis;
     g_PyVis = NULL;
  
-    // cough, yeah maybe there's some ref leaks?
-    // Py_Finalize();
+    Py_Finalize();
 }
 
 
@@ -227,16 +226,15 @@ bool PyVisInterface::PathIntegralSingleStep(NumberList& output) {
     }
 
     PyObject* list = PyList_GetItem(result, 0);
-    bool success = g_PyVis->CollectNumberList(list, output);
-    Py_DECREF(list);
-    Py_DECREF(result);
-    return success;
+    return g_PyVis->CollectNumberList(list, output);
 }
 
 bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
     // Timer slowness("python time");
     if(!g_PyVis || !g_PyVis->scriptStep)
         return false;
+
+    PyErr_Print();
 
     PyObject* result = PyObject_CallObject(g_PyVis->scriptStep, /* args */ NULL);
     ScopePyDecRef clearResult(result);
@@ -245,6 +243,7 @@ bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
         return false;
     }
     PyObject* list = PyList_GetItem(result, 0);
+    PyErr_Print();
 
     NumberList nums;
     bool success = g_PyVis->CollectNumberList(list, nums);
@@ -266,9 +265,33 @@ bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
             output.SetAt(pos, true);
         }
     }
+    PyErr_Print();
 
     return success;
 }
+
+bool PyVisInterface::RunOneLine(const char* command) {
+    printf("About to try to run '%s'\n", command);
+    if(!g_PyVis || !g_PyVis->consoleGlobalContextDict || !g_PyVis->consoleLocalContextDict) {
+        printf("RunOneLine failed! dropped '%s'\n", command);
+        return false;
+    }
+    
+    printf("simple:\n");
+    printf("Result was %d\n", PyRun_SimpleString(command));
+    PyErr_Print();
+    printf("direct:\n");
+    PyObject* ref = PyRun_String(command, Py_eval_input,
+        g_PyVis->consoleGlobalContextDict, g_PyVis->consoleLocalContextDict);
+    PyErr_Print();
+    if(ref) {
+        printf("decref\n");
+        Py_DECREF(ref);
+    }
+    PyErr_Print();
+    return true;
+}
+
 
 bool PyVisInterface::RunTests() {
     return true; // so... the init/shutdown thing only works once?
