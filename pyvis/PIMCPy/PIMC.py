@@ -114,7 +114,7 @@ def PIMC(numSteps,Path,myMove):
              CalcDensity(Path,DensityHistogram)
    
    #print EnergyTrace
-   print CalcStatistics.Stats(numpy.array(EnergyTrace))
+   #print CalcStatistics.Stats(numpy.array(EnergyTrace))
    #pylab.plot(EnergyTrace)
    #pylab.show()
    
@@ -127,7 +127,7 @@ def PIMC(numSteps,Path,myMove):
    #DensityHistogram.plotMe("density.png")
    #pylab.savefig("broken.png")
    
-   print "Accepted Percentage: ",accepted/attempted
+   #print "Accepted Percentage: ",accepted/attempted
    #WriteArray("Canonical.txt",Path.beads)
    return EnergyTrace
 

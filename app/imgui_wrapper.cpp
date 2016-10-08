@@ -19,6 +19,7 @@
 #include "render.h"
 #include "shader.h"
 #include "texture.h"
+//#include "imgui_console.h"
 
 namespace fd {
 
@@ -249,6 +250,9 @@ bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
   if(!InitOpenGL())
     return false;
 
+  // if(!ConsoleInterface::Init())
+  //   return false;
+
   return true;
 }
 
@@ -320,6 +324,8 @@ bool ImGuiWrapper::InitOpenGL() {
 }
 
 void ImGuiWrapper::Shutdown() {
+  // ConsoleInterface::Shutdown();
+
   if (g_VaoHandle) glDeleteVertexArrays(1, &g_VaoHandle);
   if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
   g_VaoHandle = 0;
@@ -531,6 +537,8 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
   //  ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
   //  ImGui::ShowTestWindow(&showTestWindow);
   //}
+
+  // ConsoleInterface::Render();
 
   ImGui::Render();
 }

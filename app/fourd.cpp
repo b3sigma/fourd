@@ -1098,20 +1098,28 @@ void StepFrame() {
     }
   }
 
-
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
 #if defined(FD_USE_PYTHON_HOOK) 
   static bool doneOnce = false;
-  static fd::PyVisInterface::NumberList numbers;
+  
   if(!doneOnce) { //uuuughhh
-    doneOnce = true;
-    numbers.resize(0);
-    fd::PyVisInterface::PathIntegralSingleStep(numbers);
-    printf("Made it out alive!\nHere are the numbers:\n");
-    for(auto n : numbers) { printf(" %f", n); }
-    printf("\nwowthatwasgreat\n");
+    // doneOnce = true;
+    
+    if(g_scene.m_pQuaxolChunk) {
+      g_scene.m_pQuaxolChunk->Clear();
+      fd::PyVisInterface::PathIntegralSingleStep(
+          *g_scene.m_pQuaxolChunk);
+      g_scene.m_pQuaxolChunk->UpdateRendering();
+    }
+
+    // static fd::PyVisInterface::NumberList numbers;
+    // numbers.resize(0);
+    // fd::PyVisInterface::PathIntegralSingleStep(numbers);
+    // printf("Made it out alive!\nHere are the numbers:\n");
+    // for(auto n : numbers) { printf(" %f", n); }
+    // printf("\nwowthatwasgreat\n");
   }
   // TODO: quaxol scalar writer
 #endif //FD_USE_PYTHON_HOOK

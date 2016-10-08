@@ -59,6 +59,11 @@ void QuaxolChunk::UpdateRendering() {
   UpdateTrisFromConnects();
 }
 
+void QuaxolChunk::Clear() {
+  memset(m_blocks, 0, sizeof(m_blocks));
+  UpdateRendering();
+}
+
 void QuaxolChunk::SetAt(const QuaxolSpec& pos, bool present) {
   if(!IsValid(pos)) return;
   Block& block = GetBlock(pos);

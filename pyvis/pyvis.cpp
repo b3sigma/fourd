@@ -4,33 +4,25 @@
 
 #ifdef FD_USE_PYTHON_HOOK
 
+#include <map>
 #include <python2.7/Python.h>
 #include "../common/timer.h"
 
 
 namespace fd {
 
-class PyVis {
-public:
-    PyObject* potentialDict; 
-    PyObject* potentialMod;
-    PyObject* potentialStep;
-
-    PyVis() : potentialDict(NULL), potentialMod(NULL), potentialStep(NULL) {}
-    ~PyVis() {
-        Py_CLEAR(potentialStep);
-        Py_CLEAR(potentialDict);
-        Py_CLEAR(potentialMod);
-    }
-};
-
-struct ScopePyClear {
+struct ScopePyDecRef {
     PyObject*& pyObj;
-    ScopePyClear(PyObject*& obj) : pyObj(obj) {
-        printf("made a ScopePyClear!\n");
+    ScopePyDecRef(PyObject*& obj) : pyObj(obj) {
+        // printf("made a ScopePyDecRef!\n");
     } 
-    ~ScopePyClear() { Py_CLEAR(pyObj); 
-        printf("boomed a ScopePyClear!\n");
+    ~ScopePyDecRef() {
+        if(pyObj) {
+            Py_DECREF(pyObj);
+            pyObj = NULL;
+        }
+        //Py_DECREF(pyObj); 
+        // printf("boomed a ScopePyDecRef!\n");
     }
 };
 
@@ -51,6 +43,98 @@ struct ScopePyClear {
 //     auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([=](){code;})
 
 
+class PyVis {
+public:
+    typedef std::map<std::string, PyObject*> HashToPython;
+
+    HashToPython _modules;
+    HashToPython _dictionaries;
+
+    PyObject* scriptStep;
+
+    PyVis() : scriptStep(NULL) {}
+    ~PyVis() {
+        DecRefPythonObjects(_dictionaries);
+        _dictionaries.clear();
+        DecRefPythonObjects(_modules);
+        _modules.clear();
+
+        Py_DECREF(scriptStep);
+    }
+
+    PyObject* GetModule(std::string moduleName) {
+        auto findIt = _modules.find(moduleName);
+        if(findIt != _modules.end()) {
+            return findIt->second;
+        }
+        return NULL;
+    }
+
+    PyObject* GetDict(std::string moduleName) {
+        auto findIt = _dictionaries.find(moduleName);
+        if(findIt != _dictionaries.end()) {
+            return findIt->second;
+        }
+        return NULL;
+    }
+
+    // decref handled internally
+    PyObject* LoadModule(std::string moduleName) {
+        PyObject* module = GetModule(moduleName);
+        if(module)
+            return module;
+
+        char* unConstName = const_cast<char*>(moduleName.c_str()); // lol
+        // seriously, python's api implementers didn't get the const right?
+        module = PyImport_ImportModuleEx(unConstName,
+            /*globals*/ NULL, /*locals*/ NULL, /*fromlist*/ NULL);
+        if(!module || !PyModule_Check(module)) {
+            printf("Error loading module:%s\n", moduleName.c_str());
+            PyErr_Print();
+            Py_DECREF(module);
+            return NULL;
+        }
+        _modules.insert(std::make_pair(moduleName, module));
+        
+        PyObject* dict = PyModule_GetDict(module);
+        if(!dict || !PyDict_Check(dict)) {
+            printf("Error loading python dictionary from module:%s\n", moduleName.c_str());
+            PyErr_Print();
+            Py_DECREF(dict);
+            return NULL; 
+        }
+        _dictionaries.insert(std::make_pair(moduleName, dict));
+        return module;
+    }
+
+    bool CollectNumberList(PyObject* list, PyVisInterface::NumberList& numbers) {
+        if(!list || !PyList_Check(list)) {
+            return false;
+        }
+
+        int numResults = (int)PyList_Size(list);
+        numbers.reserve(numbers.size() + numResults);
+        for(int i = 0; i < numResults; i++) {
+            PyObject* item = PyList_GetItem(list, i);
+            ScopePyDecRef clearItem(item);
+            if(!item || !PyFloat_Check(item)) {
+                continue;
+            }
+
+            numbers.push_back(PyFloat_AsDouble(item));
+        }
+
+        return true;
+    }
+
+    void DecRefPythonObjects(HashToPython& hashPyObjs) {
+        for(auto obj : hashPyObjs) { // hopefully order doesn't matter
+            Py_DECREF(obj.second);
+        }
+    }
+
+};
+
 static PyVis* g_PyVis = NULL;
 bool PyVisInterface::InitPython() {
     if(0 != Py_IsInitialized() || g_PyVis != NULL)
@@ -60,10 +144,10 @@ bool PyVisInterface::InitPython() {
 
     Py_Initialize();
     // PyObject* mainModule = PyImport_AddModule("__main__");
-    // //ScopePyClear mmClear(mainModule);
+    // //ScopePyDecRef mmClear(mainModule);
     // if(!mainModule || !PyModule_Check(mainModule)) { 
     //     printf("Error loading python main module:\n");
-    //     Py_CLEAR(mainModule);
+    //     Py_DECREF(mainModule);
     //     PyErr_Print();
     //     return false;
     // }
@@ -77,50 +161,36 @@ bool PyVisInterface::InitPython() {
     //     PyErr_Print();
     //     return false; 
     // }
-    // Py_CLEAR(mainModule);
+    // Py_DECREF(mainModule);
     
     PyObject* systemModule = PyImport_ImportModule("sys");
     if(!systemModule || !PyModule_Check(systemModule)) {
         printf("Error loading python module sys:\n");
         PyErr_Print();
-        Py_CLEAR(systemModule);
+        Py_DECREF(systemModule);
         return false;
     }
-
-
+    
     PyObject* sysPath = PyObject_GetAttrString(systemModule, "path");
     if(!sysPath || !PyList_Check(sysPath)) {
         printf("Error loading python sys path:\n");
         PyErr_Print();
-        Py_CLEAR(sysPath);
+        Py_DECREF(sysPath);
         return false;
     }
     PyList_Append(sysPath, PyString_FromString("pyvis"));
     PyList_Append(sysPath, PyString_FromString("pyvis/PIMCPy"));
 
-    PyObject* potentialMod = PyImport_ImportModuleEx("TestSingleSlicePotential",
-            /*globals*/ NULL, /*locals*/ NULL, /*fromlist*/ NULL);
-    pyVis->potentialMod = potentialMod;
-    if(!potentialMod || !PyModule_Check(potentialMod)) {
-        printf("Error loading TestSingleSlicePotential Module\n");
-        if(PyErr_Occurred()) { PyErr_Print(); }
-        Py_CLEAR(potentialMod);
+    std::string scriptName("EmbeddedBinding");
+    if(!pyVis->LoadModule(scriptName)) {
         return false;
     }
-    
-    PyObject* potentialDict = PyModule_GetDict(potentialMod);
-    pyVis->potentialDict = potentialDict;
-    if(!potentialDict || !PyDict_Check(potentialDict)) {
-        printf("Error loading python main dictionary:\n");
-        PyErr_Print();
-        return false; 
-    }
 
-    PyRun_String("ScriptCreate()", Py_eval_input, potentialDict, potentialDict);
-    PyRun_SimpleString("print 'afterbutThen...'");
+    PyObject* scriptDict = pyVis->GetDict(scriptName);
+    PyRun_String("ScriptCreate()", Py_eval_input, scriptDict, scriptDict);
 
-    PyObject* scriptStep = PyDict_GetItemString(potentialDict, "ScriptStep");
-    pyVis->potentialStep = scriptStep;
+    PyObject* scriptStep = PyDict_GetItemString(scriptDict, "ScriptStep");
+    pyVis->scriptStep = scriptStep;
     if(!scriptStep || !PyCallable_Check(scriptStep)) {
         printf("Error loading python potential step function linkage:\n");
         PyErr_Print();
@@ -138,34 +208,66 @@ bool PyVisInterface::InitPython() {
 void PyVisInterface::ShutdownPython() {
     delete g_PyVis;
     g_PyVis = NULL;
-
-    Py_Finalize();
+ 
+    // cough, yeah maybe there's some ref leaks?
+    // Py_Finalize();
 }
 
 
 bool PyVisInterface::PathIntegralSingleStep(NumberList& output) {
     Timer slowness("python time");
-    // SCOPE_EXIT(printf("does this scope_exit thing even work?\n"));
-    if(!g_PyVis || !g_PyVis->potentialDict || !g_PyVis->potentialStep)
+    if(!g_PyVis || !g_PyVis->scriptStep)
         return false;
 
-    printf("precallobject\n");
-    PyObject* result = PyObject_CallObject(g_PyVis->potentialStep, /* args */ NULL);
-    ScopePyClear clearResult(result);
+    PyObject* result = PyObject_CallObject(g_PyVis->scriptStep, /* args */ NULL);
+    ScopePyDecRef clearResult(result);
+    if(!result || !PyList_Check(result) || PyList_Size(result) <= 0) {
+        printf("Python script step didn't return a valid list\n");
+        return false;
+    }
 
-    if(result && PyList_Check(result)) {
-        int numResults = (int)PyList_Size(result);
-        output.reserve(output.size() + numResults);
-        for(int i = 0; i < numResults; i++) {
-            PyObject* item = PyList_GetItem(result, i);
-            ScopePyClear clearItem(item);
-            if(!item || PyFloat_Check(item)) continue;
+    PyObject* list = PyList_GetItem(result, 0);
+    bool success = g_PyVis->CollectNumberList(list, output);
+    Py_DECREF(list);
+    Py_DECREF(result);
+    return success;
+}
 
-            output.push_back(PyFloat_AsDouble(item));
+bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
+    // Timer slowness("python time");
+    if(!g_PyVis || !g_PyVis->scriptStep)
+        return false;
+
+    PyObject* result = PyObject_CallObject(g_PyVis->scriptStep, /* args */ NULL);
+    ScopePyDecRef clearResult(result);
+    if(!result || !PyList_Check(result) || PyList_Size(result) <= 0) {
+        printf("Python script step didn't return a valid list\n");
+        return false;
+    }
+    PyObject* list = PyList_GetItem(result, 0);
+
+    NumberList nums;
+    bool success = g_PyVis->CollectNumberList(list, nums);
+    // printf("Got %d nums!\n", (int)nums.size());
+    QuaxolSpec pos(0,0,0,0);
+    for(int i = 0;
+            i < (int)nums.size() && i < (int)QuaxolChunk::c_mxSz; 
+            i++) {
+        double val = nums[i];
+        // printf(" val %f ", val); 
+        static double max = 10.0f;
+        static double min = 0.0f;
+        int numFilled = (int)((val - min) / (max - min) * (double)QuaxolChunk::c_mxSz);
+        pos.x = i;
+        for(int j = 0;
+                j < numFilled && j < (int)QuaxolChunk::c_mxSz;
+                j++) {
+            pos.z = j;
+            output.SetAt(pos, true);
         }
     }
 
-    return true;
+    return success;
 }
 
 bool PyVisInterface::RunTests() {

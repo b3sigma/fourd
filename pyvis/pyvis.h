@@ -4,6 +4,8 @@
 #define FD_USE_PYTHON_HOOK
 // Don't ask where is the art in a sequence of characters, ask what has been painted onto your mind.
 
+#include "../common/quaxol.h"
+
 namespace fd {
 
 #ifdef FD_USE_PYTHON_HOOK
@@ -18,8 +20,12 @@ class PyVisInterface {
     typedef std::vector<double> NumberList;
     static bool PathIntegralSingleStep(NumberList& output);
 
+    static bool PathIntegralSingleStep(QuaxolChunk& output);
+
 };
 
 #endif //FD_USE_PYTHON_HOOK
 
 } //namespace fd
+
+// So after writing this, that thing with the art? lol
