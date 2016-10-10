@@ -12,36 +12,14 @@
 namespace fd {
 
 struct ScopePyDecRef {
-    PyObject*& pyObj;
-    ScopePyDecRef(PyObject*& obj) : pyObj(obj) {
-        // printf("made a ScopePyDecRef!\n");
-    } 
+    PyObject* pyObj;
+    ScopePyDecRef(PyObject* obj) : pyObj(obj) { } 
     ~ScopePyDecRef() {
         if(pyObj) {
             Py_DECREF(pyObj);
-            pyObj = NULL;
         }
-        //Py_DECREF(pyObj); 
-        // printf("boomed a ScopePyDecRef!\n");
     }
 };
-
-// // from http://the-witness.net/news/2012/11/scopeexit-in-c11/
-// template <typename F>
-// struct ScopeExit {
-//     ScopeExit(F f) : f(f) {}
-//     ~ScopeExit() { f(); }
-//     F f;
-// };
-
-// template <typename F>
-// ScopeExit<F> MakeScopeExit(F f) {
-//     return ScopeExit<F>(f);
-// };
-
-// #define SCOPE_EXIT(code) \
-//     auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([=](){code;})
-
 
 class PyVis {
 public:
@@ -139,13 +117,7 @@ bool PyVisInterface::InitPython() {
 
     PyObject* mainModule = pyVis->LoadModule("__main__");
     pyVis->consoleGlobalContextDict = mainModule; 
-    // PyObject* mainModule = PyImport_AddModule("__main__");
-    if(!mainModule || !PyModule_Check(mainModule)) { 
-        printf("Error loading python main module:\n");
-        // Py_DECREF(mainModule);
-        PyErr_Print();
-        return false;
-    }
+    if(!mainModule) { return false; }
     PyErr_Print();
     
     // PyRun_SimpleString("print 'Then...'");
@@ -179,10 +151,22 @@ bool PyVisInterface::InitPython() {
     PyErr_Print();
 
     std::string scriptName("EmbeddedBinding");
+    std::string scriptNameShorthand("eb");
     if(!pyVis->LoadModule(scriptName)) {
         return false;
     }
     PyErr_Print();
+
+    // So far this seems to be necessary to use EmbeddedBinding from the 
+    // PyRun_SimpleString context, but they are still referencing the same module
+    std::string importToSimple = std::string("import ") + scriptName; 
+    PyRun_SimpleString(importToSimple.c_str()); 
+    // Same, but now even more convenient! So like "eb.ScriptStep()"
+    std::string importToSimpleShorthand = std::string("import ") + scriptName
+        + std::string(" as ") + scriptNameShorthand;
+    PyRun_SimpleString(importToSimpleShorthand.c_str());
+    
+    PyRun_SimpleString("import numpy"); // handy, was already loaded above anyway
 
     PyObject* scriptDict = pyVis->GetDict(scriptName);
     PyRun_String("ScriptCreate()", Py_eval_input, mainModule, scriptDict);
@@ -271,24 +255,25 @@ bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
 }
 
 bool PyVisInterface::RunOneLine(const char* command) {
-    printf("About to try to run '%s'\n", command);
+    // printf("About to try to run '%s'\n", command);
     if(!g_PyVis || !g_PyVis->consoleGlobalContextDict || !g_PyVis->consoleLocalContextDict) {
         printf("RunOneLine failed! dropped '%s'\n", command);
         return false;
     }
     
-    printf("simple:\n");
-    printf("Result was %d\n", PyRun_SimpleString(command));
+    // printf("simple:\n");
+    int simpleResult = PyRun_SimpleString(command);
+    // printf("Result was %d\n", simpleResult);
     PyErr_Print();
-    printf("direct:\n");
-    PyObject* ref = PyRun_String(command, Py_eval_input,
-        g_PyVis->consoleGlobalContextDict, g_PyVis->consoleLocalContextDict);
-    PyErr_Print();
-    if(ref) {
-        printf("decref\n");
-        Py_DECREF(ref);
-    }
-    PyErr_Print();
+    // printf("direct:\n");
+    // PyObject* ref = PyRun_String(command, Py_eval_input,
+    //     g_PyVis->consoleGlobalContextDict, g_PyVis->consoleLocalContextDict);
+    // PyErr_Print();
+    // if(ref) {
+    //     printf("decref\n");
+    //     Py_DECREF(ref);
+    // }
+    // PyErr_Print();
     return true;
 }
 

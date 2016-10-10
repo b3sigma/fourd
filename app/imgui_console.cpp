@@ -46,8 +46,24 @@ static size_t ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_li
 }
 static inline bool  ImCharIsSpace(int c) { return c == ' ' || c == '\t' || c == 0x3000; }
 
-struct Console
+// not utf8, not even used, scheduled for deletion
+static bool ImTrim(char* buf, size_t buf_size) {
+    if(buf[0] == 0)
+        return false;
+    for (size_t i = 1; i < buf_size; i++)
+    {
+        if(buf[i] == 0)
+        {
+            buf[i - 1] = 0;
+            return true;
+        }
+    }
+    return false;
+}
+
+class Console
 {
+  public:
     char                  InputBuf[256];
     ImVector<char*>       Items;
     bool                  ScrollToBottom;
@@ -55,13 +71,15 @@ struct Console
     int                   HistoryPos;    // -1: new line, 0..History.size()-1 browsing history.
     ImVec2                StartSize;
     bool                  TakeFocus;
+    bool                  ShouldDropNextKeyInput;
     ConsoleInterface::OnCommandCallback     Callback;
     ImVector<const char*> Commands;
 
     Console(float sizeX, float sizeY, ConsoleInterface::OnCommandCallback callback,
             bool takeFocus)
-        : TakeFocus(takeFocus)
-        , StartSize(sizeX, sizeY)
+        : StartSize(sizeX, sizeY)
+        , TakeFocus(takeFocus)
+        , ShouldDropNextKeyInput(false)
     {
         ClearLog();
         HistoryPos = -1;
@@ -70,12 +88,25 @@ struct Console
         Commands.push_back("#CLEAR");
         Commands.push_back("#CLOSE");
         Callback = callback;
+        InputBuf[0] = 0;
+
+        AddLog("Type #HELP to get help, or execute python commands");
     }
     ~Console()
     {
         ClearLog();
         for (size_t i = 0; i < Items.size(); i++) 
             free(History[i]); 
+    }
+
+    void    DropPreviousKeyInput()
+    {
+        ImTrim(InputBuf, IM_ARRAYSIZE(InputBuf));
+    }
+
+    void    DropNextKeyInput()
+    {
+        ShouldDropNextKeyInput = true;
     }
 
     void    ClearLog()
@@ -99,32 +130,32 @@ struct Console
 
     void    Run(const char* title, bool* opened)
     {
-        // ImGui::SetNextWindowSize(StartSize, ImGuiSetCond_FirstUseEver);
-        ImGui::SetNextWindowSize(StartSize, ImGuiSetCond_Once);
+        ImGui::SetNextWindowCollapsed(!TakeFocus, ImGuiSetCond_Always);
+        ImGui::SetNextWindowSize(StartSize, ImGuiSetCond_FirstUseEver);
         if (!ImGui::Begin(title, opened))
         {
             ImGui::End();
             return;
         }
-
-        // ImGui::TextWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
-        ImGui::TextWrapped("Enter '#HELP' for help, press TAB to use text completion.");
-
         // TODO: display items starting from the bottom
 
-        // if (ImGui::SmallButton("Add Dummy Text")) { AddLog("%d some text", Items.size()); AddLog("some more text"); AddLog("display very important message here!"); } ImGui::SameLine(); 
-        // if (ImGui::SmallButton("Add Dummy Error")) AddLog("[error] something went wrong"); ImGui::SameLine(); 
-        if (ImGui::SmallButton("Clear")) ClearLog();
-        //static float t = 0.0f; if (ImGui::GetTime() - t > 0.02f) { t = ImGui::GetTime(); AddLog("Spam %f", t); }
-
-        ImGui::Separator();
-
+        // ImGui::SameLine(); 
+        // if (ImGui::SmallButton("Clear")) ClearLog();
+        // ImGui::Separator();
 
         // Command-line
-        if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CallbackCompletion|ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
+        if (ImGui::InputText("Input",
+                InputBuf, IM_ARRAYSIZE(InputBuf),
+                ImGuiInputTextFlags_EnterReturnsTrue
+                | ImGuiInputTextFlags_CallbackCompletion
+                | ImGuiInputTextFlags_CallbackHistory
+                | ImGuiInputTextFlags_CallbackCharFilter,
+                &TextEditCallbackStub, (void*)this))
         {
             char* input_end = InputBuf+strlen(InputBuf);
-            while (input_end > InputBuf && input_end[-1] == ' ') input_end--; *input_end = 0;
+            while (input_end > InputBuf && input_end[-1] == ' ')
+                input_end--;
+            *input_end = 0;
             if (InputBuf[0])
                 ExecCommand(InputBuf);
             strcpy(InputBuf, "");
@@ -183,7 +214,7 @@ struct Console
 
     void    ExecCommand(const char* command_line)
     {
-        AddLog("# %s\n", command_line);
+        AddLog("%s\n", command_line);
 
         // Insert into history. First find match and delete it so it can be pushed to the back. This isn't trying to be smart or optimal.
         HistoryPos = -1;
@@ -218,12 +249,11 @@ struct Console
         }
         else
         {
-            // AddLog("Ex-cute: '%s'\n", command_line);
             Callback(command_line);
         }
     }
 
-    static int TextEditCallbackStub(ImGuiTextEditCallbackData* data) // In C++11 you are better off using lambdas for this sort of forwarding callbacks
+    static int TextEditCallbackStub(ImGuiTextEditCallbackData* data) // In C++11 you are better off using lambdas for this sort of forwarding callbacks[citation required]
     {
         Console* console = (Console*)data->UserData;
         return console->TextEditCallback(data);
@@ -234,6 +264,15 @@ struct Console
         //AddLog("cursor: %d, selection: %d-%d", data->CursorPos, data->SelectionStart, data->SelectionEnd);
         switch (data->EventFlag)
         {
+        case ImGuiInputTextFlags_CallbackCharFilter:
+            {
+                if(ShouldDropNextKeyInput)
+                {
+                    ShouldDropNextKeyInput = false;
+                    return 1;
+                }
+            } break;
+
         case ImGuiInputTextFlags_CallbackCompletion:
             {
                 // Example of TEXT COMPLETION
@@ -296,9 +335,7 @@ struct Console
                     for (size_t i = 0; i < candidates.size(); i++)
                         AddLog("- %s\n", candidates[i]);
                 }
-
-                break;
-            }
+            } break;
         case ImGuiInputTextFlags_CallbackHistory:
             {
                 // Example of HISTORY
@@ -324,7 +361,7 @@ struct Console
                     data->BufDirty = true;
                     data->CursorPos = data->SelectionStart = data->SelectionEnd = (int)strlen(data->Buf);
                 }
-            }
+            } break;
         }
         return 0;
     }
@@ -332,20 +369,19 @@ struct Console
 
 
 static Console* g_console = NULL;
+bool ConsoleInterface::s_consoleActive = false;
 //static FILE* g_stdout = NULL; // ugh to capture python printf?
 
 bool ConsoleInterface::Init(OnCommandCallback callback) {
-  static bool takeFocus = true;
-  g_console = new Console(320.0f, 300.0f, callback, takeFocus);
+  g_console = new Console(320.0f, 300.0f, callback, s_consoleActive);
   return true;
 }
 
 bool ConsoleInterface::Render() {
   if(!g_console) return false;
 
-  // TODO: move flag to Console class
-  static bool opened = true; //false; 
-  g_console->Run("Console", &opened);
+  // static bool opened = true; //false; 
+  g_console->Run("Console", &ConsoleInterface::s_consoleActive);
 
   return true;
 }
@@ -353,6 +389,25 @@ bool ConsoleInterface::Render() {
 void ConsoleInterface::Shutdown() {
   delete g_console;
   g_console = NULL;
+}
+
+void ConsoleInterface::SetFocus(bool shouldBeFocused) {
+    if(g_console) {
+        g_console->TakeFocus = shouldBeFocused;
+    }
+    ConsoleInterface::s_consoleActive = shouldBeFocused;
+}
+
+void ConsoleInterface::DropPreviousKeyInput() {
+    if(g_console) {
+        g_console->DropPreviousKeyInput();
+    }
+}
+
+void ConsoleInterface::DropNextKeyInput() {
+    if(g_console) {
+        g_console->DropNextKeyInput();
+    }        
 }
 
 } //namespace fd

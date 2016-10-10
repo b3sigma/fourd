@@ -72,6 +72,29 @@ void ImGuiKeyCallback(
   if (action == GLFW_RELEASE)
     io.KeysDown[key] = false;
 
+  // nice side effect of different buttons is you have less of repeat issue
+  int consoleActivateKey = '`';
+  int consoleDeactivateKey = GLFW_KEY_ESCAPE;
+  bool dropFurtherProcessing = false;
+  if(ConsoleInterface::s_consoleActive) {
+    dropFurtherProcessing = true;
+    if(io.KeysDown[consoleDeactivateKey]) {
+      ConsoleInterface::SetFocus(false);
+    }  
+  } else {
+    dropFurtherProcessing = false;
+    if(io.KeysDown[consoleActivateKey]) {
+      ConsoleInterface::SetFocus(true);
+      ConsoleInterface::DropNextKeyInput();
+      // ConsoleInterface::DropPreviousKeyInput();
+      io.KeysDown[consoleActivateKey] = false;
+      dropFurtherProcessing = true;
+    }
+  }
+
+  if(dropFurtherProcessing)
+    return;
+
   (void)mods; // Modifiers are not reliable across systems
   io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
   io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];

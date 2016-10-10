@@ -20,6 +20,7 @@ public: // probably just because of lazy
 
   static Shader* s_UIRender;
   static Shader* s_UIRenderVR;
+  static bool s_consoleActive;
 
 public:
   static bool Init(GLFWwindow* glfwWindow,
