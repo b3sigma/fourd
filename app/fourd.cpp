@@ -1,7 +1,6 @@
 #include <math.h>
 #include <memory>
 
-
 #include <GL/glew.h>
 
 #ifdef WIN32
@@ -1211,9 +1210,17 @@ void RunTests() {
   #endif // FD_USE_PYTHON_HOOK
 }
 
+void ConsoleAddCustomCommands() {
+  ConsoleInterface::AddConsoleCommand("#RELOAD");
+}
+
 void ConsoleCommandCallback(const char* command) {
-  printf("the command was %s\n", command);
-  PyVisInterface::RunOneLine(command);
+  
+  if(0 == strcmp(command, "#RELOAD")) {
+    PyVisInterface::ReloadScripts();
+  } else {
+    PyVisInterface::RunOneLine(command);
+  }
 }
 
 void glfwErrorCallback(int error, const char* description) {

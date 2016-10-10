@@ -99,12 +99,18 @@ class Console
             free(History[i]); 
     }
 
-    void    DropPreviousKeyInput()
-    {
+    // Essentially only does tab completion and help
+    // A better approach to these would take argh?
+    // but we already have a python parser so whatever
+    void AddCommand(const char* command) {
+        Commands.push_back(command);
+    }
+
+    void DropPreviousKeyInput() {
         ImTrim(InputBuf, IM_ARRAYSIZE(InputBuf));
     }
 
-    void    DropNextKeyInput()
+    void DropNextKeyInput()
     {
         ShouldDropNextKeyInput = true;
     }
@@ -409,5 +415,12 @@ void ConsoleInterface::DropNextKeyInput() {
         g_console->DropNextKeyInput();
     }        
 }
+
+void ConsoleInterface::AddConsoleCommand(const char* command) {
+    if(g_console) {
+        g_console->AddCommand(command);
+    }
+}
+
 
 } //namespace fd

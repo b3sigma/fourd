@@ -25,16 +25,10 @@ def CalcSingleSlicePotential() :
   Path.SetCouplingConstant(0.0)
   return PIMC(200,Path,SingleSliceMove)
 
-#print CalcSingleSlicePotential()
-
 energyTraces = []
 def ScriptCreate() :
   energyTraces.append(CalcSingleSlicePotential())
   return []
 
 def ScriptStep() :
-  #print "Had %d trace lists!\n" % (len(energyTraces))
-  #print "Guess the first one was"
-  #print energyTraces[0];
-  #print energyTraces
   return energyTraces

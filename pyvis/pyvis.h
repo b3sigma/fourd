@@ -15,15 +15,16 @@ class PyVisInterface {
     static bool InitPython();
     static void ShutdownPython();
 
-    static bool RunTests();
 
     typedef std::vector<double> NumberList;
     static bool PathIntegralSingleStep(NumberList& output);
-
     static bool PathIntegralSingleStep(QuaxolChunk& output);
 
     static bool RunOneLine(const char* command);
+    static bool ReloadScripts();
 
+
+    static bool RunTests();
 };
 
 #endif //FD_USE_PYTHON_HOOK

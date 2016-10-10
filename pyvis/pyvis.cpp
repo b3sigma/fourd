@@ -36,6 +36,10 @@ public:
         , consoleGlobalContextDict(NULL)
         , consoleLocalContextDict(NULL) {}
     ~PyVis() {
+        CleanUpModulesAndDictionaries();
+    }
+
+    void CleanUpModulesAndDictionaries() {
         _dictionaries.clear(); // borrowed refs
         DecRefPythonObjects(_modules);
         _modules.clear();
@@ -65,6 +69,7 @@ public:
 
         char* unConstName = const_cast<char*>(moduleName.c_str()); // lol
         // seriously, python's api implementers didn't get the const right?
+        // or they are actually modifying stuff...
         module = PyImport_ImportModuleEx(unConstName,
             /*globals*/ NULL, /*locals*/ NULL, /*fromlist*/ NULL);
         if(!module || !PyModule_Check(module)) {
@@ -104,6 +109,40 @@ public:
     }
 
 };
+
+bool LoadInitialModules(PyVis* pyVis) {
+    std::string scriptName("EmbeddedBinding");
+    std::string scriptNameShorthand("eb");
+    if(!pyVis->LoadModule(scriptName)) {
+        return false;
+    }
+    PyErr_Print();
+
+    // So far this seems to be necessary to use EmbeddedBinding from the 
+    // PyRun_SimpleString context, but they are still referencing the same module
+    std::string importToSimple = std::string("import ") + scriptName; 
+    PyRun_SimpleString(importToSimple.c_str()); 
+    // Same, but now even more convenient! So like "eb.ScriptStep()"
+    std::string importToSimpleShorthand = std::string("import ") + scriptName
+        + std::string(" as ") + scriptNameShorthand;
+    PyRun_SimpleString(importToSimpleShorthand.c_str());
+    
+    PyRun_SimpleString("import numpy"); // handy, was already loaded above anyway
+
+    PyObject* scriptDict = pyVis->GetDict(scriptName);
+    PyRun_String("ScriptCreate()", Py_eval_input, pyVis->consoleGlobalContextDict, scriptDict);
+    pyVis->consoleLocalContextDict = scriptDict;
+
+    PyObject* scriptStep = PyDict_GetItemString(scriptDict, "ScriptStep"); // borrowed ref
+    pyVis->scriptStep = scriptStep;  // borrowed ref
+    if(!scriptStep || !PyCallable_Check(scriptStep)) {
+        printf("Error loading python potential step function linkage: no ScriptStep()\n");
+        PyErr_Print();
+        return false; 
+    }
+
+    return true;
+}
 
 static PyVis* g_PyVis = NULL;
 bool PyVisInterface::InitPython() {
@@ -150,35 +189,10 @@ bool PyVisInterface::InitPython() {
     PyList_Append(sysPath, PyString_FromString("pyvis/PIMCPy"));
     PyErr_Print();
 
-    std::string scriptName("EmbeddedBinding");
-    std::string scriptNameShorthand("eb");
-    if(!pyVis->LoadModule(scriptName)) {
+    if(!LoadInitialModules(pyVis.get())) {
         return false;
     }
     PyErr_Print();
-
-    // So far this seems to be necessary to use EmbeddedBinding from the 
-    // PyRun_SimpleString context, but they are still referencing the same module
-    std::string importToSimple = std::string("import ") + scriptName; 
-    PyRun_SimpleString(importToSimple.c_str()); 
-    // Same, but now even more convenient! So like "eb.ScriptStep()"
-    std::string importToSimpleShorthand = std::string("import ") + scriptName
-        + std::string(" as ") + scriptNameShorthand;
-    PyRun_SimpleString(importToSimpleShorthand.c_str());
-    
-    PyRun_SimpleString("import numpy"); // handy, was already loaded above anyway
-
-    PyObject* scriptDict = pyVis->GetDict(scriptName);
-    PyRun_String("ScriptCreate()", Py_eval_input, mainModule, scriptDict);
-    pyVis->consoleLocalContextDict = scriptDict;
-
-    PyObject* scriptStep = PyDict_GetItemString(scriptDict, "ScriptStep"); // borrowed ref
-    pyVis->scriptStep = scriptStep;  // borrowed ref
-    if(!scriptStep || !PyCallable_Check(scriptStep)) {
-        printf("Error loading python potential step function linkage: no ScriptStep()\n");
-        PyErr_Print();
-        return false; 
-    }
 
     if(0 == Py_IsInitialized()) {
         return false;
@@ -277,6 +291,28 @@ bool PyVisInterface::RunOneLine(const char* command) {
     return true;
 }
 
+bool PyVisInterface::ReloadScripts() {
+    if(!g_PyVis) return false;
+
+    typedef std::vector<std::string> ImportCommands;
+    ImportCommands imports;
+    for(auto module : g_PyVis->_modules) {
+         // store off name
+        imports.push_back(
+            std::string("reload(") + module.first + std::string(")"));
+    }
+
+    g_PyVis->CleanUpModulesAndDictionaries();
+
+    for(auto command : imports) {
+        PyRun_SimpleString(command.c_str());
+    }
+    
+    if(!LoadInitialModules(g_PyVis))
+        return false;
+
+    return true;
+}
 
 bool PyVisInterface::RunTests() {
     return true; // so... the init/shutdown thing only works once?

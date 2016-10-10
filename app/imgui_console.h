@@ -2,6 +2,8 @@
 
 namespace fd {
 
+  // this separation is already tiresome
+  // odds of ever actually breaking this out to some other thing?
   class ConsoleInterface {
     public:
       static bool s_consoleActive;
@@ -15,6 +17,7 @@ namespace fd {
       static void SetFocus(bool shouldBeFocused);
       static void DropNextKeyInput();
       static void DropPreviousKeyInput();
+      static void AddConsoleCommand(const char* command);
   };
 
 
