@@ -539,10 +539,10 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
   ImVec2 windowSize((float)renderer->m_viewWidth, (float)renderer->m_viewHeight);
 
-  if(doUpdate) {
+  if(doUpdate) { 
 
-    //RenderFpsOverlay(frameTime, offset);
-    //RenderVRDebugOverlay(frameTime, offset, renderer);
+    RenderFpsOverlay(frameTime, offset);
+    RenderVRDebugOverlay(frameTime, offset, renderer);
 
     RenderControlsSceen(windowSize);
     RenderResetScreen(windowSize);

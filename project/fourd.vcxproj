@@ -91,6 +91,7 @@
     <ClCompile Include="..\app\components\quaxol_modifier.cpp" />
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
+    <ClCompile Include="..\app\imgui_console.cpp" />
     <ClCompile Include="..\app\imgui_wrapper.cpp" />
     <ClCompile Include="..\app\input_handler.cpp" />
     <ClCompile Include="..\app\meshbuffer.cpp" />
@@ -118,6 +119,7 @@
     <ClCompile Include="..\common\thirdparty\jenn3d\todd_coxeter.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
+    <ClCompile Include="..\pyvis\pyvis.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\components\gui_input_router.h" />
@@ -126,6 +128,7 @@
     <ClInclude Include="..\app\components\screensaver.h" />
     <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\glhelper.h" />
+    <ClInclude Include="..\app\imgui_console.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
     <ClInclude Include="..\app\input_handler.h" />
     <ClInclude Include="..\app\meshbuffer.h" />
@@ -166,6 +169,7 @@
     <ClInclude Include="..\common\types.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
+    <ClInclude Include="..\pyvis\pyvis.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg" />

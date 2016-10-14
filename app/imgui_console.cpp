@@ -8,8 +8,12 @@
 
 #include "imgui_console.h"
 
-namespace fd {
+#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
+namespace fd {
+  
 #ifndef IM_ARRAYSIZE
 #define IM_ARRAYSIZE(_ARR)          ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 #endif 
