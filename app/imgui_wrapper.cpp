@@ -541,8 +541,8 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
   if(doUpdate) {
 
-    //RenderFpsOverlay(frameTime, offset);
-    //RenderVRDebugOverlay(frameTime, offset, renderer);
+    RenderFpsOverlay(frameTime, offset);
+    RenderVRDebugOverlay(frameTime, offset, renderer);
 
     RenderControlsSceen(windowSize);
     RenderResetScreen(windowSize);
