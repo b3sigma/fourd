@@ -1,9 +1,10 @@
 # Following http://web.engr.illinois.edu/~bkclark/PIMCTutorial/tutorial.pdf
-import numpy
-##import pylab
-from PIMCHelp import *
-import random
 import CalcStatistics
+import numpy
+import os
+import pylab
+import random
+from PIMCHelp import *
 
 
 class PathClass:
@@ -13,7 +14,7 @@ class PathClass:
      self.beads=beads.copy()
      self.NumTimeSlices=len(beads)
      self.NumParticles=len(beads[0])
-     self.sigma=numpy.sqrt((self.lam*self.tau))
+     self.sqrtLamTau=numpy.sqrt((self.lam*self.tau))
      print "I have setup the path with a temperature of ",1.0/(tau*self.NumTimeSlices), "and ",self.NumParticles," particles"
   def SetCouplingConstant(self,c):
      self.c=c
@@ -98,49 +99,53 @@ def PairCorrelationFunction(self,PairHistogram):
         dist=sqrt(dot(disp,disp) )
         PairHistogram.add(dist)
 
-PairHistogram=Histogram(0.1,10.0,100)
-DensityHistogram=Histogram(-5.0,5.0,100)
-def PIMC(numSteps,Path,myMove):
-   observableSkip=10
-   EnergyTrace=[]
-   accepted=0.0
-   attempted=0.0
+PairHistogram = Histogram(0.1,10.0,100)
+DensityHistogram = Histogram(-5.0,5.0,100)
+EnergyTraces = []
+def PIMC(numSteps, Path, myMove):
+   observableSkip = 10
+   minSteps = 0
+   EnergyTrace = [] # will actually contain numSteps/observableSkip
+   accepted = 0.0
+   attempted = 0.0
    for steps in range(0,numSteps):
-         (accepted,attempted)=myMove(Path,accepted,attempted)
+         (accepted,attempted) = myMove(Path,accepted,attempted)
          DisplaceMove(Path)
-         if steps % observableSkip==0 : # and steps>1000:
+         if observableSkip == 0 or (steps % observableSkip) == 0 and steps >= minSteps:
              EnergyTrace.append(Path.Energy())
              PairCorrelationFunction(Path,PairHistogram)
              CalcDensity(Path,DensityHistogram)
    
-   #print EnergyTrace
-   #print CalcStatistics.Stats(numpy.array(EnergyTrace))
-   #pylab.plot(EnergyTrace)
-   #pylab.show()
-   
-   #print "Pair hisogram:"
-   #PairHistogram.printMe()
-   #print "Density Histogram"
-   #DensityHistogram.printMe()
-   
-   #PairHistogram.plotMeNorm("pairme.png")
-   #DensityHistogram.plotMe("density.png")
-   #pylab.savefig("broken.png")
+   EnergyTraces.extend(EnergyTrace)
    
    #print "Accepted Percentage: ",accepted/attempted
    #WriteArray("Canonical.txt",Path.beads)
    return EnergyTrace
+
+def Plot() :
+   pylab.plot(EnergyTraces)
+   pylab.show()
+   
+   print "Pair hisogram:"
+   PairHistogram.printMe()
+   print "Density Histogram:"
+   DensityHistogram.printMe()
+
+   print "Writing some pngs to " + str(os.getcwd())   
+   PairHistogram.plotMeNorm("pairme.png")
+   DensityHistogram.plotMe("density.png")
+   pylab.savefig("broken.png")
 
 
 def Bisect(Path,ptclToMove,maxStepSize):
    stepSize=maxStepSize
    logSampleProb=0.0
    while stepSize>=2:
-        sigma=Path.sigma*numpy.sqrt(stepSize/2)
+        sqrtLamTau=Path.sqrtLamTau*numpy.sqrt(stepSize/2)
         for i in numpy.arange(0,maxStepSize,stepSize):
             midVec=(Path.beads[i,ptclToMove]+Path.beads[i+stepSize,ptclToMove])/2.0
-            delta=numpy.random.normal(0.0,sigma,3)
-            logSampleProb+=numpy.dot(delta,delta)/(2.0*sigma*sigma)
+            delta=numpy.random.normal(0.0,sqrtLamTau,3)
+            logSampleProb+=numpy.dot(delta,delta)/(2.0*sqrtLamTau*sqrtLamTau)
             Path.beads[i+stepSize/2,ptclToMove]=midVec+delta
         stepSize=stepSize/2
    return logSampleProb
@@ -149,11 +154,11 @@ def NewToOld(Path,ptclToMove,maxStepSize):
    stepSize=maxStepSize
    logSampleProb=0.0
    while stepSize>=2:
-        sigma=Path.sigma*numpy.sqrt(stepSize/2)
+        sqrtLamTau=Path.sqrtLamTau*numpy.sqrt(stepSize/2)
         for i in numpy.arange(0,maxStepSize,stepSize):
             midVec=(Path.beads[i,ptclToMove]+Path.beads[i+stepSize,ptclToMove])/2.0
             delta=Path.beads[i+stepSize/2,ptclToMove]-midVec
-            logSampleProb+=numpy.dot(delta,delta)/(2.0*sigma*sigma)
+            logSampleProb+=numpy.dot(delta,delta)/(2.0*sqrtLamTau*sqrtLamTau)
         stepSize=stepSize/2
    return logSampleProb
 

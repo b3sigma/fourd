@@ -1235,6 +1235,7 @@ int main(int argc, const char *argv[]) {
 
   std::string keepAliveFileName("");
   bool displayUsage = false;
+  bool displayDebugInfo = true;
   float pixelScale = 0.5f; //1.0f;
   float screenSaverMoveThreshold = 0.00003f;
   float screenSaverRotateThreshold = 0.0001f;
@@ -1246,6 +1247,8 @@ int main(int argc, const char *argv[]) {
       "-h", "Display help (you probably figured this one out)");
   cmd_line.addFlag(displayUsage,
       "-?", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(displayDebugInfo,
+      "--debug_info", "Display system information with debug enabled");
   cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled,
       "--disable_ui", "Disable the gui, useful for when it sucks");
   cmd_line.addOption<float>(pixelScale, pixelScale,
@@ -1374,6 +1377,12 @@ int main(int argc, const char *argv[]) {
   if(!Initialize(startWidth, startHeight)) {
     printf("Initialized failed\n");
     return -1;
+  }
+
+  if(displayDebugInfo) {
+    printf("OpenGL vendor string: %s\n", glGetString(GL_VENDOR));
+    printf("OpenGL renderer string: %s\n", glGetString(GL_RENDERER));
+    printf("OpenGL version string: %s\n", glGetString(GL_VERSION));
   }
 
   ReshapeGL(g_glfwWindow, startWidth, startHeight);

@@ -48,6 +48,9 @@ public:
         _dictionaries.clear(); // borrowed refs
         DecRefPythonObjects(_modules);
         _modules.clear();
+        scriptStep = NULL;
+        // but not global because it's main presumably and we're not cleaning that up?
+        consoleLocalContextDict = NULL;
     }
 
     PyObject* GetModule(std::string moduleName) {
@@ -116,6 +119,11 @@ public:
 };
 
 bool LoadInitialModules(PyVis* pyVis) {
+    PyObject* mainModule = pyVis->LoadModule("__main__");
+    pyVis->consoleGlobalContextDict = mainModule; 
+    if(!mainModule) { return false; }
+    PyErr_Print();
+
     std::string scriptName("EmbeddedBinding");
     std::string scriptNameShorthand("eb");
     if(!pyVis->LoadModule(scriptName)) {
@@ -158,36 +166,22 @@ bool PyVisInterface::InitPython() {
 
     Py_Initialize();
     PyErr_Print();
-
-    PyObject* mainModule = pyVis->LoadModule("__main__");
-    pyVis->consoleGlobalContextDict = mainModule; 
-    if(!mainModule) { return false; }
-    PyErr_Print();
     
-    // PyRun_SimpleString("print 'Then...'");
-    
-    // PyObject* mainDict = PyModule_GetDict(mainModule);
-    // pyVis->mainDict = mainDict;
-    // if(!mainDict || !PyDict_Check(mainDict)) {
-    //     printf("Error loading python main dictionary:\n");
-    //     PyErr_Print();
-    //     return false; 
-    // }
-    
+    // Need to load sys and path in order to load modules from custom dirs
     PyObject* systemModule = PyImport_ImportModule("sys");
+    ScopePyDecRef clearSystem(systemModule);
     if(!systemModule || !PyModule_Check(systemModule)) {
         printf("Error loading python module sys:\n");
         PyErr_Print();
-        Py_DECREF(systemModule);
         return false;
     }
     PyErr_Print();
     
     PyObject* sysPath = PyObject_GetAttrString(systemModule, "path");
+    ScopePyDecRef clearPath(sysPath);
     if(!sysPath || !PyList_Check(sysPath)) {
         printf("Error loading python sys path:\n");
         PyErr_Print();
-        Py_DECREF(sysPath);
         return false;
     }
     PyList_Append(sysPath, PyString_FromString("pyvis"));
@@ -242,7 +236,7 @@ bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
     PyObject* result = PyObject_CallObject(g_PyVis->scriptStep, /* args */ NULL);
     ScopePyDecRef clearResult(result);
     if(!result || !PyList_Check(result) || PyList_Size(result) <= 0) {
-        printf("Python script step didn't return a valid list\n");
+        //printf("Python script step didn't return a valid list\n");
         return false;
     }
     PyObject* list = PyList_GetItem(result, 0);
