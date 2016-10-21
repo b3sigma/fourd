@@ -5,7 +5,12 @@
 #ifdef FD_USE_PYTHON_HOOK
 
 #include <map>
+#ifdef WIN32
+#include <Python.h>
+#else //WIN32
 #include <python2.7/Python.h>
+#endif //WIN32
+
 #include "../common/timer.h"
 
 
@@ -75,7 +80,7 @@ public:
         if(!module || !PyModule_Check(module)) {
             printf("Error loading module:%s\n", moduleName.c_str());
             PyErr_Print();
-            Py_DECREF(module);
+            if(module) { Py_DECREF(module); }
             return NULL;
         }
         _modules.insert(std::make_pair(moduleName, module));

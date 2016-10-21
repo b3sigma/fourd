@@ -39,13 +39,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/;C:\Python27\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/;C:\Python27\libs</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/;C:\Python27\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/;C:\Python27\libs</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

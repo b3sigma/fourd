@@ -13,7 +13,7 @@ bool Timer::RunTests() {
   Timer test1;
   test1.Start();
   double elapsedTime = test1.GetElapsed();
-  assert(elapsedTime > 0.0);
+  assert(elapsedTime >= 0.0);
   return true;
 }
 
