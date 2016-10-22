@@ -298,7 +298,7 @@ void AddAllEyeCandy() {
   AddEyeCandy(EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));
   AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 5.0f));
   AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 180.0f, 0.0f));
-  AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  //AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
   //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 240.0f, 0.0f));
 
   g_shader = savedShader;
@@ -1101,28 +1101,28 @@ void StepFrame() {
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
-#if defined(FD_USE_PYTHON_HOOK) 
-  static bool doneOnce = false;
-  
-  if(!doneOnce) { //uuuughhh
-    // doneOnce = true;
-    
-    if(g_scene.m_pQuaxolChunk) {
-      g_scene.m_pQuaxolChunk->Clear();
-      fd::PyVisInterface::PathIntegralSingleStep(
-          *g_scene.m_pQuaxolChunk);
-      g_scene.m_pQuaxolChunk->UpdateRendering();
-    }
-
-    // static fd::PyVisInterface::NumberList numbers;
-    // numbers.resize(0);
-    // fd::PyVisInterface::PathIntegralSingleStep(numbers);
-    // printf("Made it out alive!\nHere are the numbers:\n");
-    // for(auto n : numbers) { printf(" %f", n); }
-    // printf("\nwowthatwasgreat\n");
-  }
-  // TODO: quaxol scalar writer
-#endif //FD_USE_PYTHON_HOOK
+//#if defined(FD_USE_PYTHON_HOOK) 
+//  static bool doneOnce = false;
+//  
+//  if(!doneOnce) { //uuuughhh
+//    // doneOnce = true;
+//    
+//    if(g_scene.m_pQuaxolChunk) {
+//      g_scene.m_pQuaxolChunk->Clear();
+//      fd::PyVisInterface::PathIntegralSingleStep(
+//          *g_scene.m_pQuaxolChunk);
+//      g_scene.m_pQuaxolChunk->UpdateRendering();
+//    }
+//
+//    // static fd::PyVisInterface::NumberList numbers;
+//    // numbers.resize(0);
+//    // fd::PyVisInterface::PathIntegralSingleStep(numbers);
+//    // printf("Made it out alive!\nHere are the numbers:\n");
+//    // for(auto n : numbers) { printf(" %f", n); }
+//    // printf("\nwowthatwasgreat\n");
+//  }
+//  // TODO: quaxol scalar writer
+//#endif //FD_USE_PYTHON_HOOK
 
   UpdatePointerEntity();
 }
@@ -1153,8 +1153,8 @@ bool IsZero(float val) { return (fabs(val) < cfThreshold); }
 
 // TODO: tests in here is totally tacky, move them.
 void RunTests() {
-//return;
 
+  // TODO: put the tests in their own classes at least
   Vec4f a(Rand(), Rand(), Rand(), Rand());
   Vec4f b(Rand(), Rand(), Rand(), Rand());
   Vec4f c(Rand(), Rand(), Rand(), Rand());
@@ -1196,7 +1196,7 @@ void RunTests() {
   Quatf rotPiDiv4(sqrt(2.0f) / 2.0f, sqrt(2.0f) / 2.0f, 0.0f, 0.0f);
   Quatf rotPiDiv2(0.0f, 1.0f, 0.0f, 0.0f);
   assert(rotPiDiv2.approxEqual(rotPiDiv4 * rotPiDiv4, 0.00001f));
-
+  
   //Mat4f threeMat;
   //threeMat.eigen().
 
@@ -1206,7 +1206,8 @@ void RunTests() {
   PhysicsHelp::RunTests();
   Timer::RunTests();
   #if defined(FD_USE_PYTHON_HOOK)
-  assert(PyVisInterface::RunTests() == true);
+  bool pythonTestSuccess = PyVisInterface::RunTests();
+  assert(pythonTestSuccess);
   #endif // FD_USE_PYTHON_HOOK
 }
 

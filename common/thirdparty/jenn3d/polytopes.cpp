@@ -41,7 +41,7 @@ namespace jenn {
     {
       Word result;
       char num[2] = { 0, 0 };
-      int I = strlen(g);
+      int I = (int)strlen(g);
       for (int i = 0; i < I; ++i) {
         num[0] = g[i];
         result.push_back(atoi(num));

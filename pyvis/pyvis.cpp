@@ -188,10 +188,10 @@ bool PyVisInterface::InitPython() {
     PyList_Append(sysPath, PyString_FromString("pyvis/PIMCPy"));
     PyErr_Print();
 
-    if(!LoadInitialModules(pyVis.get())) {
-        return false;
-    }
-    PyErr_Print();
+    //if(!LoadInitialModules(pyVis.get())) {
+    //    return false;
+    //}
+    //PyErr_Print();
 
     if(0 == Py_IsInitialized()) {
         return false;
@@ -314,16 +314,20 @@ bool PyVisInterface::ReloadScripts() {
 }
 
 bool PyVisInterface::RunTests() {
-    return true; // so... the init/shutdown thing only works once?
+    printf("Begining python tests\n");
+    //return true; // so... the init/shutdown thing only works once?
+    //assert(InitPython() == true);
+    //ShutdownPython();
 
     assert(InitPython() == true);
-    ShutdownPython();
-    assert(InitPython() == true);
 
-    PyRun_SimpleString("import numpy");
 
-    PyRun_SimpleString("print 'Python is wokring, numpy.sqrt gives %f' % (numpy.sqrt(13))");
+    PyRun_SimpleString("print str(3+6)");
+    //PyRun_SimpleString("import numpy");
+
+    //PyRun_SimpleString("print 'Python is working, numpy.sqrt gives %f' % (numpy.sqrt(13))");
     // actually testing something would be pretty cool
+
 
     ShutdownPython();
 

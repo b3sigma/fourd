@@ -557,7 +557,7 @@ namespace jenn {
         adj[c].insert(adj[c].begin(), neigh[c].begin(), neigh[c].end());
       }
       neigh.clear();
-      deg = adj[0].size();
+      deg = (int)adj[0].size();
       logger.info() << "edge table built: deg = " << deg | 0;
 
       //define faces
@@ -624,7 +624,7 @@ namespace jenn {
           }
         }
       }
-      ord_f = faces.size();
+      ord_f = (int)faces.size();
       logger.info() << "faces defined: order = " << ord_f | 0;
 
       //define vertex coset
