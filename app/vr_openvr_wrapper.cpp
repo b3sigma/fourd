@@ -1,6 +1,10 @@
 #include "vr_wrapper.h"
 #ifdef FD_VR_USE_OPENVR
 
+
+#include <openvr.h>
+
+
 #include <memory>
 
 //#include "texture.h"
@@ -19,7 +23,8 @@ namespace fd {
 // TODO: move this to like ovr_vr_wrapper.cpp or something
 class VVRWrapper : public VRWrapper {
 public:
-  //PlatformWindow* m_pWindow;
+  PlatformWindow* m_pWindow;
+  vr::IVRSystem* m_HMD;
   //ovrHmd m_HMD; // actually a pointer...
   //bool m_isDebugDevice;
 
@@ -35,28 +40,41 @@ public:
 
   //const Mat4f* m_debugHeadPose;
 
-  //VVRWrapper() : m_HMD(NULL), m_debugHeadPose(NULL)
+  VVRWrapper() : m_HMD(NULL), m_pWindow(NULL)
+  //    , m_debugHeadPose(NULL)
   //    , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
   //    , m_isDebugDevice(true)
-  //{
+  {
   //  for(int e = 0; e < 2; e++) {
   //    m_eyeRenderTex[e] = NULL;
   //    m_eyeDepthTex[e] = NULL;
   //  }
   //  m_doScreenSaver = false;
   //  m_hadInput = false;
-  //}
+  }
 
-  //~VVRWrapper() {
+  ~VVRWrapper() {
   //  for(int e = 0; e < 2; e++) {
   //    delete m_eyeRenderTex[e];
   //    delete m_eyeDepthTex[e];
   //  }
   //  ovr_Shutdown();
-  //}
+    vr::VR_Shutdown();
+  }
 
   bool Initialize() {
-	  return false;
+    // Loading the SteamVR Runtime
+	  vr::EVRInitError eError = vr::VRInitError_None;
+	  vr::IVRSystem* HMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
+
+	  if ( eError != vr::VRInitError_None )
+	  {
+      printf("Couldn't init openvr: %s\n", vr::VR_GetVRInitErrorAsEnglishDescription(eError));
+		  return false;
+	  }
+
+    m_HMD = HMD;
+	  return true;
   }
   //  if (!ovr_Initialize()) {
   //    printf("Couldn't init ovr\n");
