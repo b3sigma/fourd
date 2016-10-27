@@ -13,3 +13,6 @@
 [submodule "glfw"]
 	path = glfw
 	url = https://github.com/b3sigma/glfw
+[submodule "openvr"]
+	path = openvr
+	url = https://github.com/b3sigma/openvr
