@@ -8,6 +8,8 @@ namespace fd {
 
 class Camera;
 class Texture;
+//#define FD_VR_USE_OCULUS
+#define FD_VR_USE_OPENVR
 
 // Interface class for actual vr.
 // Probably silly as ovr is only game in town currently, which means the 2nd

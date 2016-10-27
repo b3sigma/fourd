@@ -99,6 +99,8 @@
     <ClCompile Include="..\app\shader.cpp" />
     <ClCompile Include="..\app\texture.cpp" />
     <ClCompile Include="..\app\thirdparty\glew\src\glew.c" />
+    <ClCompile Include="..\app\vr_oculus_wrapper.cpp" />
+    <ClCompile Include="..\app\vr_openvr_wrapper.cpp" />
     <ClCompile Include="..\app\vr_wrapper.cpp" />
     <ClCompile Include="..\app\win32_platform.cpp" />
     <ClCompile Include="..\common\camera.cpp" />

@@ -925,7 +925,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       }
     } break;
     case 'V' : {
-      SetIsUsingVR(g_renderer.m_usingVR);
+      SetIsUsingVR(!g_renderer.m_usingVR);
     } break;
     case 'F' : {
       if (g_vr) {
