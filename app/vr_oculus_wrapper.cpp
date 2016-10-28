@@ -22,7 +22,6 @@
 namespace fd {
 
 #if defined(WIN32)
-// TODO: move this to like ovr_vr_wrapper.cpp or something
 class OVRWrapper : public VRWrapper {
 public:
   PlatformWindow* m_pWindow;

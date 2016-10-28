@@ -395,6 +395,36 @@ public:
 
 typedef Matrix4<float> Mat4f;
 
+template <typename T>
+class Pose4 {
+public:
+  typedef Matrix4<T> Mat;
+  typedef Vector4<T> Vec;
+  Mat rotation;
+  Vec position;
+
+  Pose4() {}
+  Pose4(const Mat& rot, const Vec& pos) : rotation(rot), position(pos) {}
+
+  // A 4x4 matrix is used for rotation, and a 4 vector for position.
+  // Transforming a vector, x, by the pose, M, can be
+  // M * x = (R * x) + P
+  // where R is rotation and P is position.
+  // For the inverse, 
+  // M^-1 * M * x = x = M^-1 * ((R * x) + P)
+  // x * ((R * x) + P)^-1 = M^-1
+  Pose4& invert() {
+    Mat rotInv = rotation.inverse();
+    position = -rotInv.transform(position);
+    rotation = rotInv;
+    return *this;
+  }
+
+  ALIGNED_ALLOC_NEW_DEL_OVERRIDE
+};
+
+typedef Pose4<float> Pose4f;
+
 // So the premise is that you take sqrt(-1) = i, interpreted as rotation,
 // and generalize the concept to 3d so you have 3 independent axis of rotation.
 // So you have i,j,k, where

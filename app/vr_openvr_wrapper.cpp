@@ -1,64 +1,74 @@
+// Heavily borrowing from openvr hellovr sample integration
 #include "vr_wrapper.h"
 #ifdef FD_VR_USE_OPENVR
 
-
 #include <openvr.h>
-
-
 #include <memory>
 
-//#include "texture.h"
+#include "texture.h"
+
 //#ifdef WIN32
 //#include <Windows.h>
 //#endif
-//#include "glhelper.h"
-//#include "render.h"
-//#include "win32_platform.h"
-//#include "../common/fourmath.h"
-//#include "../common/camera.h"
+#include "glhelper.h"
+#include "render.h"
+#include "win32_platform.h"
+#include "../common/fourmath.h"
+#include "../common/camera.h"
 
 namespace fd {
 
 #if defined(WIN32)
-// TODO: move this to like ovr_vr_wrapper.cpp or something
 class VVRWrapper : public VRWrapper {
 public:
   PlatformWindow* m_pWindow;
   vr::IVRSystem* m_HMD;
-  //ovrHmd m_HMD; // actually a pointer...
-  //bool m_isDebugDevice;
+  
+  Texture* m_eyeRenderTex[2];
+  Texture* m_eyeDepthTex[2];
+  Texture* m_eyeResolveTex[2];
 
-  //Texture* m_eyeRenderTex[2];
-  //Texture* m_eyeDepthTex[2];
+  vr::TrackedDevicePose_t m_devicePoses[vr::k_unMaxTrackedDeviceCount];
+  Pose4f m_device3Poses[vr::k_unMaxTrackedDeviceCount];
+  Pose4f m_hmdPose;
+  std::string m_strCurrentDeviceClasses;
+  char m_rDeviceClassCharCodes[vr::k_unMaxTrackedDeviceCount];
+	//vr::ETrackedDeviceClass m_deviceClasses[vr::k_unMaxTrackedDeviceCount];
 
-  //ovrEyeRenderDesc m_eyeDesc[2];
-  //ovrPosef m_eyeRenderPose[2];
-  //ovrPosef m_lastEyeRenderPose[2];
+  unsigned int m_numDistortionIndices;
+	GLuint m_unLensVAO;
+	GLuint m_glIDVertBuffer;
+	GLuint m_glIDIndexBuffer;
+  GLuint m_unLensProgramID;
 
-  //int m_eyeRenderWidth;
-  //int m_eyeRenderHeight;
+  uint32_t m_eyeRenderWidth;
+  uint32_t m_eyeRenderHeight;
 
   //const Mat4f* m_debugHeadPose;
+  //bool m_isDebugDevice
 
   VVRWrapper() : m_HMD(NULL), m_pWindow(NULL)
+      , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
+      , m_numDistortionIndices(0)
   //    , m_debugHeadPose(NULL)
-  //    , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
   //    , m_isDebugDevice(true)
   {
-  //  for(int e = 0; e < 2; e++) {
-  //    m_eyeRenderTex[e] = NULL;
-  //    m_eyeDepthTex[e] = NULL;
-  //  }
-  //  m_doScreenSaver = false;
-  //  m_hadInput = false;
+    memset(&m_rDeviceClassCharCodes[0], 0, sizeof(m_rDeviceClassCharCodes));
+    for(int e = 0; e < 2; e++) {
+      m_eyeRenderTex[e] = NULL;
+      m_eyeDepthTex[e] = NULL;
+      m_eyeResolveTex[e] = NULL;
+    }
+    m_doScreenSaver = false; // so, this may not be the way we want to do this for vive, as they have screensaver already it seems like, and it's better.
+    m_hadInput = false;
   }
 
   ~VVRWrapper() {
-  //  for(int e = 0; e < 2; e++) {
-  //    delete m_eyeRenderTex[e];
-  //    delete m_eyeDepthTex[e];
-  //  }
-  //  ovr_Shutdown();
+    for(int e = 0; e < 2; e++) {
+      delete m_eyeRenderTex[e];
+      delete m_eyeDepthTex[e];
+      delete m_eyeResolveTex[e];
+    }
     vr::VR_Shutdown();
   }
 
@@ -76,61 +86,213 @@ public:
     m_HMD = HMD;
 	  return true;
   }
-  //  if (!ovr_Initialize()) {
-  //    printf("Couldn't init ovr\n");
-  //    return false;
-  //  }
 
-  //  int ovrIndex = ovrHmd_Detect();
-
-  //  m_isDebugDevice = false;
-  //  if (ovrIndex == 0 || (NULL == (m_HMD = ovrHmd_Create(0)))) {
-  //    printf("Oculus device not found\n"
-  //        "Trying to create debug oculus device...\n");
-  //    // do we want to #ifdef DEBUG this?
-  //    m_HMD = ovrHmd_CreateDebug(ovrHmd_DK2);
-  //    m_isDebugDevice = true;
-  //  }
-
-  //  if (m_HMD == NULL) {
-  //    printf("Oculus device not created:\n");
-  //    return false;
-  //  }
-
-  //  int ovrCaps = ovrHmdCap_DynamicPrediction | ovrHmdCap_LowPersistence;
-  //  ovrHmd_SetEnabledCaps(m_HMD, ovrCaps);
-
-  //  int trackingCaps = ovrTrackingCap_Orientation
-  //      | ovrTrackingCap_MagYawCorrection
-  //      | ovrTrackingCap_Position;
-  //  ovrHmd_ConfigureTracking(m_HMD, trackingCaps, 0);
-
-  //  return true;
+  //bool SetupTrackedDeviceModels() {
+  //  return false;
   //}
 
-  //virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) {
-  //  m_pWindow = pWindow;
+  struct VertexDataLens
+  {
+    Vec2f position;
+    Vec2f texCoordRed;
+    Vec2f texCoordGreen;
+    Vec2f texCoordBlue;
+  };
 
-  //  const float pixelsPerDisplayPixel = pixelScale; //0.25f; // 1.0f;
-  //  bool createSuccess = true;
-  //  for (int e = 0; e < 2; e++) {
-  //    ovrSizei recommendedFovTexSize = ovrHmd_GetFovTextureSize(
-  //        m_HMD, (ovrEyeType)e, m_HMD->DefaultEyeFov[e],
-  //        pixelsPerDisplayPixel);
-  //    m_eyeRenderWidth = recommendedFovTexSize.w;
-  //    m_eyeRenderHeight = recommendedFovTexSize.h;
-  //    WasGLErrorPlusPrint();
-  //    m_eyeRenderTex[e] = new Texture();
-  //    createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(
-  //        recommendedFovTexSize.w, recommendedFovTexSize.h);
-  //    m_eyeDepthTex[e] = new Texture();
-  //    createSuccess &= m_eyeDepthTex[e]->CreateDepthTarget(
-  //        recommendedFovTexSize.w, recommendedFovTexSize.h);
-  //  }
-  //  if(!createSuccess) {
-  //    printf("VR Render/depth target creation failed\n");
-  //    return false;
-  //  }
+  void SetupDistortion()
+  {
+    if (!m_HMD)
+      return;
+
+    GLushort m_iLensGridSegmentCountH = 43;
+    GLushort m_iLensGridSegmentCountV = 43;
+
+    float w = (float)(1.0 / float(m_iLensGridSegmentCountH - 1));
+    float h = (float)(1.0 / float(m_iLensGridSegmentCountV - 1));
+
+    float u, v = 0;
+
+    std::vector<VertexDataLens> vVerts(0);
+    VertexDataLens vert;
+
+    //left eye distortion verts
+    float Xoffset = -1;
+    for (int y = 0; y < m_iLensGridSegmentCountV; y++)
+    {
+      for (int x = 0; x < m_iLensGridSegmentCountH; x++)
+      {
+        u = x*w; v = 1 - y*h;
+        vert.position = Vec2f(Xoffset + u, -1 + 2 * y*h);
+
+        vr::DistortionCoordinates_t dc0 = m_HMD->ComputeDistortion(vr::Eye_Left, u, v);
+
+        vert.texCoordRed = Vec2f(dc0.rfRed[0], 1 - dc0.rfRed[1]);
+        vert.texCoordGreen = Vec2f(dc0.rfGreen[0], 1 - dc0.rfGreen[1]);
+        vert.texCoordBlue = Vec2f(dc0.rfBlue[0], 1 - dc0.rfBlue[1]);
+
+        vVerts.push_back(vert);
+      }
+    }
+
+    //right eye distortion verts
+    Xoffset = 0;
+    for (int y = 0; y < m_iLensGridSegmentCountV; y++)
+    {
+      for (int x = 0; x < m_iLensGridSegmentCountH; x++)
+      {
+        u = x*w; v = 1 - y*h;
+        vert.position = Vec2f(Xoffset + u, -1 + 2 * y*h);
+
+        vr::DistortionCoordinates_t dc0 = m_HMD->ComputeDistortion(vr::Eye_Right, u, v);
+
+        vert.texCoordRed = Vec2f(dc0.rfRed[0], 1 - dc0.rfRed[1]);
+        vert.texCoordGreen = Vec2f(dc0.rfGreen[0], 1 - dc0.rfGreen[1]);
+        vert.texCoordBlue = Vec2f(dc0.rfBlue[0], 1 - dc0.rfBlue[1]);
+
+        vVerts.push_back(vert);
+      }
+    }
+
+    std::vector<GLushort> vIndices;
+    GLushort a, b, c, d;
+
+    GLushort offset = 0;
+    for (GLushort y = 0; y < m_iLensGridSegmentCountV - 1; y++)
+    {
+      for (GLushort x = 0; x < m_iLensGridSegmentCountH - 1; x++)
+      {
+        a = m_iLensGridSegmentCountH*y + x + offset;
+        b = m_iLensGridSegmentCountH*y + x + 1 + offset;
+        c = (y + 1)*m_iLensGridSegmentCountH + x + 1 + offset;
+        d = (y + 1)*m_iLensGridSegmentCountH + x + offset;
+        vIndices.push_back(a);
+        vIndices.push_back(b);
+        vIndices.push_back(c);
+
+        vIndices.push_back(a);
+        vIndices.push_back(c);
+        vIndices.push_back(d);
+      }
+    }
+
+    offset = (m_iLensGridSegmentCountH)*(m_iLensGridSegmentCountV);
+    for (GLushort y = 0; y < m_iLensGridSegmentCountV - 1; y++)
+    {
+      for (GLushort x = 0; x < m_iLensGridSegmentCountH - 1; x++)
+      {
+        a = m_iLensGridSegmentCountH*y + x + offset;
+        b = m_iLensGridSegmentCountH*y + x + 1 + offset;
+        c = (y + 1)*m_iLensGridSegmentCountH + x + 1 + offset;
+        d = (y + 1)*m_iLensGridSegmentCountH + x + offset;
+        vIndices.push_back(a);
+        vIndices.push_back(b);
+        vIndices.push_back(c);
+
+        vIndices.push_back(a);
+        vIndices.push_back(c);
+        vIndices.push_back(d);
+      }
+    }
+    m_numDistortionIndices = vIndices.size();
+
+    glGenVertexArrays(1, &m_unLensVAO);
+    glBindVertexArray(m_unLensVAO);
+
+    glGenBuffers(1, &m_glIDVertBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m_glIDVertBuffer);
+    glBufferData(GL_ARRAY_BUFFER, vVerts.size()*sizeof(VertexDataLens), &vVerts[0], GL_STATIC_DRAW);
+
+    glGenBuffers(1, &m_glIDIndexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIDIndexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vIndices.size()*sizeof(GLushort), &vIndices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, position));
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, texCoordRed));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, texCoordGreen));
+
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof(VertexDataLens, texCoordBlue));
+
+    glBindVertexArray(0);
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  }
+
+  void RenderDistortion()
+  {
+    glDisable(GL_DEPTH_TEST);
+    glViewport(0, 0, m_eyeRenderWidth, m_eyeRenderHeight);
+
+    glBindVertexArray(m_unLensVAO);
+    glUseProgram(m_unLensProgramID);
+
+    //render left lens (first half of index array )
+    glBindTexture(GL_TEXTURE_2D, m_eyeResolveTex[0]->GetTextureID());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glDrawElements(GL_TRIANGLES, m_numDistortionIndices / 2, GL_UNSIGNED_SHORT, 0);
+
+    //render right lens (second half of index array )
+    glBindTexture(GL_TEXTURE_2D, m_eyeResolveTex[0]->GetTextureID());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glDrawElements(GL_TRIANGLES, m_numDistortionIndices / 2, GL_UNSIGNED_SHORT, (const void *)(m_numDistortionIndices));
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+  }
+
+  // need cleanup for distortion
+
+  virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) {
+    m_pWindow = pWindow;
+	  if(!m_HMD)
+		  return false;
+
+	  vr::EVRInitError peError = vr::VRInitError_None;
+
+	  if (!vr::VRCompositor())
+	  {
+		  printf("Compositor initialization failed\n");
+		  return false;
+	  } 
+
+	  m_HMD->GetRecommendedRenderTargetSize(&m_eyeRenderWidth, &m_eyeRenderHeight);
+
+    const float pixelsPerDisplayPixel = pixelScale; //0.25f; // 1.0f;
+    bool createSuccess = true;
+    for (int e = 0; e < 2; e++) {
+      m_eyeRenderTex[e] = new Texture();
+      createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(
+          m_eyeRenderWidth, m_eyeRenderHeight);
+      m_eyeDepthTex[e] = new Texture();
+      createSuccess &= m_eyeDepthTex[e]->CreateDepthTarget(
+          m_eyeRenderWidth, m_eyeRenderHeight);
+    }
+    if(!createSuccess) {
+      printf("VR Render/depth target creation failed\n");
+      return false;
+    }
+    
+    // initialize hand representations
+    // initialize vertex buffer for distortion mesh
+
+
 
   //  ovrGLConfig config;
   //  config.OGL.Header.API = ovrRenderAPI_OpenGL;
@@ -147,17 +309,66 @@ public:
 
   //  ovrHmd_AttachToWindow(m_HMD, m_pWindow->m_hWnd,
   //      NULL /*destRect*/, NULL /*srcRect*/);
-
   //  ovrHmd_DismissHSWDisplay(m_HMD);
 
-  //  s_Initialized = true;
-  //  //s_UsingVR = true;
+    s_Initialized = true;
+    //s_UsingVR = true;
 
-  //  return true;
-  //}
+    return true;
+  }
 
-  //virtual void StartFrame() {
-  //  ovrHmd_BeginFrame(m_HMD, 0);
+  //vvr is right-handed system
+  // +y is up
+  // +x is to the right
+  // -z is going away from you
+  //fd is ???-apendaged system
+  void ConvertSteamVRMatrixToMatrix4(
+      const vr::HmdMatrix34_t &vrPose, Pose4f& pose)
+  {
+    // probably still totally wrong, look here first when it's messed
+    float vals[] = {    
+      vrPose.m[0][0], vrPose.m[1][0], vrPose.m[2][0], 0.0,
+      vrPose.m[0][1], vrPose.m[1][1], vrPose.m[2][1], 0.0,
+      vrPose.m[0][2], vrPose.m[1][2], vrPose.m[2][2], 0.0,
+      0.0f, 0.0f, 0.0f, 1.0f
+    };
+    memcpy(pose.rotation.raw(), vals, sizeof(vals));
+    pose.position.set(vrPose.m[0][3], vrPose.m[1][3], vrPose.m[2][3], 0.0f);
+  }
+
+  virtual void StartFrame() {
+    vr::VRCompositor()->WaitGetPoses(
+      m_devicePoses, vr::k_unMaxTrackedDeviceCount, NULL, 0);
+
+    for (int nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice)
+    {
+      if (m_devicePoses[nDevice].bPoseIsValid)
+      {
+        ConvertSteamVRMatrixToMatrix4(m_devicePoses[nDevice].mDeviceToAbsoluteTracking,
+          m_device3Poses[nDevice]);
+        if (m_rDeviceClassCharCodes[nDevice] == 0)
+        {
+          switch (m_HMD->GetTrackedDeviceClass(nDevice))
+          {
+          case vr::TrackedDeviceClass_Controller:        m_rDeviceClassCharCodes[nDevice] = 'C'; break;
+          case vr::TrackedDeviceClass_HMD:               m_rDeviceClassCharCodes[nDevice] = 'H'; break;
+          case vr::TrackedDeviceClass_Invalid:           m_rDeviceClassCharCodes[nDevice] = 'I'; break;
+          case vr::TrackedDeviceClass_Other:             m_rDeviceClassCharCodes[nDevice] = 'O'; break;
+          case vr::TrackedDeviceClass_TrackingReference: m_rDeviceClassCharCodes[nDevice] = 'T'; break;
+          default:                                       m_rDeviceClassCharCodes[nDevice] = '?'; break;
+          }
+        }
+        m_strCurrentDeviceClasses += m_rDeviceClassCharCodes[nDevice];
+      }
+    }
+
+    if (m_devicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+    {
+      m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].invert();
+    }
+
+
+//  ovrHmd_BeginFrame(m_HMD, 0);
 
   //  ovrVector3f viewOffsets[2] = {
   //      m_eyeDesc[0].HmdToEyeViewOffset,
@@ -171,9 +382,10 @@ public:
   //  }
   //  ovrHmd_GetEyePoses(m_HMD, 0, viewOffsets, m_eyeRenderPose,
   //      NULL /*trackingState*/);
-  //}
 
-  //void StartEye(int eye, Texture** outRenderColor, Texture** outRenderDepth) {
+  }
+
+  void StartEye(int eye, Texture** outRenderColor, Texture** outRenderDepth) {
   //  glBindFramebuffer(GL_FRAMEBUFFER, m_eyeRenderTex[eye]->m_framebuffer_id);
   //  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
   //      GL_TEXTURE_2D, m_eyeRenderTex[eye]->m_texture_id, 0);
@@ -188,9 +400,9 @@ public:
   //  }
 
   //  glViewport(0, 0,
-  //      m_eyeRenderTex[eye]->m_width, m_eyeRenderTex[eye]->m_height);
+  //      enderTex[eye]->m_width, m_eyeRenderTex[eye]->m_height);
   //  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  //}
+  }
 
 
   //virtual void SetDebugHeadOrientation(const Mat4f* matrix) {
@@ -367,21 +579,13 @@ public:
   //  UpdateCameraRenderMatrix(eye, pCamera);
   //}
 
-  //virtual void FinishFrame() {
-  //  ovrGLTexture eyeTex[2];
-  //  for(int e = 0; e < 2; e++) {
-  //    eyeTex[e].OGL.Header.API = ovrRenderAPI_OpenGL;
-  //    eyeTex[e].OGL.Header.TextureSize.w = m_eyeRenderTex[e]->m_width;
-  //    eyeTex[e].OGL.Header.TextureSize.h = m_eyeRenderTex[e]->m_height;
-  //    eyeTex[e].OGL.Header.RenderViewport.Pos.x = 0;
-  //    eyeTex[e].OGL.Header.RenderViewport.Pos.y = 0;
-  //    eyeTex[e].OGL.Header.RenderViewport.Size = eyeTex[e].OGL.Header.TextureSize;
-  //    eyeTex[e].OGL.TexId = m_eyeRenderTex[e]->m_texture_id;
-  //  }
-  //  //ovrTexture eyeTexStruct[2];
-  //  //eyeTexStruct[0] = eyeTex[0].Texture;
-  //  // uh this seems weird.... but parallel to sample so far
-  //  ovrHmd_EndFrame(m_HMD, m_eyeRenderPose, &eyeTex[0].Texture);
+  virtual void FinishFrame() {
+    RenderDistortion();
+    
+		vr::Texture_t leftEyeTexture = {(void*)m_eyeResolveTex[0]->GetTextureID(), vr::API_OpenGL, vr::ColorSpace_Gamma };
+		vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture );
+		vr::Texture_t rightEyeTexture = {(void*)m_eyeResolveTex[1]->GetTextureID(), vr::API_OpenGL, vr::ColorSpace_Gamma };
+		vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
 
   //  if(m_doScreenSaver) {
   //    float maxDeltaPos = 0.0f;
@@ -405,23 +609,24 @@ public:
   //    //printf("VR input:%d pos:%f rot:%f\n", m_hadInput, maxDeltaPos, maxDeltaRot);
 
   //  }
-  //}
 
-  //virtual void SetIsUsingVR(bool usingVR) {
-  //  if(!s_Initialized) return;
-  //  if(s_UsingVR == usingVR) return;
+  }
 
-  //  if(s_UsingVR) {
-  //    s_UsingVR = false;
-  //    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //    int restoreWidth;
-  //    int restoreHeight;
-  //    m_pWindow->GetWidthHeight(&restoreWidth, &restoreHeight);
-  //    glViewport(0, 0, restoreWidth, restoreHeight);
-  //  } else {
-  //    s_UsingVR = true;
-  //  }
-  //}
+  virtual void SetIsUsingVR(bool usingVR) {
+    if(!s_Initialized) return;
+    if(s_UsingVR == usingVR) return;
+
+    if(s_UsingVR) {
+      s_UsingVR = false;
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      int restoreWidth;
+      int restoreHeight;
+      m_pWindow->GetWidthHeight(&restoreWidth, &restoreHeight);
+      glViewport(0, 0, restoreWidth, restoreHeight);
+    } else {
+      s_UsingVR = true;
+    }
+  }
 
   //virtual std::string GetDeviceName() {
   //  if(!m_HMD) return std::string("");
@@ -456,6 +661,8 @@ public:
   //  if(!m_HMD) return;
   //  ovrHmd_RecenterPose(m_HMD);
   //}
+
+  ALIGNED_ALLOC_NEW_DEL_OVERRIDE
 };
 
 VRWrapper* VRWrapper::CreateVR() {
