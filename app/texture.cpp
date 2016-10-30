@@ -94,7 +94,7 @@ namespace fd {
     return true;
   }
 
-  bool Texture::CreateRenderTarget(int sizeX, int sizeY) {
+  bool Texture::CreateColorTarget(int sizeX, int sizeY) {
     glGenTextures(1, &m_texture_id);
     glBindTexture(GL_TEXTURE_2D, m_texture_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // GL_LINEAR);
@@ -105,7 +105,8 @@ namespace fd {
     m_width = sizeX;
     m_height = sizeY;
     m_format = GL_RGBA;
-    m_internal_format = GL_SRGB_ALPHA;
+    // This probably affected the dk2 but precision in colors is like... *shrug* anyway right now :)
+    m_internal_format = GL_RGBA8; // GL_SRGB_ALPHA;
 
     glTexImage2D(GL_TEXTURE_2D, 0 /* level */,
           m_internal_format, m_width, m_height, 0 /* border */,
@@ -136,8 +137,22 @@ namespace fd {
     return !WasGLErrorPlusPrint();
   }
 
-  bool Texture::CreateFrameTarget(int sizeX, int sizeY) {
-    return false;
+  bool Texture::CreateFrameBuffer() { //int sizeX, int sizeY) {
+    glGenFramebuffers(1, &m_framebuffer_id);
+    return !WasGLErrorPlusPrint();
+  }
+
+  bool Texture::CreateRenderBuffers(int sizeX, int sizeY) {
+    m_width = sizeX;
+    m_height = sizeY;
+
+    glGenRenderbuffers(1, &m_texture_id);
+	  glBindRenderbuffer(GL_RENDERBUFFER, m_texture_id);
+  	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, m_width, m_height);
+  	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
+        m_texture_id);
+
+    return !WasGLErrorPlusPrint();
   }
 
   void Texture::Release() {

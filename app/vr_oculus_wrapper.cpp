@@ -106,7 +106,7 @@ public:
       m_eyeRenderHeight = recommendedFovTexSize.h;
       WasGLErrorPlusPrint();
       m_eyeRenderTex[e] = new Texture();
-      createSuccess &= m_eyeRenderTex[e]->CreateRenderTarget(
+      createSuccess &= m_eyeRenderTex[e]->CreateColorTarget(
           recommendedFovTexSize.w, recommendedFovTexSize.h);
       m_eyeDepthTex[e] = new Texture();
       createSuccess &= m_eyeDepthTex[e]->CreateDepthTarget(

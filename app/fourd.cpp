@@ -81,7 +81,7 @@ float g_screensaverTime = 0.0f; // 0 is disabled
 bool g_startupAddEyeCandy = true;
 std::string g_startupLevel = "current.bin";
 
-fd::Shader* LoadShader(const char* shaderName) {
+extern fd::Shader* LoadShader(const char* shaderName) {
   static std::string g_currentShader;
   std::string shaderDir = "data/";
   std::string vertPrefix = std::string("vert");
@@ -957,6 +957,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
 }
 
 void Draw(GLFWwindow* window) {
+  WasGLErrorPlusPrint();
   if (!g_shader)
     return;
 
@@ -965,6 +966,7 @@ void Draw(GLFWwindow* window) {
   glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
+  WasGLErrorPlusPrint();
 
   float frameTime = (float)g_renderer.GetFrameTime();
   static bool renderVRUI = true;
@@ -977,22 +979,29 @@ void Draw(GLFWwindow* window) {
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartLeftEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
+    WasGLErrorPlusPrint();
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, true /*doUpdate*/);
+    WasGLErrorPlusPrint();
     g_vr->FinishLeftEye(&g_camera, &renderColor, &renderDepth);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartRightEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
+    WasGLErrorPlusPrint();
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, false /*doUpdate*/);
+    WasGLErrorPlusPrint();
     g_vr->FinishRightEye(&g_camera, &renderColor, &renderDepth);
+    WasGLErrorPlusPrint();
     g_vr->FinishFrame();
+    WasGLErrorPlusPrint();
   } else {
     Vec2f uiOffset(0, 0);
     g_camera.UpdateRenderMatrix(NULL /*lookOffset*/, NULL /*posOffset*/);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_renderer.RenderAllScenesPerCamera(NULL /*renderColor*/, NULL /*renderDepth*/);
     ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, true /*doUpdate*/);
+    WasGLErrorPlusPrint();
   }
 
   if(ImGuiWrapper::s_bGuiDisabled) {
@@ -1005,6 +1014,7 @@ void Draw(GLFWwindow* window) {
 
   glFlush();
   glfwSwapBuffers(window);
+  WasGLErrorPlusPrint();
 }
 
 void RaycastToOpenQuaxol() {

@@ -99,7 +99,7 @@ bool Render::ResizeRenderTargets(int width, int height) {
     return true; // don't need any of these unless it's multipass
 
   std::unique_ptr<Texture> colorOverdraw(new Texture());
-  if(!colorOverdraw->CreateRenderTarget(width, height))
+  if(!colorOverdraw->CreateColorTarget(width, height))
     return false;
 
   //std::unique_ptr<Texture> depthOverdraw(new Texture());
@@ -107,7 +107,7 @@ bool Render::ResizeRenderTargets(int width, int height) {
   //  return false;
 
   std::unique_ptr<Texture> renderColor(new Texture());
-  if(!renderColor->CreateRenderTarget(width, height))
+  if(!renderColor->CreateColorTarget(width, height))
     return false;
 
   std::unique_ptr<Texture> renderDepth(new Texture());

@@ -28,9 +28,10 @@ namespace fd {
     ~Texture();
 
     bool LoadFromFile(const char* filename);
-    bool CreateRenderTarget(int sizeX, int sizeY);
+    bool CreateColorTarget(int sizeX, int sizeY);
     bool CreateDepthTarget(int sizeX, int sizeY);
-    bool CreateFrameTarget(int sizeX, int sizeY); //yeahhh, I dunno
+    bool CreateFrameBuffer();
+    bool CreateRenderBuffers(int sizeX, int sizeY);
     void Release();
 
     GLuint GetTextureID() const { return m_texture_id; }
