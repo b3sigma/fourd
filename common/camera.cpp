@@ -3,6 +3,7 @@
 #include "components/animated_rotation.h"
 #include "components/animated_camera_params.h"
 
+
 using namespace ::fd;
 
 Camera::Camera()
@@ -115,14 +116,27 @@ void Camera::setMovementMode(MovementMode mode) {
   }
 }
 
-void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
-  if(lookOffset && posOffset) {
-    //_renderMatrix = (*lookOffset) * (_yawPitchTrans * _cameraMatrix);
-    _renderMatrix = (*lookOffset) * (_yawTrans * _cameraMatrix);
-    _renderPos = _cameraPos + *posOffset;
+void Camera::UpdateRenderMatrix(Pose4f* pose) {
+  if(pose) {
+    UpdateRenderMatrix(&pose->rotation, &pose->position);
   } else {
-    _renderMatrix = _yawPitchTrans * _cameraMatrix;
-    _renderPos = _cameraPos;
+    UpdateRenderMatrix(NULL /*look*/, NULL /*pos*/);
+  }
+}
+
+void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
+  if(_movement == MovementMode::ROOM && lookOffset && posOffset) {
+    _renderMatrix = *lookOffset;
+    _renderPos = *posOffset;
+  } else {
+    if(lookOffset && posOffset) {
+      //_renderMatrix = (*lookOffset) * (_yawPitchTrans * _cameraMatrix);
+      _renderMatrix = (*lookOffset) * (_yawTrans * _cameraMatrix);
+      _renderPos = _cameraPos + *posOffset;
+    } else {
+      _renderMatrix = _yawPitchTrans * _cameraMatrix;
+      _renderPos = _cameraPos;
+    }
   }
 }
 

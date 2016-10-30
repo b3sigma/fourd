@@ -136,6 +136,9 @@ namespace fd {
     return !WasGLErrorPlusPrint();
   }
 
+  bool Texture::CreateFrameTarget(int sizeX, int sizeY) {
+    return false;
+  }
 
   void Texture::Release() {
     if (m_texture_id >= 0) {

@@ -5,6 +5,26 @@
 
 //#ifdef _DEBUG
 inline bool WasGLErrorPlusPrint() {
+  static bool succeededOnce = false;
+  GLenum errCode = glGetError();
+  const GLubyte *errString;
+  if(!succeededOnce && errCode == GL_INVALID_OPERATION) {
+    return false; // calling glGetError too soon is an error?
+  } else {
+    // once it succeeds, treat behavior normally
+    succeededOnce = true;
+  }
+
+  if (errCode != GL_NO_ERROR) {
+    errString = gluErrorString(errCode);
+    printf("OpenGL Error: %s\n", errString);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+inline bool WasGLErrorPlusPrintSimple() {
   GLenum errCode;
   const GLubyte *errString;
 
@@ -15,6 +35,16 @@ inline bool WasGLErrorPlusPrint() {
   } else {
     return false;
   }
+}
+
+// only valid when framebuffers are bound maybe?
+inline bool WasFramebufferError() {
+  GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) {
+    printf("Framebuffer error: %d!\n", status);
+    return true;
+  }
+  return false;
 }
 
 inline bool WasGLUErr(int gluErr) {

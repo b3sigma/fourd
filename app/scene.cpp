@@ -34,6 +34,7 @@ Scene::Scene()
       &Scene::RemoveEntity);  // notification from entity that it is being deleted
   m_componentBus.RegisterSignal(std::string("DeleteEntity"), this,
       &Scene::OnDeleteEntity); // command from entity to delete it
+  WasGLErrorPlusPrint();
 }
 
 Scene::~Scene() {

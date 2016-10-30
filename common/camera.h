@@ -32,7 +32,7 @@ public:
   };
 
   enum MovementMode {
-    LOOK = 1, ORBIT = 2, WALK = 3,
+    LOOK = 1, ORBIT = 2, WALK = 3, ROOM = 4, 
   };
 
   MovementMode _movement;
@@ -63,6 +63,7 @@ public:
   //  _cameraPos.storeZero();
   //}
 
+  void UpdateRenderMatrix(Pose4f* pose);
   void UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset);
   void SetZProjection(int width, int height,
       float zFov, float zNear, float zFar);

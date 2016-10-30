@@ -29,6 +29,8 @@ Render::Render()
     , m_usingVR(false)
 {
   timer_.Start();
+  WasGLErrorPlusPrint();
+
 }
 
 Render::~Render() {

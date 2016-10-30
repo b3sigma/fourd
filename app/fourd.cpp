@@ -1,7 +1,6 @@
 #include <math.h>
 #include <memory>
 
-
 #include <GL/glew.h>
 
 #ifdef WIN32
@@ -228,6 +227,16 @@ void ToggleCameraMode(Camera::MovementMode mode) {
   }
 }
 
+void SetDefaultCameraMode() {
+  if(VRWrapper::IsUsingVR() && g_vr) {
+    g_vr->SetVRPreferredMovementMode(&g_camera);
+    // TODO: refactor the g_ into a game/app thing?s 
+    ToggleCameraMode(g_camera.getMovementMode());
+  } else {
+    ToggleCameraMode(Camera::MovementMode::WALK);
+  }
+}
+
 enum EyeCandyTypes {
   EyeCandyQuad,
   EyeCandyCube,
@@ -297,7 +306,7 @@ void AddAllEyeCandy() {
   AddEyeCandy(EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));
   AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 5.0f));
   AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 180.0f, 0.0f));
-  AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  //AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
   //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 240.0f, 0.0f));
 
   g_shader = savedShader;
@@ -332,7 +341,7 @@ bool Initialize(int width, int height) {
   //g_camera.ApplyRotationInput(-(float)PI / 1.0f, Camera::FORWARD, Camera::RIGHT);
   g_debugHeadPose.storeIdentity();
   g_camera._yaw = (float)PI;
-  ToggleCameraMode(Camera::MovementMode::WALK);
+  SetDefaultCameraMode();
 
   g_inputHandler.AddInputTarget(&(g_camera.GetComponentBus()));
   g_inputHandler.AddDefaultBindings();
@@ -970,11 +979,13 @@ void Draw(GLFWwindow* window) {
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, true /*doUpdate*/);
+    g_vr->FinishLeftEye(&g_camera, &renderColor, &renderDepth);
     glClearColor(g_renderer.m_clearColor.x, g_renderer.m_clearColor.y, g_renderer.m_clearColor.z, g_renderer.m_clearColor.w);
     g_vr->StartRightEye(&g_camera, &renderColor, &renderDepth);
     g_renderer.RenderAllScenesPerCamera(renderColor, renderDepth);
     if(renderVRUI)
       ImGuiWrapper::Render(frameTime, uiOffset, &g_renderer, false /*doUpdate*/);
+    g_vr->FinishRightEye(&g_camera, &renderColor, &renderDepth);
     g_vr->FinishFrame();
   } else {
     Vec2f uiOffset(0, 0);
@@ -1098,9 +1109,11 @@ void StepFrame() {
 
 void StaticInitialize() {
   Timer staticTimer(std::string("StaticInitialize"));
+  WasGLErrorPlusPrint();
 
   QuaxolChunk::BuildCanonicalCubesByDir(g_blockSize);
   QuaxolChunk::BuildCanonicalCubesByFlag(g_blockSize);
+  WasGLErrorPlusPrint();
 }
 
 float Rand() { return (float)rand() / (float)RAND_MAX; }
@@ -1172,6 +1185,7 @@ void glfwErrorCallback(int error, const char* description) {
 #define RUN_TESTS
 
 int main(int argc, const char *argv[]) {
+  WasGLErrorPlusPrint();
 
   std::string keepAliveFileName("");
   bool displayUsage = false;
@@ -1217,9 +1231,14 @@ int main(int argc, const char *argv[]) {
   printf("keep alive is %s\n", keepAliveFileName.c_str());
 
   StaticInitialize();
+  
 
 #ifdef RUN_TESTS
+  printf("Starting tests... \n");
+  WasGLErrorPlusPrint();
   RunTests();
+  WasGLErrorPlusPrint();
+  printf("Completed tests.\n");
 #endif // RUN_TESTS
 
   // ovr is supposed to preceed glfw
@@ -1235,17 +1254,24 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
 
-  int startWidth = 640;
-  int startHeight = 580;
+  //int startWidth = 640;
+  //int startHeight = 580;
+  int startWidth = 1600;
+  int startHeight = 1050;
   GLFWmonitor* monitor = NULL;
   const GLFWvidmode* vidMode;
   static bool startFullscreen = false;
-  static bool startVRFullscreen = true;
+  static bool startVRFullscreen = false;
   if(startVRFullscreen && g_vr && !g_vr->GetIsDebugDevice()) {
     std::string deviceName = g_vr->GetDeviceName();
     monitor = PlatformWindow::GetRiftMonitorByName(deviceName.c_str());
-    vidMode = glfwGetVideoMode(monitor);
-    g_vr->GetTotalRenderSize(startWidth, startHeight);
+    if(monitor) {
+      vidMode = glfwGetVideoMode(monitor);
+      g_vr->GetTotalRenderSize(startWidth, startHeight);
+    } else {
+      monitor = glfwGetPrimaryMonitor();
+      vidMode = glfwGetVideoMode(monitor);
+    }
   } else if(startFullscreen) {
     //startVRFullscreen = false;
     monitor = glfwGetPrimaryMonitor();
@@ -1305,7 +1331,7 @@ int main(int argc, const char *argv[]) {
 
   glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
 
-  if(g_vr && startVRFullscreen) {
+  if(g_vr) { // && startVRFullscreen) {
     SetIsUsingVR(true);
     glfwSetInputMode(g_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   }

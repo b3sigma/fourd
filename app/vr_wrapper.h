@@ -24,8 +24,14 @@ public:
   virtual bool InitializeWindow(PlatformWindow* pWindow, float pixelScale) { return false; }
 
   virtual void StartFrame() {}
-  virtual void StartLeftEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
-  virtual void StartRightEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
+  virtual void StartLeftEye(
+    Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
+  virtual void FinishLeftEye(
+    Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
+  virtual void StartRightEye(
+    Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
+  virtual void FinishRightEye(
+    Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
   virtual void FinishFrame() {}
 
   virtual std::string GetDeviceName() { return std::string(""); }
@@ -34,6 +40,7 @@ public:
   virtual void SetIsUsingVR(bool usingVR) {}
   virtual void ToggleFullscreen() {}
   virtual void Recenter() {}
+  virtual void SetVRPreferredMovementMode(Camera* pCamera) {}
 
   virtual Texture* GetCurrentRenderColor() { return NULL; }
   virtual Texture* GetCurrentRenderDepth() { return NULL; }

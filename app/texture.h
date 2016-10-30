@@ -30,6 +30,7 @@ namespace fd {
     bool LoadFromFile(const char* filename);
     bool CreateRenderTarget(int sizeX, int sizeY);
     bool CreateDepthTarget(int sizeX, int sizeY);
+    bool CreateFrameTarget(int sizeX, int sizeY); //yeahhh, I dunno
     void Release();
 
     GLuint GetTextureID() const { return m_texture_id; }

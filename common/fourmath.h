@@ -400,11 +400,23 @@ class Pose4 {
 public:
   typedef Matrix4<T> Mat;
   typedef Vector4<T> Vec;
+  typedef Pose4<T> Pose;
   Mat rotation;
   Vec position;
 
   Pose4() {}
   Pose4(const Mat& rot, const Vec& pos) : rotation(rot), position(pos) {}
+
+  // M * x = R * x + P
+  // M * M * x = (R * (R * x + P) + P)
+  // M * M * x = RRx + RP + P
+  // (M * M) * x = RR * x + (RP + P)
+  Pose operator * (const Pose& m) const {
+    Pose r;
+    r.rotation = rotation * m.rotation;
+    r.position = rotation.transform(m.position) + position;
+    return r;
+  }
 
   // A 4x4 matrix is used for rotation, and a 4 vector for position.
   // Transforming a vector, x, by the pose, M, can be

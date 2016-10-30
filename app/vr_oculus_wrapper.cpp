@@ -408,6 +408,10 @@ public:
     }
   }
 
+  virtual void SetVRPreferredMovementMode(Camera* pCamera) {
+    pCamera->setMovementMode(Camera::MovementMode::WALK);
+  }
+
   virtual std::string GetDeviceName() {
     if(!m_HMD) return std::string("");
     return std::string(m_HMD->DisplayDeviceName);

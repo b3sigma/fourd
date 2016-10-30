@@ -69,12 +69,25 @@ public:
       delete m_eyeDepthTex[e];
       delete m_eyeResolveTex[e];
     }
+
+    if (m_unLensProgramID) {
+      glDeleteProgram(m_unLensProgramID);
+    }
+    glDeleteBuffers(1, &m_glIDVertBuffer);
+		glDeleteBuffers(1, &m_glIDIndexBuffer);
+
+    if (m_unLensVAO != 0) {
+      glDeleteVertexArrays(1, &m_unLensVAO);
+    }
+
+
     vr::VR_Shutdown();
   }
 
   bool Initialize() {
     // Loading the SteamVR Runtime
-	  vr::EVRInitError eError = vr::VRInitError_None;
+	  WasGLErrorPlusPrint();
+    vr::EVRInitError eError = vr::VRInitError_None;
 	  vr::IVRSystem* HMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
 
 	  if ( eError != vr::VRInitError_None )
@@ -84,7 +97,7 @@ public:
 	  }
 
     m_HMD = HMD;
-	  return true;
+	  return !WasGLErrorPlusPrint();
   }
 
   //bool SetupTrackedDeviceModels() {
@@ -103,7 +116,8 @@ public:
   {
     if (!m_HMD)
       return;
-
+    WasGLErrorPlusPrint();
+  
     GLushort m_iLensGridSegmentCountH = 43;
     GLushort m_iLensGridSegmentCountV = 43;
 
@@ -227,10 +241,11 @@ public:
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    WasGLErrorPlusPrint();
   }
 
-  void RenderDistortion()
-  {
+  void RenderDistortion() {
+    WasGLErrorPlusPrint();
     glDisable(GL_DEPTH_TEST);
     glViewport(0, 0, m_eyeRenderWidth, m_eyeRenderHeight);
 
@@ -255,6 +270,7 @@ public:
 
     glBindVertexArray(0);
     glUseProgram(0);
+    WasGLErrorPlusPrint();
   }
 
   // need cleanup for distortion
@@ -266,8 +282,7 @@ public:
 
 	  vr::EVRInitError peError = vr::VRInitError_None;
 
-	  if (!vr::VRCompositor())
-	  {
+	  if (!vr::VRCompositor()) {
 		  printf("Compositor initialization failed\n");
 		  return false;
 	  } 
@@ -283,6 +298,9 @@ public:
       m_eyeDepthTex[e] = new Texture();
       createSuccess &= m_eyeDepthTex[e]->CreateDepthTarget(
           m_eyeRenderWidth, m_eyeRenderHeight);
+      m_eyeResolveTex[e] = new Texture();
+      createSuccess &= m_eyeResolveTex[e]->CreateRenderTarget(
+          m_eyeRenderWidth, m_eyeRenderHeight);
     }
     if(!createSuccess) {
       printf("VR Render/depth target creation failed\n");
@@ -290,9 +308,8 @@ public:
     }
     
     // initialize hand representations
-    // initialize vertex buffer for distortion mesh
-
-
+    
+    SetupDistortion();
 
   //  ovrGLConfig config;
   //  config.OGL.Header.API = ovrRenderAPI_OpenGL;
@@ -311,6 +328,14 @@ public:
   //      NULL /*destRect*/, NULL /*srcRect*/);
   //  ovrHmd_DismissHSWDisplay(m_HMD);
 
+    // check FBO status
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+      printf("Framebuffer error: %d!\n", status);
+      return false;
+    }
+
+
     s_Initialized = true;
     //s_UsingVR = true;
 
@@ -322,9 +347,8 @@ public:
   // +x is to the right
   // -z is going away from you
   //fd is ???-apendaged system
-  void ConvertSteamVRMatrixToMatrix4(
-      const vr::HmdMatrix34_t &vrPose, Pose4f& pose)
-  {
+  void ConvertSteamVRMatrixToPose4(
+      const vr::HmdMatrix34_t &vrPose, Pose4f& pose) {
     // probably still totally wrong, look here first when it's messed
     float vals[] = {    
       vrPose.m[0][0], vrPose.m[1][0], vrPose.m[2][0], 0.0,
@@ -336,248 +360,345 @@ public:
     pose.position.set(vrPose.m[0][3], vrPose.m[1][3], vrPose.m[2][3], 0.0f);
   }
 
+  void ConvertSteamVRMatrixToMatrix4(
+      const vr::HmdMatrix44_t &vrMat, Mat4f& fdMat) {
+    // probably still totally wrong, look here first when it's messed
+    float vals[] = {    
+      vrMat.m[0][0], vrMat.m[1][0], vrMat.m[2][0], vrMat.m[3][0],
+      vrMat.m[0][1], vrMat.m[1][1], vrMat.m[2][1], vrMat.m[3][1],
+      vrMat.m[0][2], vrMat.m[1][2], vrMat.m[2][2], vrMat.m[3][2],
+      vrMat.m[0][3], vrMat.m[1][3], vrMat.m[2][3], vrMat.m[3][3]
+    };
+    memcpy(fdMat.raw(), vals, sizeof(vals));
+    // odds that there will be a call to transpose right here in the near future as a test?
+  }
+
   virtual void StartFrame() {
+    WasGLErrorPlusPrint();
     vr::VRCompositor()->WaitGetPoses(
       m_devicePoses, vr::k_unMaxTrackedDeviceCount, NULL, 0);
 
-    for (int nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice)
-    {
-      if (m_devicePoses[nDevice].bPoseIsValid)
-      {
-        ConvertSteamVRMatrixToMatrix4(m_devicePoses[nDevice].mDeviceToAbsoluteTracking,
+    for (int nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice) {
+      if (m_devicePoses[nDevice].bPoseIsValid) {
+        ConvertSteamVRMatrixToPose4(
+          m_devicePoses[nDevice].mDeviceToAbsoluteTracking,
           m_device3Poses[nDevice]);
-        if (m_rDeviceClassCharCodes[nDevice] == 0)
-        {
-          switch (m_HMD->GetTrackedDeviceClass(nDevice))
-          {
-          case vr::TrackedDeviceClass_Controller:        m_rDeviceClassCharCodes[nDevice] = 'C'; break;
-          case vr::TrackedDeviceClass_HMD:               m_rDeviceClassCharCodes[nDevice] = 'H'; break;
-          case vr::TrackedDeviceClass_Invalid:           m_rDeviceClassCharCodes[nDevice] = 'I'; break;
-          case vr::TrackedDeviceClass_Other:             m_rDeviceClassCharCodes[nDevice] = 'O'; break;
-          case vr::TrackedDeviceClass_TrackingReference: m_rDeviceClassCharCodes[nDevice] = 'T'; break;
-          default:                                       m_rDeviceClassCharCodes[nDevice] = '?'; break;
+        if (m_rDeviceClassCharCodes[nDevice] == 0) {
+          switch (m_HMD->GetTrackedDeviceClass(nDevice)) {
+            case vr::TrackedDeviceClass_Controller:        m_rDeviceClassCharCodes[nDevice] = 'C'; break;
+            case vr::TrackedDeviceClass_HMD:               m_rDeviceClassCharCodes[nDevice] = 'H'; break;
+            case vr::TrackedDeviceClass_Invalid:           m_rDeviceClassCharCodes[nDevice] = 'I'; break;
+            case vr::TrackedDeviceClass_Other:             m_rDeviceClassCharCodes[nDevice] = 'O'; break;
+            case vr::TrackedDeviceClass_TrackingReference: m_rDeviceClassCharCodes[nDevice] = 'T'; break;
+            default:                                       m_rDeviceClassCharCodes[nDevice] = '?'; break;
           }
+          m_strCurrentDeviceClasses += m_rDeviceClassCharCodes[nDevice];
         }
-        m_strCurrentDeviceClasses += m_rDeviceClassCharCodes[nDevice];
       }
     }
 
-    if (m_devicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
-    {
+    //  if(m_doScreenSaver) {
+    //    // reset screensaver detection state
+    //    m_lastEyeRenderPose[0] = m_eyeRenderPose[0];
+    //    m_lastEyeRenderPose[1] = m_eyeRenderPose[1];
+    //    m_hadInput = false;
+    //  }
+
+    if (m_devicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid) {
       m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].invert();
     }
-
-
-//  ovrHmd_BeginFrame(m_HMD, 0);
-
-  //  ovrVector3f viewOffsets[2] = {
-  //      m_eyeDesc[0].HmdToEyeViewOffset,
-  //      m_eyeDesc[1].HmdToEyeViewOffset };
-
-  //  if(m_doScreenSaver) {
-  //    // reset screensaver detection state
-  //    m_lastEyeRenderPose[0] = m_eyeRenderPose[0];
-  //    m_lastEyeRenderPose[1] = m_eyeRenderPose[1];
-  //    m_hadInput = false;
-  //  }
-  //  ovrHmd_GetEyePoses(m_HMD, 0, viewOffsets, m_eyeRenderPose,
-  //      NULL /*trackingState*/);
-
+    WasGLErrorPlusPrint();
   }
 
-  void StartEye(int eye, Texture** outRenderColor, Texture** outRenderDepth) {
+  void StartEye(vr::Hmd_Eye eye, Texture** outRenderColor, Texture** outRenderDepth) {
+    WasGLErrorPlusPrint();
+    // remove this, it's also set externally, but will be nice for debugging that this vr is on
+    glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
+    WasGLErrorPlusPrint();
+    glBindFramebuffer(GL_FRAMEBUFFER, m_eyeRenderTex[eye]->m_framebuffer_id);
+    WasGLErrorPlusPrint();
+    glViewport(0, 0, m_eyeRenderTex[eye]->m_width, m_eyeRenderTex[eye]->m_height);
+    WasGLErrorPlusPrint();
+    
   //  glBindFramebuffer(GL_FRAMEBUFFER, m_eyeRenderTex[eye]->m_framebuffer_id);
-  //  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-  //      GL_TEXTURE_2D, m_eyeRenderTex[eye]->m_texture_id, 0);
-  //  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-  //      GL_TEXTURE_2D, m_eyeDepthTex[eye]->m_texture_id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_TEXTURE_2D, m_eyeRenderTex[eye]->m_texture_id, 0);
+    WasGLErrorPlusPrint();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D, m_eyeDepthTex[eye]->m_texture_id, 0);
+    WasGLErrorPlusPrint();
+  
+    if(outRenderColor) {
+      *outRenderColor = m_eyeRenderTex[eye];
+    }
+    if(outRenderDepth) {
+      *outRenderDepth = m_eyeDepthTex[eye];
+    }
 
-  //  if(outRenderColor) {
-  //    *outRenderColor = m_eyeRenderTex[eye];
-  //  }
-  //  if(outRenderDepth) {
-  //    *outRenderDepth = m_eyeDepthTex[eye];
-  //  }
-
-  //  glViewport(0, 0,
-  //      enderTex[eye]->m_width, m_eyeRenderTex[eye]->m_height);
-  //  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    WasGLErrorPlusPrint();
   }
 
+  void FinishEye(int eye, Texture** outRenderColor, Texture** outRenderDepth) {
+    WasGLErrorPlusPrint();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    WasFramebufferError();
+    WasGLErrorPlusPrint();
+
+    //glDisable(GL_MULTISAMPLE);
+    //WasGLErrorPlusPrint();
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, m_eyeRenderTex[eye]->m_framebuffer_id);
+    WasFramebufferError();
+    WasGLErrorPlusPrint();
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_eyeResolveTex[eye]->m_framebuffer_id);
+    WasFramebufferError();
+    WasGLErrorPlusPrint();
+
+    glBlitFramebuffer(0, 0, m_eyeRenderTex[eye]->m_width, m_eyeRenderTex[eye]->m_height,
+      0, 0, m_eyeResolveTex[eye]->m_width, m_eyeResolveTex[eye]->m_height,
+      GL_COLOR_BUFFER_BIT,
+      GL_LINEAR);
+    WasGLErrorPlusPrint();
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    WasGLErrorPlusPrint();
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    WasGLErrorPlusPrint();
+  }
 
   //virtual void SetDebugHeadOrientation(const Mat4f* matrix) {
   //  m_debugHeadPose = matrix;
   //}
 
-  //void UpdateCameraRenderMatrix(int eye, Camera* pCamera) {
+  Mat4f GetHMDMatrixProjectionEye(vr::Hmd_Eye nEye, Camera* camera) {
+    Mat4f fdMat;
+    if (!m_HMD)
+      return fdMat;
 
-  //  const ovrQuatf& localQuatOvr = m_eyeRenderPose[eye].Orientation;
-  //  Quatf localEyeQuat(localQuatOvr.w, localQuatOvr.x, localQuatOvr.y, localQuatOvr.z);
-  //  Mat4f localEye;
-  //  localEye.storeQuat3dRotation(localEyeQuat);
+    vr::HmdMatrix44_t vrMat = m_HMD->GetProjectionMatrix(
+        nEye, camera->_zNear, camera->_zFar, vr::API_OpenGL);
 
-  //  if(m_debugHeadPose) {
-  //    localEye = *m_debugHeadPose;
-  //  }
+    ConvertSteamVRMatrixToMatrix4(vrMat, fdMat);
 
-  //  const float worldScale = 20.0f;
-  //  static bool simpleEyeOffset = true;
-  //  if(simpleEyeOffset) {
-  //    const ovrVector3f& localPosOvr = m_eyeDesc[eye].HmdToEyeViewOffset;
-  //    Vec4f ovrEyePos(-localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
-  //    ovrEyePos *= worldScale;
-  //    ovrEyePos = pCamera->_renderMatrix.transpose().transform(ovrEyePos);
-  //    //pCamera->_renderPos = pCamera->_cameraPos + ovrEyePos;
-  //    pCamera->UpdateRenderMatrix(&localEye, &ovrEyePos);
+    return fdMat;
+  }
 
-  //  } else {
-  //    const ovrVector3f& ovrEyeZero = m_eyeRenderPose[0].Position;
-  //    const ovrVector3f& ovrEyeOne = m_eyeRenderPose[1].Position;
 
-  //    Vec4f ovrEyeDifference(
-  //        ovrEyeOne.x - ovrEyeZero.x,
-  //        ovrEyeOne.y - ovrEyeZero.y,
-  //        ovrEyeOne.z - ovrEyeZero.z,
-  //        0.0f);
+  void StoreHMDMatrixPoseEye(vr::Hmd_Eye nEye, Pose4f& outPose)
+  {
+    if (!m_HMD)
+      return;
 
-  //    const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
-  //    static int transposer[3] = {0, 1, 2};
-  //    //static Vec4f sign(1.0f, 1.0f, 1.0f, 1.0f);
-  //    static Vec4f sign(-1.0f, 1.0f, 1.0f, 1.0f);
-  //    Vec4f ovrEyePos(localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
+    vr::HmdMatrix34_t matEye = m_HMD->GetEyeToHeadTransform(nEye);
+    ConvertSteamVRMatrixToPose4(matEye, outPose);
 
-  //    // TODO: try to convert ovr into local using simple sign switch
-  //    // then independently do eye and forehead transformations
-  //    Vec4f ovrForehead;
-  //    if(eye == 0) {
-  //      ovrForehead = ovrEyePos - (ovrEyeDifference * 0.5f);
-  //    } else {
-  //      ovrForehead = ovrEyePos - (ovrEyeDifference * -0.5f);
-  //    }
+    outPose = outPose.invert();
+  }
 
-  //    ovrEyePos *= worldScale;
-  //    Vec4f localOffset(
-  //        ovrEyePos[transposer[0]] * sign.x,
-  //        ovrEyePos[transposer[1]] * sign.y,
-  //        ovrEyePos[transposer[2]] * sign.z,
-  //        0.0f);
+  // The current intuitive approach is to consider the vr pose as being a 3-pose within the 4-space that is defined as the 4-pose of the camera. To convert from the vr 3-pose to the correct new 4-pose, as defined as already aligned with the camera's xyz-pose out of the 4-pose, transform the vr 3-pose filled out to an identity 4-pose for extra params by the identity matrix, then multiply by the room 4-pose to get the 4-pose of the camera.
+  // C is camera 4-pose
+  // C * w = C.R * w + C.P, where R is rotation, P is position 
+  // C3 is the xyz of C
+  // R is the room 4-pose
+  // both C and R are relative to world origin, but C is derived per frame from R
+  // V is the vr 3-pose
+  // for 4-position w
+  // 
+  void UpdateCameraRenderMatrix(vr::Hmd_Eye eye, Camera* pCamera) {
+    Pose4f matRoomCameraEye;
+    // m_hmdPose should already be an identify padded version of the vr device's coordinates in some space
+    Pose4f matEyeToHead;
+    StoreHMDMatrixPoseEye(eye, matEyeToHead);
 
-  //    static float amount = (float)PI / 2.0f;
-  //    static int targetAxis = 2;
-  //    static int sourceAxis = 1;
-  //    Mat4f matArbitrary(Mat4f().storeRotation(
-  //        amount, targetAxis, sourceAxis));
-  //    //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
-  //    //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
-  //    static int doArbitrary = 0; //1;
-  //    if(doArbitrary > 0) {
-  //      localOffset = matArbitrary.transform(localOffset);
-  //    } else if (doArbitrary < 0) {
-  //      localOffset = matArbitrary.transpose().transform(localOffset);
-  //    } else {
-  //      // do nothing
-  //    }
+    // ok just do from the origin to start
+    matRoomCameraEye = matEyeToHead * m_hmdPose;
+    //matMVP = m_mat4ProjectionLeft * m_mat4eyePosLeft * m_mat4HMDPose;
+    pCamera->UpdateRenderMatrix(&matRoomCameraEye);
 
-  //    static int doLocalTrans = 0;
-  //    Vec4f eyeSpaceOffset = localOffset;
-  //    if(doLocalTrans > 0) {
-  //      eyeSpaceOffset = localEye.transform(eyeSpaceOffset);
-  //    } else if(doLocalTrans < 0) {
-  //      eyeSpaceOffset = localEye.transpose().transform(eyeSpaceOffset);
-  //    } else {
-  //      // do nothing
-  //    }
+    //ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
+    //  0.2f /*zNear*/, 1000.0f /*zFar*/, true /*rightHanded*/);
+    pCamera->_zProjectionMatrix = GetHMDMatrixProjectionEye(eye, pCamera);
 
-  //    static int doCameraTrans = 0; //-1;
-  //    Vec4f worldSpaceOffset = eyeSpaceOffset;
-  //    if(doCameraTrans > 0) {
-  //      worldSpaceOffset = pCamera->_cameraMatrix.transform(worldSpaceOffset);
-  //    } else if(doCameraTrans < 0) {
-  //      worldSpaceOffset = pCamera->_cameraMatrix.transpose().transform(worldSpaceOffset);
-  //    } else {
-  //      // do nothing
-  //    }
+    return;
 
-  //    static int doRenderTrans = -1; //0;
-  //    Vec4f renderOffset = worldSpaceOffset;
-  //    if(doRenderTrans > 0) {
-  //      renderOffset = pCamera->_renderMatrix.transform(renderOffset);
-  //    } else if(doRenderTrans < 0) {
-  //      renderOffset = pCamera->_renderMatrix.transpose().transform(renderOffset);
-  //    } else {
-  //      // do nothing
-  //    }
 
-  //    static float postAmount = -(float)PI / 2.0f;
-  //    static int postTargetAxis = 2;
-  //    static int postSourceAxis = 1;
-  //    Mat4f matPostArbitrary(Mat4f().storeRotation(
-  //        postAmount, postTargetAxis, postSourceAxis));
-  //    //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
-  //    //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
-  //    static int doPostArbitrary = 0;
-  //    if(doPostArbitrary > 0) {
-  //      renderOffset = matPostArbitrary.transform(renderOffset);
-  //    } else if (doPostArbitrary < 0) {
-  //      renderOffset = matPostArbitrary.transpose().transform(renderOffset);
-  //    } else {
-  //      // do nothing
-  //    }
+    //Quatf localEyeQuat(localQuatOvr.w, localQuatOvr.x, localQuatOvr.y, localQuatOvr.z);
+    //Mat4f localEye;
+    //localEye.storeQuat3dRotation(localEyeQuat);
 
-  //    static int finalTransposer[4] = {0, 1, 2, 3};
-  //    static Vec4f finalSign(1.0f, 1.0f, 1.0f, 1.0f);
+    //if(m_debugHeadPose) {
+    //  localEye = *m_debugHeadPose;
+    //}
 
-  //    Vec4f finalOffset(
-  //        renderOffset[finalTransposer[0]] * finalSign.x,
-  //        renderOffset[finalTransposer[1]] * finalSign.y,
-  //        renderOffset[finalTransposer[2]] * finalSign.z,
-  //        renderOffset[finalTransposer[3]] * finalSign.w);
+    //const float worldScale = 20.0f;
+    //static bool simpleEyeOffset = true;
+    //if(simpleEyeOffset) {
+    //  const ovrVector3f& localPosOvr = m_eyeDesc[eye].HmdToEyeViewOffset;
+    //  Vec4f ovrEyePos(-localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
+    //  ovrEyePos *= worldScale;
+    //  ovrEyePos = pCamera->_renderMatrix.transpose().transform(ovrEyePos);
+    //  //pCamera->_renderPos = pCamera->_cameraPos + ovrEyePos;
+    //  pCamera->UpdateRenderMatrix(&localEye, &ovrEyePos);
 
-  //    const float derpEyes[2] = { -0.6f, 0.6f };
-  //    Vec4f derpEye = (pCamera->_renderMatrix[Camera::RIGHT] * (derpEyes[eye]));
+    //} else {
+    //  const ovrVector3f& ovrEyeZero = m_eyeRenderPose[0].Position;
+    //  const ovrVector3f& ovrEyeOne = m_eyeRenderPose[1].Position;
 
-  //    //pCamera->_renderPos = pCamera->_cameraPos + finalOffset;
-  //    pCamera->UpdateRenderMatrix(&localEye, &finalOffset);
+    //  Vec4f ovrEyeDifference(
+    //      ovrEyeOne.x - ovrEyeZero.x,
+    //      ovrEyeOne.y - ovrEyeZero.y,
+    //      ovrEyeOne.z - ovrEyeZero.z,
+    //      0.0f);
 
-  //    static int framecount = 0;
-  //    if(eye == 0) {
-  //      framecount++;
-  //    }
-  //    if(framecount > 100) {
-  //      printf("Eye %d\n", eye);
-  //      printf("pristine ovr: \t");   ovrEyePos.printIt();
-  //      printf("\neyespace: \t"); eyeSpaceOffset.printIt();
-  //      printf("\neyecamera: \t"); worldSpaceOffset.printIt();
-  //      printf("\neyerender: \t"); renderOffset.printIt();
-  //      printf("\nfinal: \t"); finalOffset.printIt();
-  //      printf("\nderp: \t"); derpEye.printIt();
-  //      printf("\ncamerapos: \t"); pCamera->_cameraPos.printIt();
-  //      printf("\nlocalEyeMat: \n"); localEye.printIt();
-  //      printf("\ncamera: \n"); pCamera->_cameraMatrix.printIt();
-  //      printf("\nrender: \n"); pCamera->_renderMatrix.printIt();
-  //      printf("\n");
-  //      if(eye != 0) {
-  //        framecount = 0;
-  //      }
-  //    }
-  //  }
+    //  const ovrVector3f& localPosOvr = m_eyeRenderPose[eye].Position;
+    //  static int transposer[3] = {0, 1, 2};
+    //  //static Vec4f sign(1.0f, 1.0f, 1.0f, 1.0f);
+    //  static Vec4f sign(-1.0f, 1.0f, 1.0f, 1.0f);
+    //  Vec4f ovrEyePos(localPosOvr.x, localPosOvr.y, localPosOvr.z, 0.0f);
 
-  //  ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
-  //    0.2f /*zNear*/, 1000.0f /*zFar*/, true /*rightHanded*/);
-  //  pCamera->_zProjectionMatrix.storeFromTransposedArray(&ovrProj.M[0][0]);
-  //}
+    //  // TODO: try to convert ovr into local using simple sign switch
+    //  // then independently do eye and forehead transformations
+    //  Vec4f ovrForehead;
+    //  if(eye == 0) {
+    //    ovrForehead = ovrEyePos - (ovrEyeDifference * 0.5f);
+    //  } else {
+    //    ovrForehead = ovrEyePos - (ovrEyeDifference * -0.5f);
+    //  }
 
-  //virtual void StartLeftEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
-  //  const int eye = 0;
-  //  StartEye(eye, outRenderColor, outRenderDepth);
-  //  UpdateCameraRenderMatrix(eye, pCamera);
-  //}
+    //  ovrEyePos *= worldScale;
+    //  Vec4f localOffset(
+    //      ovrEyePos[transposer[0]] * sign.x,
+    //      ovrEyePos[transposer[1]] * sign.y,
+    //      ovrEyePos[transposer[2]] * sign.z,
+    //      0.0f);
 
-  //virtual void StartRightEye(Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
-  //  const int eye = 1;
-  //  StartEye(eye, outRenderColor, outRenderDepth);
-  //  UpdateCameraRenderMatrix(eye, pCamera);
-  //}
+    //  static float amount = (float)PI / 2.0f;
+    //  static int targetAxis = 2;
+    //  static int sourceAxis = 1;
+    //  Mat4f matArbitrary(Mat4f().storeRotation(
+    //      amount, targetAxis, sourceAxis));
+    //  //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
+    //  //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
+    //  static int doArbitrary = 0; //1;
+    //  if(doArbitrary > 0) {
+    //    localOffset = matArbitrary.transform(localOffset);
+    //  } else if (doArbitrary < 0) {
+    //    localOffset = matArbitrary.transpose().transform(localOffset);
+    //  } else {
+    //    // do nothing
+    //  }
+
+    //  static int doLocalTrans = 0;
+    //  Vec4f eyeSpaceOffset = localOffset;
+    //  if(doLocalTrans > 0) {
+    //    eyeSpaceOffset = localEye.transform(eyeSpaceOffset);
+    //  } else if(doLocalTrans < 0) {
+    //    eyeSpaceOffset = localEye.transpose().transform(eyeSpaceOffset);
+    //  } else {
+    //    // do nothing
+    //  }
+
+    //  static int doCameraTrans = 0; //-1;
+    //  Vec4f worldSpaceOffset = eyeSpaceOffset;
+    //  if(doCameraTrans > 0) {
+    //    worldSpaceOffset = pCamera->_cameraMatrix.transform(worldSpaceOffset);
+    //  } else if(doCameraTrans < 0) {
+    //    worldSpaceOffset = pCamera->_cameraMatrix.transpose().transform(worldSpaceOffset);
+    //  } else {
+    //    // do nothing
+    //  }
+
+    //  static int doRenderTrans = -1; //0;
+    //  Vec4f renderOffset = worldSpaceOffset;
+    //  if(doRenderTrans > 0) {
+    //    renderOffset = pCamera->_renderMatrix.transform(renderOffset);
+    //  } else if(doRenderTrans < 0) {
+    //    renderOffset = pCamera->_renderMatrix.transpose().transform(renderOffset);
+    //  } else {
+    //    // do nothing
+    //  }
+
+    //  static float postAmount = -(float)PI / 2.0f;
+    //  static int postTargetAxis = 2;
+    //  static int postSourceAxis = 1;
+    //  Mat4f matPostArbitrary(Mat4f().storeRotation(
+    //      postAmount, postTargetAxis, postSourceAxis));
+    //  //static Quatf arbitrary(0.0f, 1.0f, 0.0f, 0.0f);
+    //  //Mat4f matArbitrary = Mat4f().storeQuat3dRotation(arbitrary.storeNormalized());
+    //  static int doPostArbitrary = 0;
+    //  if(doPostArbitrary > 0) {
+    //    renderOffset = matPostArbitrary.transform(renderOffset);
+    //  } else if (doPostArbitrary < 0) {
+    //    renderOffset = matPostArbitrary.transpose().transform(renderOffset);
+    //  } else {
+    //    // do nothing
+    //  }
+
+    //  static int finalTransposer[4] = {0, 1, 2, 3};
+    //  static Vec4f finalSign(1.0f, 1.0f, 1.0f, 1.0f);
+
+    //  Vec4f finalOffset(
+    //      renderOffset[finalTransposer[0]] * finalSign.x,
+    //      renderOffset[finalTransposer[1]] * finalSign.y,
+    //      renderOffset[finalTransposer[2]] * finalSign.z,
+    //      renderOffset[finalTransposer[3]] * finalSign.w);
+
+    //  const float derpEyes[2] = { -0.6f, 0.6f };
+    //  Vec4f derpEye = (pCamera->_renderMatrix[Camera::RIGHT] * (derpEyes[eye]));
+
+    //  //pCamera->_renderPos = pCamera->_cameraPos + finalOffset;
+    //  pCamera->UpdateRenderMatrix(&localEye, &finalOffset);
+
+    //  static int framecount = 0;
+    //  if(eye == 0) {
+    //    framecount++;
+    //  }
+    //  if(framecount > 100) {
+    //    printf("Eye %d\n", eye);
+    //    printf("pristine ovr: \t");   ovrEyePos.printIt();
+    //    printf("\neyespace: \t"); eyeSpaceOffset.printIt();
+    //    printf("\neyecamera: \t"); worldSpaceOffset.printIt();
+    //    printf("\neyerender: \t"); renderOffset.printIt();
+    //    printf("\nfinal: \t"); finalOffset.printIt();
+    //    printf("\nderp: \t"); derpEye.printIt();
+    //    printf("\ncamerapos: \t"); pCamera->_cameraPos.printIt();
+    //    printf("\nlocalEyeMat: \n"); localEye.printIt();
+    //    printf("\ncamera: \n"); pCamera->_cameraMatrix.printIt();
+    //    printf("\nrender: \n"); pCamera->_renderMatrix.printIt();
+    //    printf("\n");
+    //    if(eye != 0) {
+    //      framecount = 0;
+    //    }
+    //  }
+    //}
+  }
+
+  virtual void StartLeftEye(
+      Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
+    vr::Hmd_Eye eye = vr::Eye_Left;
+    StartEye(eye, outRenderColor, outRenderDepth);
+    UpdateCameraRenderMatrix(eye, pCamera);
+  }
+  
+  virtual void FinishLeftEye(
+      Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
+    vr::Hmd_Eye eye = vr::Eye_Left;
+    FinishEye(eye, outRenderColor, outRenderDepth);  
+  }
+
+  virtual void StartRightEye(
+      Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
+    vr::Hmd_Eye eye = vr::Eye_Right;
+    StartEye(eye, outRenderColor, outRenderDepth);
+    UpdateCameraRenderMatrix(eye, pCamera);
+  }
+
+  virtual void FinishRightEye(
+      Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
+    vr::Hmd_Eye eye = vr::Eye_Right;
+    FinishEye(eye, outRenderColor, outRenderDepth);  
+  }
 
   virtual void FinishFrame() {
     RenderDistortion();
@@ -628,12 +749,16 @@ public:
     }
   }
 
+  virtual void SetVRPreferredMovementMode(Camera* pCamera) {
+    pCamera->setMovementMode(Camera::MovementMode::ROOM);
+  }
+
   //virtual std::string GetDeviceName() {
   //  if(!m_HMD) return std::string("");
   //  return std::string(m_HMD->DisplayDeviceName);
   //}
 
-  //virtual bool GetIsDebugDevice() { return m_isDebugDevice; }
+  virtual bool GetIsDebugDevice() { return false; }
 
   //virtual void ToggleFullscreen() {
   //  if(!m_HMD) return;
