@@ -452,21 +452,32 @@ namespace fd {
     // -z is going away from you
     //fd is ???-apendaged system
     void ConvertSteamVRMatrixToPose4(
-      const vr::HmdMatrix34_t &vrPose, Pose4f& pose) {
-      // probably still totally wrong, look here first when it's messed
+        const vr::HmdMatrix34_t &vrPose, Pose4f& pose) {
+      static float signs[] = {
+        1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f, 
+        1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f
+      };
       float vals[] = {
-        vrPose.m[0][0], vrPose.m[1][0], vrPose.m[2][0], 0.0,
-        vrPose.m[0][1], vrPose.m[1][1], vrPose.m[2][1], 0.0,
-        vrPose.m[0][2], vrPose.m[1][2], vrPose.m[2][2], 0.0,
+        vrPose.m[0][0], vrPose.m[0][1], vrPose.m[0][2], 0.0,
+        vrPose.m[1][0], vrPose.m[1][1], vrPose.m[1][2], 0.0,
+        vrPose.m[2][0], vrPose.m[2][1], vrPose.m[2][2], 0.0,
         0.0f, 0.0f, 0.0f, 1.0f
       };
+      for(int val = 0; val < (sizeof(signs) / sizeof(signs[0])); val++) {
+        vals[val] = signs[val] * vals[val];
+      }
       memcpy(pose.rotation.raw(), vals, sizeof(vals));
+      static bool transpose = false;
+      if(transpose) {
+        pose.rotation = pose.rotation.transpose();
+      }
       pose.position.set(vrPose.m[0][3], vrPose.m[1][3], vrPose.m[2][3], 0.0f);
     }
 
     void ConvertSteamVRMatrixToMatrix4(
       const vr::HmdMatrix44_t &vrMat, Mat4f& fdMat) {
-      // probably still totally wrong, look here first when it's messed
       float vals[] = {
         vrMat.m[0][0], vrMat.m[1][0], vrMat.m[2][0], vrMat.m[3][0],
         vrMat.m[0][1], vrMat.m[1][1], vrMat.m[2][1], vrMat.m[3][1],
@@ -474,7 +485,6 @@ namespace fd {
         vrMat.m[0][3], vrMat.m[1][3], vrMat.m[2][3], vrMat.m[3][3]
       };
       memcpy(fdMat.raw(), vals, sizeof(vals));
-      // odds that there will be a call to transpose right here in the near future as a test?
     }
 
     virtual void StartFrame() {
@@ -780,7 +790,8 @@ namespace fd {
 
     virtual void StartLeftEye(
       Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
-      vr::Hmd_Eye eye = vr::Eye_Left;
+      //vr::Hmd_Eye eye = vr::Eye_Left;
+      vr::Hmd_Eye eye = vr::Eye_Right;
       StartEye(eye, outRenderColor, outRenderDepth);
       UpdateCameraRenderMatrix(eye, pCamera);
     }
@@ -793,7 +804,8 @@ namespace fd {
 
     virtual void StartRightEye(
       Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
-      vr::Hmd_Eye eye = vr::Eye_Right;
+      //vr::Hmd_Eye eye = vr::Eye_Right;
+      vr::Hmd_Eye eye = vr::Eye_Left;
       StartEye(eye, outRenderColor, outRenderDepth);
       UpdateCameraRenderMatrix(eye, pCamera);
     }
