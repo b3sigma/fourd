@@ -84,6 +84,7 @@ public:
 
   bool Initialize(int width, int height);
   bool ResizeRenderTargets(int width, int height);
+  Shader* LoadShader(const char* shaderName);
 
   void UpdateFrameTime();
   void Step();
@@ -94,6 +95,7 @@ public:
   void AddCamera(Camera* pCamera);
   Camera* GetFirstCamera();
   void AddScene(Scene* pScene);
+  Scene* GetFirstScene();
 
   void RenderAllScenesPerCamera(Texture* pRenderColor, Texture* pRenderDepth);
   void RenderScene(Camera* pCamera, Scene* pScene, Texture* pRenderColor, Texture* pRenderDepth);

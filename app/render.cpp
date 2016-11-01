@@ -5,6 +5,7 @@
 #include "../common/camera.h"
 #include "../common/misc_defs.h"
 #include "glhelper.h"
+#include "platform_interface.h"
 #include "scene.h"
 #include "shader.h"
 #include "texture.h"
@@ -77,6 +78,58 @@ bool Render::Initialize(int width, int height) {
 
   return true;
 }
+
+Shader* Render::LoadShader(const char* shaderName) {
+  static std::string g_currentShader;
+  std::string shaderDir = "data/";
+  std::string vertPrefix = std::string("vert");
+  std::string fragPrefix = std::string("frag");
+  std::string ext = std::string(".glsl");
+
+  std::string baseNameWithExt;
+  if(shaderName == NULL) {
+    std::string search = shaderDir + vertPrefix + "*" + ext;
+    const char* currentLevel = (g_currentShader.empty()) ? NULL : g_currentShader.c_str();
+    std::string nextNameWithExt;
+    if(!Platform::GetNextFileName(search.c_str(), currentLevel, nextNameWithExt)) {
+      return NULL;
+    }
+    // muhahaha so robust
+    const char* baseStart = &(nextNameWithExt.c_str()[4]); // skip vert
+    baseNameWithExt.assign(baseStart);
+  } else {
+    std::string nameBase(shaderName);
+    baseNameWithExt = nameBase + ext;
+  }
+
+  std::string vertName = shaderDir + vertPrefix + baseNameWithExt;
+  std::string fragName = shaderDir + fragPrefix + baseNameWithExt;
+
+  std::unique_ptr<::fd::Shader> shaderMem;
+  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(baseNameWithExt);
+  if (pShader) {
+    pShader->Release();
+  } else {
+    pShader = new ::fd::Shader();
+    shaderMem.reset(pShader);
+  }
+
+  pShader->AddDynamicMeshCommonSubShaders();
+  if(!pShader->LoadFromFile(baseNameWithExt.c_str(), vertName.c_str(), fragName.c_str())) {
+    printf("Failed loading shader!\n");
+    return NULL;
+  }
+
+  shaderMem.release();
+  //g_shader = pShader;
+  //g_scene.m_pQuaxolShader = g_shader;
+
+  g_currentShader = vertPrefix + baseNameWithExt;
+  printf("Loaded shader %s\n", vertName.c_str());
+
+  return pShader;
+}
+
 
 bool Render::ResizeRenderTargets(int width, int height) {
   if(m_overdrawColor) {
@@ -174,6 +227,13 @@ Camera* Render::GetFirstCamera() {
 
 void Render::AddScene(Scene* pScene) {
   m_scenes.push_back(pScene);
+}
+
+Scene* Render::GetFirstScene() {
+  if(m_scenes.empty())
+    return NULL;
+
+  return m_scenes.front();
 }
 
 void Render::RenderScene(Camera* pCamera, Scene* pScene,

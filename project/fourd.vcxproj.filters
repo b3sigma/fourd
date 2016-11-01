@@ -114,6 +114,9 @@
     <ClCompile Include="..\app\vr_openvr_wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\app\render_helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">
@@ -252,6 +255,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\app\components\gui_input_router.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\render_helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

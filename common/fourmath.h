@@ -181,7 +181,7 @@ protected:
   //};
 
 public:
-  Matrix4() { storeZero(); }
+  Matrix4() { storeIdentity(); }
   Matrix4(const Matrix4<T>& c) {
     d(0) = c.d(0); d(1) = c.d(1); d(2) = c.d(2); d(3) = c.d(3);
   }

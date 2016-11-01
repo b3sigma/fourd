@@ -95,6 +95,7 @@
     <ClCompile Include="..\app\input_handler.cpp" />
     <ClCompile Include="..\app\meshbuffer.cpp" />
     <ClCompile Include="..\app\render.cpp" />
+    <ClCompile Include="..\app\render_helper.cpp" />
     <ClCompile Include="..\app\scene.cpp" />
     <ClCompile Include="..\app\shader.cpp" />
     <ClCompile Include="..\app\texture.cpp" />
@@ -133,6 +134,7 @@
     <ClInclude Include="..\app\meshbuffer.h" />
     <ClInclude Include="..\app\platform_interface.h" />
     <ClInclude Include="..\app\render.h" />
+    <ClInclude Include="..\app\render_helper.h" />
     <ClInclude Include="..\app\scene.h" />
     <ClInclude Include="..\app\shader.h" />
     <ClInclude Include="..\app\texture.h" />

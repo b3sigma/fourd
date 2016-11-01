@@ -18,7 +18,7 @@
 #include "../common/camera.h"
 
 // hmm not great
-fd::Shader* LoadShader(const char* shaderName);
+extern fd::Render g_renderer; // fourd.cpp
 
 namespace fd {
 
@@ -255,7 +255,7 @@ namespace fd {
 
     bool SetupShaders() {
       delete m_lensShader;
-      m_lensShader = ::LoadShader("OpenVrDistortion");
+      m_lensShader = g_renderer.LoadShader("OpenVrDistortion");
       if(!m_lensShader) {
         printf("Lens shader failed to load?");
         return false;

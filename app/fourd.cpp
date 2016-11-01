@@ -33,13 +33,14 @@
 #include "../common/components/timed_death.h"
 #include "../common/thirdparty/argh.h"
 #include "entity.h"
+#include "glhelper.h"
 #include "imgui_wrapper.h"
 #include "input_handler.h"
 #include "render.h"
+#include "render_helper.h"
 #include "scene.h"
 #include "shader.h"
 #include "texture.h"
-#include "glhelper.h"
 #include "components/gui_input_router.h"
 #include "components/reset_watcher.h"
 #include "components/quaxol_modifier.h"
@@ -81,56 +82,6 @@ float g_screensaverTime = 0.0f; // 0 is disabled
 bool g_startupAddEyeCandy = true;
 std::string g_startupLevel = "current.bin";
 
-extern fd::Shader* LoadShader(const char* shaderName) {
-  static std::string g_currentShader;
-  std::string shaderDir = "data/";
-  std::string vertPrefix = std::string("vert");
-  std::string fragPrefix = std::string("frag");
-  std::string ext = std::string(".glsl");
-
-  std::string baseNameWithExt;
-  if(shaderName == NULL) {
-    std::string search = shaderDir + vertPrefix + "*" + ext;
-    const char* currentLevel = (g_currentShader.empty()) ? NULL : g_currentShader.c_str();
-    std::string nextNameWithExt;
-    if(!::fd::Platform::GetNextFileName(search.c_str(), currentLevel, nextNameWithExt)) {
-      return NULL;
-    }
-    // muhahaha so robust
-    const char* baseStart = &(nextNameWithExt.c_str()[4]); // skip vert
-    baseNameWithExt.assign(baseStart);
-  } else {
-    std::string nameBase(shaderName);
-    baseNameWithExt = nameBase + ext;
-  }
-
-  std::string vertName = shaderDir + vertPrefix + baseNameWithExt;
-  std::string fragName = shaderDir + fragPrefix + baseNameWithExt;
-
-  std::unique_ptr<::fd::Shader> shaderMem;
-  ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(baseNameWithExt);
-  if (pShader) {
-    pShader->Release();
-  } else {
-    pShader = new ::fd::Shader();
-    shaderMem.reset(pShader);
-  }
-
-  pShader->AddDynamicMeshCommonSubShaders();
-  if(!pShader->LoadFromFile(baseNameWithExt.c_str(), vertName.c_str(), fragName.c_str())) {
-    printf("Failed loading shader!\n");
-    return NULL;
-  }
-
-  shaderMem.release();
-  g_shader = pShader;
-  //g_scene.m_pQuaxolShader = g_shader;
-
-  g_currentShader = vertPrefix + baseNameWithExt;
-  printf("Loaded shader %s\n", vertName.c_str());
-
-  return pShader;
-}
 
 std::string g_levelPath = "data/levels/";
 bool SaveLevel(const char* levelName) {
@@ -237,80 +188,15 @@ void SetDefaultCameraMode() {
   }
 }
 
-enum EyeCandyTypes {
-  EyeCandyQuad,
-  EyeCandyCube,
-  EyeCandyTesseract,
-  EyeCandy16Cell,
-  EyeCandy24Cell,
-  EyeCandy120Cell,
-  EyeCandy600Cell,
-};
-typedef std::list<std::unique_ptr<Mesh>> MeshList;
-MeshList g_eyeCandyMeshes;
-
-void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
-  g_eyeCandyMeshes.emplace_back(new Mesh());
-  Mesh* candy = g_eyeCandyMeshes.back().get();
-  const float size = 30.0f;
-  const float smallSize = 15.0f;
-  Vec4f smallOff(13.0f, 0.0f, 0.0f, 3.0f);
-  switch(type) {
-    case EyeCandyQuad:
-      candy->buildQuad(smallSize, smallOff, Vec4f());
-      break;
-    case EyeCandyCube:
-      candy->buildCube(smallSize, smallOff, Vec4f());
-      break;
-    case EyeCandyTesseract:
-      candy->buildTesseract(smallSize, smallOff, Vec4f());
-      break;
-    case EyeCandy16Cell:
-      candy->build16cell(size, Vec4f());
-      break;
-    case EyeCandy24Cell: {
-      const float shift = 8.5f;
-      const Vec4f offsetSize(shift, shift, 0.5f, shift * 2);
-      candy->buildCaylay24Cell(size, offsetSize);
-    } break;
-    case EyeCandy120Cell: {
-      const float shift = 5.5f;
-      const Vec4f offsetSize(size / 2 + shift, size / 2 + shift, shift, size / 2 + shift);
-      candy->buildCaylay120Cell(size, offsetSize);
-    } break;
-    case EyeCandy600Cell: {
-      const float shift = 5.5f;
-      const Vec4f offsetSize(size / 2 + shift, size / 2 + shift, shift, size / 2 + shift);
-      candy->buildCaylay600Cell(size, offsetSize);
-    } break;
-  }
-
-  Entity* pEntity = g_scene.AddEntity();
-  // ugh need like a mesh manager and better approach to shader handling
-  //pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
-  pEntity->Initialize(candy, LoadShader("ColorBlendClipped"), NULL);
-  pEntity->m_position = pos;
-  pEntity->GetComponentBus().AddComponent(
-      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
-      -20.0f, true));
-}
-
 void AddAllEyeCandy() {
-
-  // yeah yeah side effects blah blah
-  Shader* savedShader = g_shader;
-
   float closeDist = -50.0f;
-  AddEyeCandy(EyeCandyQuad, Vec4f(closeDist, 00.0f, -50.0f, 15.0f));
-  AddEyeCandy(EyeCandyCube, Vec4f(closeDist, 00.0f, 00.0f, 15.0f));
-  AddEyeCandy(EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));
-  AddEyeCandy(EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 5.0f));
-  AddEyeCandy(EyeCandy24Cell, Vec4f(50.0f, 00.0f, 180.0f, 0.0f));
-  //AddEyeCandy(EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
-  //AddEyeCandy(EyeCandy600Cell, Vec4f(250.0f, 00.0f, 240.0f, 0.0f));
-
-  g_shader = savedShader;
-  //g_scene.m_pQuaxolShader = g_shader;
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandyQuad, Vec4f(closeDist, 00.0f, -50.0f, 15.0f));
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandyCube, Vec4f(closeDist, 00.0f, 00.0f, 15.0f));
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandy16Cell, Vec4f(-50.0f, 00.0f, 150.0f, 5.0f));
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandy24Cell, Vec4f(50.0f, 00.0f, 180.0f, 0.0f));
+  //RenderHelper::AddEyeCandy(RenderHelper::EyeCandy120Cell, Vec4f(150.0f, 00.0f, 200.0f, 0.0f));
+  //RenderHelper::AddEyeCandy(RenderHelper::EyeCandy600Cell, Vec4f(250.0f, 00.0f, 240.0f, 0.0f));
 }
 
 bool Initialize(int width, int height) {
@@ -374,16 +260,17 @@ bool Initialize(int width, int height) {
   g_renderer.ToggleAlphaDepthModes(Render::AlphaOnDepthOffSrcDest);
   // Just preload the shaders to check for compile errors
   // Last one will be "current"
-  if (!LoadShader("AlphaTest")
-    || !LoadShader("AlphaTestTex")
-    || !LoadShader("ColorBlend")
-    || !LoadShader("BlendNoTex")
-    || !LoadShader("ColorBlendClipped")
-    || !LoadShader("Rainbow")
+  if (!g_renderer.LoadShader("AlphaTest")
+    || !g_renderer.LoadShader("AlphaTestTex")
+    || !g_renderer.LoadShader("ColorBlend")
+    || !g_renderer.LoadShader("BlendNoTex")
+    || !g_renderer.LoadShader("ColorBlendClipped")
+    || !g_renderer.LoadShader("Rainbow")
     ) {
     printf("Shader loading failed\n");
     exit(-1);
   }
+  g_shader = g_renderer.LoadShader("Rainbow"); // should be cached, this sets for some tools
 
   LoadLevel(g_startupLevel.c_str());
   //LoadLevel("current.bin");
@@ -443,7 +330,7 @@ void UpdatePerspective() {
 void SetSimpleProjectiveMode() {
   g_camera.SetWProjection(-8.5f, 8.5f, 1.0f, 1.0f /*animateTime*/);
   //LoadShader("AlphaTest");
-  LoadShader("AlphaTestTex");
+  g_shader = g_renderer.LoadShader("AlphaTestTex");
   g_renderer.ToggleAlphaDepthModes(Render::AlphaTestDepthOnSrcDest);
   UpdatePerspective();
 }
@@ -586,7 +473,7 @@ void AddRaycastEntity() {
     Entity* pEntity = g_scene.AddEntity();
     // ugh need like a mesh manager and better approach to shader handling
 
-    pEntity->Initialize(&tesseract, LoadShader("ColorBlendClipped"), NULL);
+    pEntity->Initialize(&tesseract, g_renderer.LoadShader("ColorBlendClipped"), NULL);
     //pEntity->Initialize(&tesseract, g_shader, NULL);
     //pEntity->m_orientation.storeScale(10.0f);
 
@@ -695,26 +582,26 @@ void AsciiKeyUpdate(int key, bool isShift) {
       g_renderer.ToggleAlphaDepthModes(Render::EToggleModes);
     } break;
     case '@' : {
-      LoadShader("Rainbow");
+      g_shader = g_renderer.LoadShader("Rainbow");
       UpdatePerspective();
     } break;
     case '#' : {
-      LoadShader("ColorBlendClipped");
+      g_shader = g_renderer.LoadShader("ColorBlendClipped");
       UpdatePerspective();
     } break;
     case '$' : {
-      LoadShader("AlphaTestTex");
+      g_shader = g_renderer.LoadShader("AlphaTestTex");
       UpdatePerspective();
     } break;
     case '%' : {
       SetSimpleProjectiveMode();
     } break;
     case '^' : {
-      LoadShader("RedShift");
+      g_shader = g_renderer.LoadShader("RedShift");
       UpdatePerspective();
     } break;
     case '&' : {
-      LoadShader(NULL);
+      g_shader = g_renderer.LoadShader(NULL);
       UpdatePerspective();
     } break;
     case '*' : {
