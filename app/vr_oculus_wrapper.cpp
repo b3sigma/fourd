@@ -136,8 +136,7 @@ public:
     ovrHmd_DismissHSWDisplay(m_HMD);
 
     s_Initialized = true;
-    //s_UsingVR = true;
-
+    
     return true;
   }
 

@@ -126,8 +126,35 @@ void Camera::UpdateRenderMatrix(Pose4f* pose) {
 
 void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
   if(_movement == MovementMode::ROOM && lookOffset && posOffset) {
-    _renderMatrix = *lookOffset;
-    _renderPos = *posOffset;
+    // so in this case look and pos work like
+    // M * x = M.R * x + M.P
+    static int shotgunProgramming = 2;
+    switch(shotgunProgramming) {
+      case 0: {
+        _renderMatrix = _cameraMatrix * (*lookOffset);
+        _renderPos = _cameraMatrix.transform(*posOffset) + _cameraPos;
+      } break;
+      case 1: {
+        _renderMatrix = (*lookOffset) * _cameraMatrix;
+        _renderPos = _cameraMatrix.transform(*posOffset) + _cameraPos;
+      } break;
+      case 2: {
+        _renderMatrix = (*lookOffset) * _cameraMatrix;
+        _renderPos = *posOffset + (*lookOffset).transform(_cameraPos);
+      } break;
+      case 3: {
+        _renderMatrix = _cameraMatrix * (*lookOffset);
+        _renderPos = *posOffset + (*lookOffset).transform(_cameraPos);
+      } break;
+      case 4: {
+        _renderMatrix = (*lookOffset) * _cameraMatrix;
+        _renderPos = *posOffset + _cameraPos;
+      } break;
+      case 10: {
+        _renderMatrix = (*lookOffset);
+        _renderPos = *posOffset;
+      } break;
+      }
   } else {
     if(lookOffset && posOffset) {
       //_renderMatrix = (*lookOffset) * (_yawPitchTrans * _cameraMatrix);
