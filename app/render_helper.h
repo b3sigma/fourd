@@ -16,7 +16,8 @@ public:
     EyeCandy600Cell,
   };
 
-  static void RenderTess(Vec4f pos, const Mat4f* rotation = NULL);
+  static void RenderAxis(Vec4f pos, const Mat4f* rotation = NULL, float scale = 1.0f);
+  static void RenderTess(Vec4f pos, const Mat4f* rotation = NULL, float scale = 1.0f);
   static void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos);
 };
 

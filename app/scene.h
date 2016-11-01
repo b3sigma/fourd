@@ -44,7 +44,7 @@ public:
 
   typedef std::vector<Texture*> TTextureList;
   TTextureList m_texList;
-  MeshBuffer* m_pQuaxolBuffer; // owned
+  //MeshBuffer* m_pQuaxolBuffer; // owned
 
   QuaxolChunk* m_pQuaxolChunk;
 

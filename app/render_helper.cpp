@@ -1,12 +1,13 @@
 #include <memory>
 #include "../common/mesh.h"
 #include "../common/components/animated_rotation.h"
+#include "../common/components/mesh_cleanup.h"
+#include "../common/components/timed_death.h"
 #include "entity.h"
 #include "render_helper.h"
 #include "render.h"
 #include "scene.h"
 
-extern fd::Scene g_scene; // fourd.cpp
 extern fd::Render g_renderer; // fourd.cpp
 
 namespace fd {
@@ -60,9 +61,8 @@ void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
       -20.0f, true));
 }
 
-void RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation) {
-  g_eyeCandyMeshes.emplace_back(new Mesh());
-  Mesh* candy = g_eyeCandyMeshes.back().get();
+void RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, float scale) {
+  std::unique_ptr<Mesh> candy(new Mesh());
   const float size = 30.0f;
   const float smallSize = 15.0f;
   Vec4f smallOff(13.0f, 0.0f, 0.0f, 3.0f);
@@ -71,14 +71,18 @@ void RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation) {
   Entity* pEntity = g_renderer.GetFirstScene()->AddEntity();
   // ugh need like a mesh manager and better approach to shader handling
   //pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
-  pEntity->Initialize(candy, g_renderer.LoadShader("ColorBlendClipped"), NULL);
+  pEntity->Initialize(candy.get(), g_renderer.LoadShader("ColorBlendClipped"), NULL);
   pEntity->m_position = pos;
   if(rotation) {
     pEntity->m_orientation = *rotation;
   }
   pEntity->GetComponentBus().AddComponent(
-      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
-      -20.0f, true));
+      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE, -20.0f, true));
+  pEntity->GetComponentBus().AddComponent(new TimedDeath(5.0f));
+  pEntity->GetComponentBus().AddComponent(new MeshCleanupComponent(&(pEntity->m_pMesh)));
+  if(pEntity->m_pMesh) {
+    candy.release(); // as now the MeshCleanupComponent has it
+  }
 }
 
 } // namespace fd 

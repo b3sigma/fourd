@@ -28,6 +28,7 @@ public:
   inline virtual ~Component();
 
   void PreBusDelete() {
+    OnIdempotentDestruction();
     // if the bus is deleting, don't do destructor callback stuff
     m_ownerBus = NULL;
   }
@@ -38,10 +39,13 @@ public:
 
   // Components should hook up data if necessary here
   virtual void OnConnected() {}
+  // should get called at least once, but maybe a few times depending on which destruction path one goes down... the idea behind this is to force the subclasser to write really defensive code but not need to understand the inner workings of the destruction path, which is an important conceptual simplification
+  virtual void OnIdempotentDestruction() {} 
 
   inline void UnregisterAllSignals();
 
   void SelfDestruct() {
+    OnIdempotentDestruction();
     _beingDestroyed = true;
     //UnregisterAllSignals();
   }

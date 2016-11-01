@@ -128,7 +128,7 @@ void Camera::UpdateRenderMatrix(Mat4f* lookOffset, Vec4f* posOffset) {
   if(_movement == MovementMode::ROOM && lookOffset && posOffset) {
     // so in this case look and pos work like
     // M * x = M.R * x + M.P
-    static int shotgunProgramming = 2;
+    static int shotgunProgramming = 1;
     switch(shotgunProgramming) {
       case 0: {
         _renderMatrix = _cameraMatrix * (*lookOffset);

@@ -21,7 +21,7 @@ namespace fd {
 Scene::Scene()
   : m_pQuaxolShader(NULL)
   , m_pQuaxolMesh(NULL)
-  , m_pQuaxolBuffer(NULL)
+  //, m_pQuaxolBuffer(NULL)
   , m_pQuaxolChunk(NULL)
   , m_pQuaxolAtlas(NULL)
   , m_pGroundPlane(NULL)
@@ -38,7 +38,7 @@ Scene::Scene()
 }
 
 Scene::~Scene() {
-  delete m_pQuaxolBuffer;
+  //delete m_pQuaxolBuffer;
   delete m_pQuaxolChunk;
   delete m_pPhysics;
   delete m_pGroundPlane;

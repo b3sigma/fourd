@@ -7,7 +7,7 @@
 namespace fd {
 
 class Mesh;
-class MeshBuffer;
+//class MeshBuffer;
 class Scene;
 class Shader;
 class Texture;
@@ -23,7 +23,7 @@ public:
   Scene* m_scene;
 
   // TODO: abstract this stuff into mesh component?
-  MeshBuffer* m_pMeshBuffer;
+  //MeshBuffer* m_pMeshBuffer;
   Mesh* m_pMesh; // not owned
   Shader* m_pShader; // not owned
   typedef std::vector<Texture*> TTextureList;

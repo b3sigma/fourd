@@ -146,6 +146,7 @@
     <ClInclude Include="..\common\components\animated_camera_params.h" />
     <ClInclude Include="..\common\components\animated_rotation.h" />
     <ClInclude Include="..\common\components\camera_follow.h" />
+    <ClInclude Include="..\common\components\mesh_cleanup.h" />
     <ClInclude Include="..\common\components\periodic_motion.h" />
     <ClInclude Include="..\common\components\physics_component.h" />
     <ClInclude Include="..\common\components\timed_death.h" />

@@ -106,7 +106,7 @@ namespace fd {
     m_height = sizeY;
     m_format = GL_RGBA;
     // This probably affected the dk2 but precision in colors is like... *shrug* anyway right now :)
-    m_internal_format = GL_RGBA8; // GL_SRGB_ALPHA;
+    m_internal_format = GL_SRGB_ALPHA; // GL_RGBA8; // GL_SRGB_ALPHA;
 
     glTexImage2D(GL_TEXTURE_2D, 0 /* level */,
           m_internal_format, m_width, m_height, 0 /* border */,
