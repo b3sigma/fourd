@@ -12,6 +12,7 @@
 //#endif
 #include "glhelper.h"
 #include "render.h"
+#include "render_helper.h"
 #include "shader.h"
 #include "win32_platform.h"
 #include "../common/fourmath.h"
@@ -64,6 +65,7 @@ namespace fd {
 
     //const Mat4f* m_debugHeadPose;
     //bool m_isDebugDevice
+    bool m_debugRendering = false;
 
     VVRWrapper() : m_HMD(NULL), m_pWindow(NULL)
       , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
@@ -396,7 +398,7 @@ namespace fd {
       }
 
       {
-        static float worldScale = 0.0f; //20.0f; // ugh, move this to somewhere in camera
+        static float worldScale = 0.0f; // ugh, move this to somewhere in camera
         static Vec4f posSigns(1.0f, 1.0f, 1.0f, 1.0f);
         pose.position.set(vrPose.m[0][3], vrPose.m[1][3], vrPose.m[2][3], 0.0f);
         pose.position *= worldScale;
@@ -446,11 +448,23 @@ namespace fd {
             }
             m_strCurrentDeviceClasses += m_rDeviceClassCharCodes[nDevice];
           }
+          if(m_debugRendering) {
+            if(m_HMD->GetTrackedDeviceClass(nDevice) == vr::TrackedDeviceClass_Controller) {
+              RenderHelper::RenderAxis(m_device3Poses[nDevice].position, &m_device3Poses[nDevice].rotation, 20 /*scale*/, false /*permanent*/);
+              Pose4f invDev = m_device3Poses[nDevice].invert();
+              RenderHelper::RenderAxis(invDev.position, &invDev.rotation, 20 /*scale*/, false /*permanent*/);
+            }
+          }
         }
       }
 
       if (m_devicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid) {
         m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].invert();
+        if(m_debugRendering) {
+          RenderHelper::RenderAxis(m_hmdPose.position, &m_hmdPose.rotation, 20 /*scale*/, false /*permanent*/);
+          RenderHelper::RenderAxis(Vec4f(50.0f, 0.0f, 0.0f, 0.0f) + m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].position, 
+              &m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].rotation, 20 /*scale*/, false /*permanent*/);
+        }
       }
       WasGLErrorPlusPrint();
     }

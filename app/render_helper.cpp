@@ -61,7 +61,7 @@ void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
       -20.0f /* ugh negative duration to be forever*/, true /*worldRotation*/));
 }
 
-void RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, float scale) {
+Entity* RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, float scale) {
   std::unique_ptr<Mesh> tesseract(new Mesh());
   tesseract->buildTesseract(1.0f, Vec4f(), Vec4f());
   tesseract->fillSolidColors(color);
@@ -88,10 +88,15 @@ void RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, flo
   if(pEntity->m_pMesh) {
     tesseract.release(); // as now the MeshCleanupComponent has it
   }
+  return pEntity;
 }
 
-void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale) {
-  Camera& camera = *(g_renderer.GetFirstCamera());
+// so according to this, the render matrix is
+// +x right, +y up, -z forward, +w in
+// camera matrix is -x right, +y up, +z forward, +w in
+// hahaha
+void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale, bool permanent) {
+  //Camera& camera = *(g_renderer.GetFirstCamera());
   Vec4f placeAt;
   Mat4f placeLike;
   Vec4f colors[] = {
@@ -110,12 +115,22 @@ void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale) {
       }
     }
 
-    placeAt = camera.getCameraPos() 
-            + camera.getCameraMatrix().inverse().transform(direction);
-//            + camera.getCameraMatrix().transform(direction);
-    placeLike = camera.getCameraMatrix() * Mat4f().storeScale(scaleDiag);
+    placeAt = pos;
+    if(rotation) {
+      placeAt += rotation->transform(direction);
+    }
+    //placeAt = camera.getCameraPos() 
+    //        //+ camera.getCameraMatrix().inverse().transform(direction);
+    //        + camera.getCameraMatrix().transform(direction);
+    if(rotation) {
+      placeLike = *rotation;
+    }
+    placeLike = Mat4f().storeScale(scaleDiag) * placeLike;
     //placeLike = camera.getCameraMatrix().inverse() * Mat4f().storeScale(scaleDiag);
-    RenderHelper::RenderTess(placeAt, &placeLike, colors[dir]);
+    Entity* tess = RenderHelper::RenderTess(placeAt, &placeLike, colors[dir]);
+    if(!permanent && tess) {
+      tess->GetComponentBus().AddComponent(new TimedDeath(1.0f)); //uuuugh
+    }
   }
 }
 

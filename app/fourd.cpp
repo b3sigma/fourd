@@ -831,6 +831,12 @@ void AsciiKeyUpdate(int key, bool isShift) {
     case 'B' : { 
       RenderHelper::RenderAxis(g_camera.getCameraPos(), &g_camera.getCameraMatrix());
     } break;
+    case 'G' : {
+      RenderHelper::RenderAxis(g_camera.getRenderPos(), &g_camera.getRenderMatrix());
+    } break;
+    case 'H' : {
+      RenderHelper::RenderAxis(g_camera.getRenderPos(), &g_camera.getRenderMatrix(), 20.0f /*scale*/, false /*permanent*/);
+    } break;
     case 'I' : {
       DebugRotateVR((float)PI / 32.0f, Camera::UP, Camera::FORWARD);
     } break;
