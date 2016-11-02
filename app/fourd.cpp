@@ -828,21 +828,8 @@ void AsciiKeyUpdate(int key, bool isShift) {
         g_vr->ToggleFullscreen();
       }
     } break;
-    case 'B' : {
-      Vec4f placeAt;
-      float worldscale = 20.0f; // ok this is the 3rd time recently, the world needs to be renormalized to have 1.0 be a block (yes this) or this needs to be moved to a nicer place like camera (this also)
-      placeAt = g_camera.getCameraPos() 
-              + g_camera.getCameraMatrix().transform(Vec4f(worldscale, 0.0f, 0.0f, 0.0f));
-      RenderHelper::RenderTess(placeAt);
-      placeAt = g_camera.getCameraPos() 
-              + g_camera.getCameraMatrix().transform(Vec4f(0.0f, worldscale, 0.0f, 0.0f));
-      RenderHelper::RenderTess(placeAt);
-      placeAt = g_camera.getCameraPos() 
-              + g_camera.getCameraMatrix().transform(Vec4f(0.0f, 0.0f, worldscale, 0.0f));
-      RenderHelper::RenderTess(placeAt);
-      placeAt = g_camera.getCameraPos() 
-              + g_camera.getCameraMatrix().transform(Vec4f(0.0f, 0.0f, 0.0f, worldscale));
-      RenderHelper::RenderTess(placeAt);
+    case 'B' : { 
+      RenderHelper::RenderAxis(g_camera.getCameraPos());
     } break;
     case 'I' : {
       DebugRotateVR((float)PI / 32.0f, Camera::UP, Camera::FORWARD);

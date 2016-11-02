@@ -1,5 +1,5 @@
 Four dimensional VR minecraft thing!
-OpenGL, Oculus and C++11ish.
+OpenGL, Vive/Oculus and C++11ish.
 Actually maybe I should advertise as 5 dimensional as it's 4 space + 1 time!
 
 ![Project picture](data/textures/poster.jpg?raw=true)
@@ -38,7 +38,7 @@ Controls UI:
 * o/l = animated pi/2 rotation between inside up
 
 VR:
-* V = enable VR (rift only)
+* V = enable VR (vive/rift only)
 * F = fullscreen
 
 Rendering UI:
@@ -59,10 +59,6 @@ Action UI (vague due to being in flux):
 
 Minimal TODOs:
 * Better fix for solid/blendy interaction alignment
-* Make a ui directive
-* Make a glowy goal with level transition
-* Create a super basic level
-* Create an escape level
 
 Game TODOs:
 * Add VR UI input?
@@ -90,20 +86,26 @@ Game TODOs:
 * Improve multipass fillrate performance (overdraw is overboard)
 ** Lower resolution blendy?
 ** Try blend vs compose for VR final pass
+* Finish the portal system
 * Add a map
+* Add the flipped signs.
 
 QM/Physics TODOs:
+* Integrate the python branch
+* Finish the PIMC
 * Add spin system
-* Add lisp parser (ecl? clisp?)
-* Add maxima
 * lorentz transformation rendering?
 * gr rendering?
 
 General TODOs:
-* Cleanup matrix math?
+* Cleanup matrix math
 * Add text window with command entry
+** Done in python branch
 * Fix portability, CMake
+** This is necessary to integrate the python branch.
 
 Using a Makefile from Michael Crawford. Thanks!
-
-Scratch:
+Using a Todd-Coxeter solver from Fritz Obermeyer. Thanks!
+Using an arg parser from Ian Clarkson. Thanks!
+Using a signals/slots impl from Patrick Hogan. Thanks!
+Using stb libs from Sean Barrett. Thanks!

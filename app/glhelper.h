@@ -15,11 +15,16 @@ inline bool WasGLErrorPlusPrint() {
     succeededOnce = true;
   }
 
+  //static GLenum lastErrCode; // this is going to really screw future-me over, muhahahaha
   if (errCode != GL_NO_ERROR) {
-    errString = gluErrorString(errCode);
-    printf("OpenGL Error: %s\n", errString);
+    //if(errCode != lastErrCode) {
+      errString = gluErrorString(errCode);
+      printf("OpenGL Error: %s\n", errString);
+    //}
+    //lastErrCode = errCode;
     return true;
   } else {
+    //lastErrCode = errCode;
     return false;
   }
 }

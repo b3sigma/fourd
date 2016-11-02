@@ -13,13 +13,6 @@ namespace fd {
 // derp
 #define PI (3.141592653589793238462643383)
 
-//failed to compile in msvc, doesn't seem to be directly referenced in fourd anyway...
-//worked fine in gcc
-//template <typename Tmax>
-//Tmax max(Tmax left, Tmax right) {
-//  return (left > right) ? left : right;
-//}
-
 template <typename T>
 class Vector4 {
 protected:
@@ -266,6 +259,15 @@ public:
     return *this;
   }
 
+  FdMat& storeScale(Vec scale) {
+    storeZero();
+    raw()[0] = scale.x;
+    raw()[5] = scale.y;
+    raw()[10] = scale.z;
+    raw()[15] = scale.w;
+    return *this;
+  }
+
   FdMat& storeScale(T scale) {
     storeZero();
     raw()[0] = scale;
@@ -307,8 +309,7 @@ public:
 
   FdMat operator * (const FdMat& m) const {
     FdMat r;
-    // holy fuck sticks really?
-    // TODO: don't be a dumbass
+    // TODO: the briefest amount of energy toward optimization could be fruitful.
     FdMat t = m.transpose();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
@@ -316,6 +317,16 @@ public:
       }
     }
     return r;
+  }
+
+  FdMat operator * (const T& s) const {
+    FdMat r(*this);
+    r.eigen() *= s;
+    return r;
+  }
+
+  void operator *= (const T& s) const {
+    *this = *this * r;
   }
 
   Vec transform(const Vec& v) const {
@@ -447,8 +458,8 @@ typedef Pose4<float> Pose4f;
 // The nice thing is if these are "normalized", you can get a 3d rotation.
 // The weird thing about that is you get two sets of r,i,j,k that equal the
 // same rotation.
-// If some of this doesn't make sense, refine your understanding of i as
-// a rotation. At least, that helped me. Why all the exposition? Haven't actually
+// If some of this doesn't make sense, understanding of i as a rotation helps.
+// At least, that helped me. Why all the exposition? Haven't actually
 // written a quat class before. Reinventing the wheel is a good idea, once, for
 // sufficiently complex wheels.
 template <typename T>

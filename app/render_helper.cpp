@@ -58,30 +58,56 @@ void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
   pEntity->m_position = pos;
   pEntity->GetComponentBus().AddComponent(
       new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
-      -20.0f, true));
+      -20.0f /* ugh negative duration to be forever*/, true /*worldRotation*/));
 }
 
 void RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, float scale) {
-  std::unique_ptr<Mesh> candy(new Mesh());
-  const float size = 30.0f;
-  const float smallSize = 15.0f;
-  Vec4f smallOff(13.0f, 0.0f, 0.0f, 3.0f);
-  candy->buildTesseract(smallSize, smallOff, Vec4f());
-  
+  //std::unique_ptr<Mesh> tesseract(new Mesh());
+  //const float size = 30.0f;
+  //const float smallSize = 15.0f;
+  static Mesh tesseract;
+  static bool setupAlready = false;
+  if(!setupAlready) {
+    tesseract.buildTesseract(1.0f, Vec4f(), Vec4f());
+    setupAlready = true;
+  }
+  //Mesh* pMeshToLoad = tesseract.get();
+  Mesh* pMeshToLoad = &tesseract;
   Entity* pEntity = g_renderer.GetFirstScene()->AddEntity();
-  // ugh need like a mesh manager and better approach to shader handling
-  //pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
-  pEntity->Initialize(candy.get(), g_renderer.LoadShader("ColorBlendClipped"), NULL);
+  pEntity->Initialize(pMeshToLoad, g_renderer.LoadShader("VolumeColor"), NULL);
   pEntity->m_position = pos;
   if(rotation) {
     pEntity->m_orientation = *rotation;
   }
-  pEntity->GetComponentBus().AddComponent(
-      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE, -20.0f, true));
-  pEntity->GetComponentBus().AddComponent(new TimedDeath(5.0f));
-  pEntity->GetComponentBus().AddComponent(new MeshCleanupComponent(&(pEntity->m_pMesh)));
-  if(pEntity->m_pMesh) {
-    candy.release(); // as now the MeshCleanupComponent has it
+  pEntity->m_orientation = pEntity->m_orientation * scale;
+  //pEntity->GetComponentBus().AddComponent(
+  //    new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
+  //    -20.0f /* ugh negative duration to be forever*/, false /*worldRotation*/));
+  //pEntity->GetComponentBus().AddComponent(new TimedDeath(5.0f));
+  //pEntity->GetComponentBus().AddComponent(new MeshCleanupComponent(&(pEntity->m_pMesh)));
+  //if(pEntity->m_pMesh) {
+  //  candy.release(); // as now the MeshCleanupComponent has it
+  //}
+}
+
+void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale) {
+  Camera& camera = *(g_renderer.GetFirstCamera());
+  Vec4f placeAt;
+  Mat4f placeLike;
+  for(int dir = 0; dir < 4; dir++) { // direction
+    Vec4f direction(0.0f, 0.0f, 0.0f, 0.0f);
+    Vec4f scaleDiag(1.0f, 1.0f, 1.0f, 1.0f);
+    for(int i = 0; i < 4; i++) { // when are you going to make this thing n-dimensional, anyway?
+      if(dir == i) {
+        direction[dir] = scale * 0.2f; // arbitrary spacing
+        scaleDiag[dir] = scale;
+      }
+    }
+
+    placeAt = camera.getCameraPos() 
+            + camera.getCameraMatrix().transform(direction);
+    placeLike = camera.getCameraMatrix() * Mat4f().storeScale(scaleDiag);
+    RenderHelper::RenderTess(placeAt, &placeLike);
   }
 }
 
