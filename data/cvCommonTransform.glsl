@@ -46,3 +46,8 @@ vec4 getCenteredThreeSpace(in vec4 vertPosition) {
   return threeSpace;
 }
 
+float smoothClip(float hardMin, float softMin, float softMax, float hardMax, float val) {
+	float smoothNear = smoothstep(hardMin, softMin, val);
+	float smoothFar = smoothstep(-hardMax, -softMax, -val);
+	return smoothNear * smoothFar;
+}

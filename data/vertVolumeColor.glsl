@@ -6,11 +6,12 @@ in vec4 vertPosition;
 in vec4 vertColor;
 out vec4 fragHPos;
 out vec4 fragCol0;
-vec4 getThreeSpace(vec4);
 
-float len(vec3 v) {
-	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-}
+////////////////////
+// includes from cvCommonTransform.glsl
+vec4 getThreeSpace(vec4); 
+float smoothClip(float hardMin, float softMin, float softMax, float hardMax, float val);
+///////////////////
 
 void main() {
 	vec4 threeSpace = getThreeSpace(vertPosition);
@@ -19,12 +20,8 @@ void main() {
 	
 	vec4 homogenousCoords = projectionMatrix * threeSpace;
 	fragHPos = homogenousCoords;
-	
-	if (savedW > 1.0 || savedW < 0.0) {
-		fragCol0.a = 0.0;
-	} else {
-        fragCol0.a = 0.8;
-    }
+
+	fragCol0.a = 0.8 * smoothClip(0.0, 0.1, 0.9, 1.0, savedW);
 
 	fragCol0.r = mod(abs(vertPosition.x / 10.0), 2.0);
 	fragCol0.g = mod(abs(vertPosition.z / 10.0), 2.0);

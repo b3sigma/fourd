@@ -9,7 +9,11 @@ in vec4 vertColor;
 out vec4 fragHPos;
 out vec4 fragCol0;
 
-vec4 getThreeSpace(vec4);
+////////////////////
+// includes from cvCommonTransform.glsl
+vec4 getThreeSpace(vec4); 
+float smoothClip(float hardMin, float softMin, float softMax, float hardMax, float val);
+///////////////////
 
 void main() {
 	vec4 threeSpace = getThreeSpace(vertPosition); 
@@ -23,12 +27,8 @@ void main() {
 	fragHPos = homogenousCoords;
 	//fragHPos = mul(megaMatrix, vertposition);
 	//fragHPos = mul(megaMatrix, worldSpace);
-	
-	if (savedW > 1.0 || savedW < 0.0) {
-	fragCol0.a = 0.0;
-	} else {
-	fragCol0.a = 0.2;
-	}
+
+	fragCol0.a = 0.2 * smoothClip(0.0, 0.1, 0.9, 1.0, savedW);
   
 	//fragCol0.rgb = vertColor.xyz;
 	//fragCol0.r = 1.0 - abs((savedW - 0.5) * 2.0);
