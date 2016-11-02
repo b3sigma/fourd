@@ -148,6 +148,7 @@ void Scene::Step(float fDelta) {
   m_toBeDeleted.resize(0);
 }
 
+// should be moved to render justgoingtothrowthatoutthere
 void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
     const Vec4f& position, const Mat4f& orientation) {
   if(pShader == NULL) return; // should go away when we sort
@@ -157,6 +158,7 @@ void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
   pShader->SetPosition(&position);
   pShader->SetOrientation(&orientation);
   pShader->SetCameraParams(pCamera);
+  GLuint colorHandle = pShader->GetColorHandle();
 
   // this is getting ugly to look at in a hurry
   // need to do buffers soon
@@ -165,12 +167,22 @@ void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
   int endTriangle = numTris;
   glBegin(GL_TRIANGLES);
   Vec4f a, b, c;
+  Vec4f colorA, colorB, colorC;
   //int colorIndex = 0;
   for (int t = startTriangle; t < endTriangle && t < numTris; t++) {
-    //glVertexAttrib4fv(hColor, colorArray[colorIndex].raw());
     pMesh->getTriangle(t, a, b, c);
+    if(colorHandle != -1) {
+      pMesh->getColors(t, colorA, colorB, colorC);
+      glVertexAttrib4fv(colorHandle, colorA.raw());
+    }
     glVertex4fv(a.raw());
+    if(colorHandle != -1) {
+      glVertexAttrib4fv(colorHandle, colorB.raw());
+    }
     glVertex4fv(b.raw());
+    if(colorHandle != -1) {
+      glVertexAttrib4fv(colorHandle, colorC.raw());
+    }
     glVertex4fv(c.raw());
     //if ((t+1) % 2 == 0) {
     //  colorIndex = (colorIndex + 1) % colorArray.size();

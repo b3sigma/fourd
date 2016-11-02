@@ -829,7 +829,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
       }
     } break;
     case 'B' : { 
-      RenderHelper::RenderAxis(g_camera.getCameraPos());
+      RenderHelper::RenderAxis(g_camera.getCameraPos(), &g_camera.getCameraMatrix());
     } break;
     case 'I' : {
       DebugRotateVR((float)PI / 32.0f, Camera::UP, Camera::FORWARD);

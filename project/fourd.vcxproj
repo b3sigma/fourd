@@ -108,6 +108,7 @@
     <ClCompile Include="..\common\chunkloader.cpp" />
     <ClCompile Include="..\common\components\physics_component.cpp" />
     <ClCompile Include="..\common\filedata.cpp" />
+    <ClCompile Include="..\common\fourmath.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />

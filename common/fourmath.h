@@ -149,6 +149,9 @@ public:
 	void printIt() const {
 	  printf("%f\t%f\t%f\t%f", x, y, z, w);
 	}
+  
+  public:
+    static Vec s_ones;
 };
 
 typedef Vector4<float> Vec4f;
@@ -326,7 +329,7 @@ public:
   }
 
   void operator *= (const T& s) const {
-    *this = *this * r;
+    *this = *this * s;
   }
 
   Vec transform(const Vec& v) const {

@@ -28,6 +28,29 @@ void Mesh::getTriangle(int index, Vec4f& a, Vec4f& b, Vec4f& c) {
   c = _verts[cInd];
 }
 
+void Mesh::getColors(int index, Vec4f& a, Vec4f& b, Vec4f& c) {
+  if(_colors.empty() || _colors.size() < _verts.size()) return;
+
+  assert(index < getNumberTriangles() && index >= 0);
+
+  int aInd = _indices[index * 3];
+  int bInd = _indices[index * 3 + 1];
+  int cInd = _indices[index * 3 + 2];
+
+  a = _colors[aInd];
+  b = _colors[bInd];
+  c = _colors[cInd];
+}
+
+// seriously wasteful for our currently only usecase
+void Mesh::fillSolidColors(Vec4f& color) {
+  _colors.resize(0);
+  _colors.reserve(_verts.size());
+  _colors.insert(_colors.begin(), _verts.size(), color);
+}
+
+
+
 void Mesh::printIt() {
   printf("Had %d verts, %d indices, %d tris\n", (int)_verts.size(), (int)_indices.size(), getNumberTriangles());
   for (unsigned int iV = 0; iV < _verts.size(); iV++) {

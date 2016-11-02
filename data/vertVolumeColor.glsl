@@ -34,6 +34,7 @@ void main() {
 	vec3 ycol = vec3(0.3, 0.2, 0.05);
 	float ycolor = mod(abs(vertPosition.y / 10.0), 2.0);
 	fragCol0.rgb += ycol * ycolor;
+	fragCol0.rgb = vertColor.rgb;
 
 	gl_Position = fragHPos;
 }

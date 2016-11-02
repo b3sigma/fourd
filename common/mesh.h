@@ -25,6 +25,7 @@ public:
   VecList _verts;
   typedef std::vector<int> IndexList;
   IndexList _indices;
+  VecList _colors;
 
   Mesh() {}
 
@@ -33,6 +34,7 @@ public:
   }
 
   void getTriangle(int index, Vec4f& a, Vec4f& b, Vec4f& c);
+  void getColors(int index, Vec4f& a, Vec4f& b, Vec4f& c);
   void printIt();
 
   // Schlafli description explaination.
@@ -69,6 +71,7 @@ public:
 
   void buildQuaxolTesseract(float size); // assumptions about tri positions
 
+  void fillSolidColors(Vec4f& color);
   //void carveSolids(
 
   void clearCurrent();
