@@ -832,7 +832,9 @@ void AsciiKeyUpdate(int key, bool isShift) {
       RenderHelper::RenderAxis(g_camera.getCameraPos(), &g_camera.getCameraMatrix());
     } break;
     case 'G' : {
+      RenderHelper::RenderAxis(g_camera.getCameraPos(), &g_camera.getCameraMatrix());
       RenderHelper::RenderAxis(g_camera.getRenderPos(), &g_camera.getRenderMatrix());
+      RenderHelper::RenderAxis(Vec4f(), &Mat4f::s_ident);
     } break;
     case 'H' : {
       RenderHelper::RenderAxis(g_camera.getRenderPos(), &g_camera.getRenderMatrix(), 20.0f /*scale*/, false /*permanent*/);

@@ -405,6 +405,10 @@ public:
   }
 
   ALIGNED_ALLOC_NEW_DEL_OVERRIDE
+
+public:
+  static FdMat s_ident;
+
 };
 
 typedef Matrix4<float> Mat4f;
