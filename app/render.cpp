@@ -79,7 +79,7 @@ bool Render::Initialize(int width, int height) {
   return true;
 }
 
-Shader* Render::LoadShader(const char* shaderName) {
+Shader* Render::LoadShader(const char* shaderName, bool reload) {
   static std::string g_currentShader;
   std::string shaderDir = "data/";
   std::string vertPrefix = std::string("vert");
@@ -105,8 +105,12 @@ Shader* Render::LoadShader(const char* shaderName) {
   std::string vertName = shaderDir + vertPrefix + baseNameWithExt;
   std::string fragName = shaderDir + fragPrefix + baseNameWithExt;
 
-  std::unique_ptr<::fd::Shader> shaderMem;
   ::fd::Shader* pShader = ::fd::Shader::GetShaderByRefName(baseNameWithExt);
+  if(!reload && pShader) {
+    return pShader;
+  }
+
+  std::unique_ptr<::fd::Shader> shaderMem;
   if (pShader) {
     pShader->Release();
   } else {
@@ -121,9 +125,6 @@ Shader* Render::LoadShader(const char* shaderName) {
   }
 
   shaderMem.release();
-  //g_shader = pShader;
-  //g_scene.m_pQuaxolShader = g_shader;
-
   g_currentShader = vertPrefix + baseNameWithExt;
   printf("Loaded shader %s\n", vertName.c_str());
 

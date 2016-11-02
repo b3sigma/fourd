@@ -84,7 +84,7 @@ public:
 
   bool Initialize(int width, int height);
   bool ResizeRenderTargets(int width, int height);
-  Shader* LoadShader(const char* shaderName);
+  Shader* LoadShader(const char* shaderName, bool reload = false);
 
   void UpdateFrameTime();
   void Step();
