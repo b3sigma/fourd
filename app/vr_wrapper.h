@@ -34,6 +34,8 @@ public:
     Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
   virtual void FinishFrame() {}
 
+  virtual void HandleInput() {}
+
   virtual std::string GetDeviceName() { return std::string(""); }
   virtual bool GetIsDebugDevice() { return true; }
 

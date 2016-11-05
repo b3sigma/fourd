@@ -18,6 +18,8 @@ public:
   // nextFile will be fileMatch relative
   static bool GetNextFileName(const char* fileMatch,
       const char* currentFile, std::string& nextFile);
+
+  static void ThreadSleep(unsigned long milliseconds);
 };
 
 

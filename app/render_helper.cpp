@@ -129,7 +129,7 @@ void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale, boo
     //placeLike = camera.getCameraMatrix().inverse() * Mat4f().storeScale(scaleDiag);
     Entity* tess = RenderHelper::RenderTess(placeAt, &placeLike, colors[dir]);
     if(!permanent && tess) {
-      tess->GetComponentBus().AddComponent(new TimedDeath(1.0f)); //uuuugh
+      tess->GetComponentBus().AddComponent(new TimedDeath(0.01f)); //uuuugh
     }
   }
 }

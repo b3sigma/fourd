@@ -26,15 +26,17 @@ namespace fd {
 #if defined(WIN32)
   class VVRWrapper : public VRWrapper {
   public:
-    PlatformWindow* m_pWindow;
-    vr::IVRSystem* m_HMD;
+    PlatformWindow* m_pWindow = NULL;
+    vr::IVRSystem* m_HMD = NULL;
 
     struct EyeRenderInfo
     {
+      Mat4f m_eyeViewProj3Pose;
       Texture* m_framebuffer = NULL; // used as a wrappper in rendering
       Texture* m_depthTex = NULL;
       Texture* m_renderTex = NULL;
       Texture* m_resolveTex = NULL;
+
       EyeRenderInfo() = default;
       ~EyeRenderInfo() {
         delete m_framebuffer;
@@ -53,35 +55,49 @@ namespace fd {
     char m_rDeviceClassCharCodes[vr::k_unMaxTrackedDeviceCount];
     //vr::ETrackedDeviceClass m_deviceClasses[vr::k_unMaxTrackedDeviceCount];
 
-    unsigned int m_numDistortionIndices;
-    GLuint m_unLensVAO;
-    GLuint m_glIDVertBuffer;
-    GLuint m_glIDIndexBuffer;
-    GLuint m_unLensProgramID;
-    Shader* m_lensShader;
+    unsigned int m_numDistortionIndices = 0;
+    GLuint m_unLensVAO = 0;
+    GLuint m_glIDVertBuffer = 0;
+    GLuint m_glIDIndexBuffer = 0;
+    GLuint m_unLensProgramID = 0;
+    Shader* m_lensShader = NULL;
 
-    uint32_t m_eyeRenderWidth;
-    uint32_t m_eyeRenderHeight;
+    int m_iTrackedControllerCount = 0;
+    int m_iTrackedControllerCount_Last = 0;
+    int m_iValidPoseCount = 0;
+    int m_iValidPoseCount_Last = 0;
+    GLuint m_glControllerVertBuffer = 0;
+    GLuint m_unControllerVAO = 0;
+    unsigned int m_uiControllerVertcount = 0;
+    //GLuint m_unControllerAxisTransformProgramID = 0;
+    Shader* m_controllerAxis = NULL;
+    GLint m_nControllerAxisLocation = -1;
+    //GLuint m_unRenderModelProgramID = 0;
+    Shader* m_controllerRender = NULL;
+	  GLint m_nControllerRenderLocation = -1;
+
+    uint32_t m_eyeRenderWidth = 0;
+    uint32_t m_eyeRenderHeight = 0;
 
     //const Mat4f* m_debugHeadPose;
     //bool m_isDebugDevice
-    bool m_debugRendering = false;
+    bool m_debugRendering = true;
 
-    VVRWrapper() : m_HMD(NULL), m_pWindow(NULL)
-      , m_eyeRenderWidth(0), m_eyeRenderHeight(0)
-      , m_numDistortionIndices(0)
-      , m_lensShader(NULL)
-      //    , m_debugHeadPose(NULL)
-      //    , m_isDebugDevice(true)
-    {
+  public:
+    VVRWrapper() {
       assert(vr::Eye_Left == 0);
       assert(vr::Eye_Right== 1);
       memset(&m_rDeviceClassCharCodes[0], 0, sizeof(m_rDeviceClassCharCodes));
+      memset(&m_rTrackedDeviceToRenderModel[0], 0, sizeof(m_rTrackedDeviceToRenderModel));
       m_doScreenSaver = false; // vive has a screensaver already
       m_hadInput = false;
     }
 
     ~VVRWrapper() {
+      for (auto model : m_vecRenderModels) {
+        delete model;
+      }
+      m_vecRenderModels.clear();
       delete m_lensShader;
 
       glDeleteBuffers(1, &m_glIDVertBuffer);
@@ -109,10 +125,6 @@ namespace fd {
       m_HMD = HMD;
       return !WasGLErrorPlusPrint();
     }
-
-    //bool SetupTrackedDeviceModels() {
-    //  return false;
-    //}
 
     struct VertexDataLens
     {
@@ -259,9 +271,24 @@ namespace fd {
       delete m_lensShader;
       m_lensShader = g_renderer.LoadShader("OpenVrDistortion");
       if(!m_lensShader) {
+        printf("Openvr Lens shader failed to load?");
+        return false;
+      }
+
+      delete m_controllerAxis;
+      m_controllerAxis = g_renderer.LoadShader("OpenVrControllerAxis");
+      if(!m_controllerAxis) {
+        printf("Openvr Controller axis shader failed to load?");
+        return false;
+      }
+
+      delete m_controllerRender;
+      m_controllerRender = g_renderer.LoadShader("OpenVrControllerRender");
+      if(!m_controllerRender) {
         printf("Lens shader failed to load?");
         return false;
       }
+
       return true;
     }
 
@@ -295,6 +322,272 @@ namespace fd {
       glBindVertexArray(0);
       m_lensShader->StopUsing();
       //glUseProgram(0);
+      WasGLErrorPlusPrint();
+    }
+
+  public:
+    class CGLRenderModel
+    {
+    public:
+      CGLRenderModel(const std::string & sRenderModelName);
+      ~CGLRenderModel();
+
+      bool BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
+      void Cleanup();
+      void Draw();
+      const std::string & GetName() const { return m_sModelName; }
+
+    private:
+      GLuint m_glVertBuffer = 0;
+      GLuint m_glIndexBuffer = 0;
+      GLuint m_glVertArray = 0;
+      GLuint m_glTexture = 0;
+      GLsizei m_unVertexCount = 0;
+      std::string m_sModelName;
+    };
+    std::vector<CGLRenderModel*> m_vecRenderModels;
+    CGLRenderModel* m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
+    bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
+
+    CGLRenderModel* FindOrLoadRenderModel(const char *pchRenderModelName) {
+      for(auto model : m_vecRenderModels) {
+        if (!_stricmp(model->GetName().c_str(), pchRenderModelName))
+          return model;
+      }
+
+
+      CGLRenderModel *pRenderModel = NULL;
+      vr::RenderModel_t *pModel;
+      vr::EVRRenderModelError error;
+      while (1)
+      {
+        error = vr::VRRenderModels()->LoadRenderModel_Async(pchRenderModelName, &pModel);
+        if (error != vr::VRRenderModelError_Loading)
+          break;
+
+        Platform::ThreadSleep(1);
+      }
+
+      if (error != vr::VRRenderModelError_None)
+      {
+        printf("Unable to load render model %s - %s\n", pchRenderModelName, vr::VRRenderModels()->GetRenderModelErrorNameFromEnum(error));
+        return NULL; // move on to the next tracked device
+      }
+
+      vr::RenderModel_TextureMap_t *pTexture;
+      while (1)
+      {
+        error = vr::VRRenderModels()->LoadTexture_Async(pModel->diffuseTextureId, &pTexture);
+        if (error != vr::VRRenderModelError_Loading)
+          break;
+
+        Platform::ThreadSleep(1);
+      }
+
+      if (error != vr::VRRenderModelError_None)
+      {
+        printf("Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName);
+        vr::VRRenderModels()->FreeRenderModel(pModel);
+        return NULL; // move on to the next tracked device
+      }
+
+      pRenderModel = new CGLRenderModel(pchRenderModelName);
+      if (!pRenderModel->BInit(*pModel, *pTexture))
+      {
+        printf("Unable to create GL model from render model %s\n", pchRenderModelName);
+        delete pRenderModel;
+        pRenderModel = NULL;
+      }
+      else
+      {
+        m_vecRenderModels.push_back(pRenderModel);
+      }
+      vr::VRRenderModels()->FreeRenderModel(pModel);
+      vr::VRRenderModels()->FreeTexture(pTexture);
+
+      return pRenderModel;
+    }
+
+    std::string GetTrackedDeviceString(
+        vr::IVRSystem *pHmd, vr::TrackedDeviceIndex_t unDevice, 
+        vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL) {
+      uint32_t unRequiredBufferLen = pHmd->GetStringTrackedDeviceProperty(unDevice, prop, NULL, 0, peError);
+      if (unRequiredBufferLen == 0)
+        return "";
+
+      char *pchBuffer = new char[unRequiredBufferLen];
+      unRequiredBufferLen = pHmd->GetStringTrackedDeviceProperty(unDevice, prop, pchBuffer, unRequiredBufferLen, peError);
+      std::string sResult = pchBuffer;
+      delete[] pchBuffer;
+      return sResult;
+    }
+
+    void HandleInput() {
+      // Process SteamVR events
+      vr::VREvent_t event;
+      while (m_HMD->PollNextEvent(&event, sizeof(event))) {
+        ProcessVREvent(event);
+      }
+
+      // Process SteamVR controller state
+      for (vr::TrackedDeviceIndex_t unDevice = 0; unDevice < vr::k_unMaxTrackedDeviceCount; unDevice++) {
+        vr::VRControllerState_t state;
+        if (m_HMD->GetControllerState(unDevice, &state)) {
+          m_rbShowTrackedDevice[unDevice] = state.ulButtonPressed == 0;
+        }
+      }
+    }
+
+    void ProcessVREvent(const vr::VREvent_t & event) {
+      switch (event.eventType) {
+        case vr::VREvent_TrackedDeviceActivated: {
+          SetupRenderModelForTrackedDevice(event.trackedDeviceIndex);
+          printf("Device %u attached. Setting up render model.\n", event.trackedDeviceIndex);
+        } break;
+        case vr::VREvent_TrackedDeviceDeactivated: {
+          printf("Device %u detached.\n", event.trackedDeviceIndex);
+        } break;
+        case vr::VREvent_TrackedDeviceUpdated: {
+          printf("Device %u updated.\n", event.trackedDeviceIndex);
+        }break;
+      }
+    }
+
+    void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t unTrackedDeviceIndex) {
+      if (unTrackedDeviceIndex >= vr::k_unMaxTrackedDeviceCount)
+        return;
+
+      // try to find a model we've already set up
+      std::string sRenderModelName = GetTrackedDeviceString(m_HMD, unTrackedDeviceIndex,
+          vr::Prop_RenderModelName_String);
+      CGLRenderModel *pRenderModel = FindOrLoadRenderModel(sRenderModelName.c_str());
+      if (!pRenderModel)
+      {
+        std::string sTrackingSystemName = GetTrackedDeviceString(m_HMD, unTrackedDeviceIndex, 
+            vr::Prop_TrackingSystemName_String);
+        printf("Unable to load render model for tracked device %d (%s.%s)",
+            unTrackedDeviceIndex, sTrackingSystemName.c_str(), sRenderModelName.c_str());
+      }
+      else
+      {
+        m_rTrackedDeviceToRenderModel[unTrackedDeviceIndex] = pRenderModel;
+        m_rbShowTrackedDevice[unTrackedDeviceIndex] = true;
+      }
+    }
+
+    void SetupRenderModels() {
+      if (!m_HMD)
+        return;
+            
+      memset(m_rTrackedDeviceToRenderModel, 0, sizeof(m_rTrackedDeviceToRenderModel));
+
+      for (uint32_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; unTrackedDevice++)
+      {
+        if (!m_HMD->IsTrackedDeviceConnected(unTrackedDevice))
+          continue;
+
+        SetupRenderModelForTrackedDevice(unTrackedDevice);
+      }
+      WasGLErrorPlusPrint();
+    }
+
+    void UpdateControllerRenderBuffers() {
+      // don't draw controllers if somebody else has input focus
+      if (m_HMD->IsInputFocusCapturedByAnotherProcess())
+        return;
+
+      std::vector<float> vertdataarray;
+
+      m_uiControllerVertcount = 0;
+      m_iTrackedControllerCount = 0;
+
+      for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
+      {
+        if (!m_HMD->IsTrackedDeviceConnected(unTrackedDevice))
+          continue;
+
+        if (m_HMD->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
+          continue;
+
+        m_iTrackedControllerCount += 1;
+
+        if (!m_devicePoses[unTrackedDevice].bPoseIsValid)
+          continue;
+
+        const Pose4f& mat = m_device3Poses[unTrackedDevice]; //m_rmat4DevicePose[unTrackedDevice];
+
+        Vec4f center = mat.position;
+
+        for (int i = 0; i < 3; ++i)
+        {
+          Vec4f color(0, 0, 0, 1);
+          Vec4f point(0, 0, 0, 0);
+          point[i] += 0.05f;  // offset in X, Y, Z
+          color[i] = 1.0;  // R, G, B
+          point = mat * point;
+          vertdataarray.push_back(center.x);
+          vertdataarray.push_back(center.y);
+          vertdataarray.push_back(center.z);
+
+          vertdataarray.push_back(color.x);
+          vertdataarray.push_back(color.y);
+          vertdataarray.push_back(color.z);
+
+          vertdataarray.push_back(point.x);
+          vertdataarray.push_back(point.y);
+          vertdataarray.push_back(point.z);
+
+          vertdataarray.push_back(color.x);
+          vertdataarray.push_back(color.y);
+          vertdataarray.push_back(color.z);
+
+          m_uiControllerVertcount += 2;
+        }
+
+        //Vec4f start = mat * Vec4f(0, 0, -0.02f, 1);
+        //Vec4f end = mat * Vec4f(0, 0, -39.f, 1);
+        Vec4f start = mat * Vec4f(0, 0, -0.02f, 0);
+        Vec4f end = mat * Vec4f(0, 0, -39.f, 0);
+        Vec4f color(0.92f, 0.92f, 0.71f, 1.0f);
+
+        vertdataarray.push_back(start.x); vertdataarray.push_back(start.y); vertdataarray.push_back(start.z);
+        vertdataarray.push_back(color.x); vertdataarray.push_back(color.y); vertdataarray.push_back(color.z);
+
+        vertdataarray.push_back(end.x); vertdataarray.push_back(end.y); vertdataarray.push_back(end.z);
+        vertdataarray.push_back(color.x); vertdataarray.push_back(color.y); vertdataarray.push_back(color.z);
+        m_uiControllerVertcount += 2;
+      }
+
+      // Setup the VAO the first time through.
+      if (m_unControllerVAO == 0)
+      {
+        glGenVertexArrays(1, &m_unControllerVAO);
+        glBindVertexArray(m_unControllerVAO);
+
+        glGenBuffers(1, &m_glControllerVertBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, m_glControllerVertBuffer);
+
+        GLuint stride = 2 * 3 * sizeof(float);
+        GLuint offset = 0;
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
+
+        offset += sizeof(float) * 3;
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
+
+        glBindVertexArray(0);
+      }
+
+      glBindBuffer(GL_ARRAY_BUFFER, m_glControllerVertBuffer);
+
+      // set vertex data if we have some
+      if (vertdataarray.size() > 0)
+      {
+        //$ TODO: Use glBufferSubData for this...
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)* vertdataarray.size(), &vertdataarray[0], GL_STREAM_DRAW);
+      }
       WasGLErrorPlusPrint();
     }
 
@@ -398,7 +691,7 @@ namespace fd {
       }
 
       {
-        static float worldScale = 0.0f; // ugh, move this to somewhere in camera
+        static float worldScale = 20.0f; // ugh, move this to somewhere in camera
         static Vec4f posSigns(1.0f, 1.0f, 1.0f, 1.0f);
         pose.position.set(vrPose.m[0][3], vrPose.m[1][3], vrPose.m[2][3], 0.0f);
         pose.position *= worldScale;
@@ -451,21 +744,34 @@ namespace fd {
           if(m_debugRendering) {
             if(m_HMD->GetTrackedDeviceClass(nDevice) == vr::TrackedDeviceClass_Controller) {
               RenderHelper::RenderAxis(m_device3Poses[nDevice].position, &m_device3Poses[nDevice].rotation, 20 /*scale*/, false /*permanent*/);
-              Pose4f invDev = m_device3Poses[nDevice].invert();
-              RenderHelper::RenderAxis(invDev.position, &invDev.rotation, 20 /*scale*/, false /*permanent*/);
+              //Pose4f invDev = m_device3Poses[nDevice].invert();
+              //RenderHelper::RenderAxis(Vec4f(50.0f, 0.0f, 0.0f, 0.0f) + invDev.position, &invDev.rotation, 20 /*scale*/, false /*permanent*/);
             }
           }
         }
       }
 
       if (m_devicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid) {
-        m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].invert();
+        static bool dropCameraPosition = true;
+        if(dropCameraPosition) {
+          m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].position.storeZero();
+        }
+        static bool doCameraInversion = true;
+        if(doCameraInversion) {
+          m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].invert();
+        } else {
+          m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd];
+        }
         if(m_debugRendering) {
           RenderHelper::RenderAxis(m_hmdPose.position, &m_hmdPose.rotation, 20 /*scale*/, false /*permanent*/);
           RenderHelper::RenderAxis(Vec4f(50.0f, 0.0f, 0.0f, 0.0f) + m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].position, 
               &m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].rotation, 20 /*scale*/, false /*permanent*/);
         }
       }
+      WasGLErrorPlusPrint();
+
+      UpdateControllerRenderBuffers();
+
       WasGLErrorPlusPrint();
     }
 
@@ -497,6 +803,53 @@ namespace fd {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       WasGLErrorPlusPrint();
+
+      DrawControllerModels(eye);
+    }
+
+    void DrawControllerModels(vr::Hmd_Eye eye) {
+      bool bIsInputCapturedByAnotherProcess = m_HMD->IsInputFocusCapturedByAnotherProcess();
+
+      if (!bIsInputCapturedByAnotherProcess && m_controllerAxis)
+      {
+        // draw the controller axis lines
+        m_controllerAxis->StartUsing();
+        //glUseProgram(m_unControllerTransformProgramID);
+        glUniformMatrix4fv(m_nControllerAxisLocation, 1, GL_FALSE, 
+          m_eye[eye].m_eyeViewProj3Pose.raw());
+        glBindVertexArray(m_unControllerVAO);
+        glDrawArrays(GL_LINES, 0, m_uiControllerVertcount);
+        glBindVertexArray(0);
+        m_controllerAxis->StopUsing();
+      }
+
+      if(m_controllerRender) {
+        m_controllerRender->StartUsing();
+        //glUseProgram(m_unRenderModelProgramID);
+
+        for (uint32_t unTrackedDevice = 0; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; unTrackedDevice++)
+        {
+          if (!m_rTrackedDeviceToRenderModel[unTrackedDevice] || !m_rbShowTrackedDevice[unTrackedDevice])
+            continue;
+
+          const vr::TrackedDevicePose_t & pose = m_devicePoses[unTrackedDevice];
+          if (!pose.bPoseIsValid)
+            continue;
+
+          if (bIsInputCapturedByAnotherProcess && m_HMD->GetTrackedDeviceClass(unTrackedDevice) == vr::TrackedDeviceClass_Controller)
+            continue;
+
+          const Pose4f& poseDeviceToTracking = m_device3Poses[unTrackedDevice];
+          Mat4f matDeviceToTracking = poseDeviceToTracking.projectTo3Pose();
+          //Matrix4 matMVP = GetCurrentViewProjectionMatrix(nEye) * matDeviceToTracking;
+          Mat4f controllerMatrix = m_eye[eye].m_eyeViewProj3Pose * matDeviceToTracking;
+          glUniformMatrix4fv(m_nControllerRenderLocation, 1, GL_FALSE, controllerMatrix.raw());
+
+          m_rTrackedDeviceToRenderModel[unTrackedDevice]->Draw();
+        }
+        m_controllerRender->StopUsing();
+        //glUseProgram(0);
+      }
     }
 
     void FinishEye(int eye, Texture** outRenderColor, Texture** outRenderDepth) {
@@ -713,6 +1066,7 @@ namespace fd {
       pCamera->setMovementMode(Camera::MovementMode::ROOM);
     }
 
+
     //virtual std::string GetDeviceName() {
     //  if(!m_HMD) return std::string("");
     //  return std::string(m_HMD->DisplayDeviceName);
@@ -743,6 +1097,99 @@ namespace fd {
     ALIGNED_ALLOC_NEW_DEL_OVERRIDE
   };
   
+
+  fd::VVRWrapper::CGLRenderModel::CGLRenderModel(const std::string & sRenderModelName)
+    : m_sModelName(sRenderModelName) {
+    m_glIndexBuffer = 0;
+    m_glVertArray = 0;
+    m_glVertBuffer = 0;
+    m_glTexture = 0;
+  }
+
+
+  fd::VVRWrapper::CGLRenderModel::~CGLRenderModel() {
+    Cleanup();
+  }
+
+
+  //-----------------------------------------------------------------------------
+  // Purpose: Allocates and populates the GL resources for a render model
+  //-----------------------------------------------------------------------------
+  bool fd::VVRWrapper::CGLRenderModel::BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture) {
+    // create and bind a VAO to hold state for this model
+    glGenVertexArrays(1, &m_glVertArray);
+    glBindVertexArray(m_glVertArray);
+
+    // Populate a vertex buffer
+    glGenBuffers(1, &m_glVertBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m_glVertBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vr::RenderModel_Vertex_t) * vrModel.unVertexCount, vrModel.rVertexData, GL_STATIC_DRAW);
+
+    // Identify the components in the vertex buffer
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (void *)offsetof(vr::RenderModel_Vertex_t, vPosition));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (void *)offsetof(vr::RenderModel_Vertex_t, vNormal));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vr::RenderModel_Vertex_t), (void *)offsetof(vr::RenderModel_Vertex_t, rfTextureCoord));
+
+    // Create and populate the index buffer
+    glGenBuffers(1, &m_glIndexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t)* vrModel.unTriangleCount * 3, vrModel.rIndexData, GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+
+    // create and populate the texture
+    glGenTextures(1, &m_glTexture);
+    glBindTexture(GL_TEXTURE_2D, m_glTexture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vrDiffuseTexture.unWidth, vrDiffuseTexture.unHeight,
+      0, GL_RGBA, GL_UNSIGNED_BYTE, vrDiffuseTexture.rubTextureMapData);
+
+    // If this renders black ask McJohn what's wrong.
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    GLfloat fLargest;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    m_unVertexCount = vrModel.unTriangleCount * 3;
+
+    return true;
+  }
+
+
+  void fd::VVRWrapper::CGLRenderModel::Cleanup() {
+    if (m_glVertBuffer)
+    {
+      glDeleteBuffers(1, &m_glIndexBuffer);
+      glDeleteVertexArrays(1, &m_glVertArray);
+      glDeleteBuffers(1, &m_glVertBuffer);
+      m_glIndexBuffer = 0;
+      m_glVertArray = 0;
+      m_glVertBuffer = 0;
+    }
+  }
+
+
+  void fd::VVRWrapper::CGLRenderModel::Draw() {
+    glBindVertexArray(m_glVertArray);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_glTexture);
+
+    glDrawElements(GL_TRIANGLES, m_unVertexCount, GL_UNSIGNED_SHORT, 0);
+
+    glBindVertexArray(0);
+  }
 
   VRWrapper* VRWrapper::CreateVR() {
     std::unique_ptr<VVRWrapper> vrWrapper(new VVRWrapper);

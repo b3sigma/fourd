@@ -322,6 +322,10 @@ public:
     return r;
   }
 
+  Vec operator * (const Vec& r) const {
+    return transform(r);
+  }
+
   FdMat operator * (const T& s) const {
     FdMat r(*this);
     r.eigen() *= s;
@@ -436,6 +440,11 @@ public:
     return r;
   }
 
+  // M * x = R * x + P
+  Vec operator * (const Vec& r) const {
+    return (rotation * r) + position;
+  }
+
   // A 4x4 matrix is used for rotation, and a 4 vector for position.
   // Transforming a vector, x, by the pose, M, can be
   // M * x = (R * x) + P
@@ -448,6 +457,14 @@ public:
     position = -rotInv.transform(position);
     rotation = rotInv;
     return *this;
+  }
+
+  // a stupid orthogonal projection to xyz
+  Mat projectTo3Pose() const {
+    Mat pose3 = rotation.convertToTransposed3d();
+    pose3.d(3).set(position);
+    pose3.d(3).w = 0;
+    return pose3;
   }
 
   ALIGNED_ALLOC_NEW_DEL_OVERRIDE

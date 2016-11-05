@@ -3,6 +3,8 @@
 #include "platform_interface.h"
 #include "linux_platform.h"
 
+#include "unistd.h"
+
 #include <assert.h>
 #include <GL/glew.h>
 
@@ -249,6 +251,11 @@ void PlatformWindow::CaptureCursor(bool capture) {
   //   ClipCursor(NULL);
   //   glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   // }
+}
+
+void Platform::ThreadSleep(unsigned long milliseconds) {
+  assert(false); // just haven't tried it yet
+  //usleep(milliseconds);
 }
 
 } // namespace fd

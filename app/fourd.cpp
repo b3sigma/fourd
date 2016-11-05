@@ -999,6 +999,10 @@ void StepFrame() {
   // printf("Frametime was %f\n", frameTime);
   ImGuiWrapper::NewFrame(frameTime, guiWidth, guiHeight);
 
+  if(g_vr && g_vr->IsUsingVR()) {
+    g_vr->HandleInput();
+  }
+
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();

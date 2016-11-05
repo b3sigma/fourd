@@ -248,6 +248,10 @@ void PlatformWindow::CaptureCursor(bool capture) {
   }
 }
 
+void Platform::ThreadSleep(unsigned long milliseconds) {
+  ::Sleep(milliseconds);
+}
+
 } // namespace fd
 
 #endif //WIN32
