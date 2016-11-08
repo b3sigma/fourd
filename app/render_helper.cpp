@@ -1,4 +1,5 @@
 #include <memory>
+#include "../common/frame_timer.h"
 #include "../common/mesh.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/mesh_cleanup.h"
@@ -62,17 +63,21 @@ void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
 }
 
 Entity* RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, float scale) {
+  //SCOPE_TIME(); //"RenderHelper::RenderAxis");
+  static Mesh staticTesseract;
+  static bool setupAlready = false;
+  if(!setupAlready) {
+    staticTesseract.buildTesseract(1.0f, Vec4f(), Vec4f());
+    setupAlready = true;
+  }
+
   std::unique_ptr<Mesh> tesseract(new Mesh());
-  tesseract->buildTesseract(1.0f, Vec4f(), Vec4f());
+  tesseract->merge(staticTesseract);  
+  // TODO: generalize this or make it fast enough to call like this
+  //tesseract->buildTesseract(1.0f, Vec4f(), Vec4f());
   tesseract->fillSolidColors(color);
   Mesh* pMeshToLoad = tesseract.get();
-  //static Mesh tesseract;
-  //static bool setupAlready = false;
-  //if(!setupAlready) {
-  //  tesseract.buildTesseract(1.0f, Vec4f(), Vec4f());
-  //  setupAlready = true;
-  //}
-  //Mesh* pMeshToLoad = &tesseract;
+
   Entity* pEntity = g_renderer.GetFirstScene()->AddEntity();
   pEntity->Initialize(pMeshToLoad, g_renderer.LoadShader("VolumeColor"), NULL);
   pEntity->m_position = pos;
@@ -80,10 +85,6 @@ Entity* RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, 
     pEntity->m_orientation = *rotation;
   }
   pEntity->m_orientation = pEntity->m_orientation * scale;
-  //pEntity->GetComponentBus().AddComponent(
-  //    new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
-  //    -20.0f /* ugh negative duration to be forever*/, false /*worldRotation*/));
-  //pEntity->GetComponentBus().AddComponent(new TimedDeath(5.0f));
   pEntity->GetComponentBus().AddComponent(new MeshCleanupComponent(&(pEntity->m_pMesh)));
   if(pEntity->m_pMesh) {
     tesseract.release(); // as now the MeshCleanupComponent has it
@@ -91,14 +92,9 @@ Entity* RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, 
   return pEntity;
 }
 
-// so according to this, the render matrix is
-// +x right, +y up, -z forward, +w in
-// camera matrix is -x right, +y up, +z forward, +w in
-// hahaha
 void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale, bool permanent) {
-  //Camera& camera = *(g_renderer.GetFirstCamera());
+  //SCOPE_TIME(); //"RenderHelper::RenderAxis");
   Vec4f placeAt;
-  Mat4f placeLike;
   Vec4f colors[] = {
       Vec4f(1.0f, 0.0f, 0.0f, 0.0f),
       Vec4f(0.0f, 1.0f, 0.0f, 0.0f),
@@ -118,19 +114,36 @@ void RenderHelper::RenderAxis(Vec4f pos, const Mat4f* rotation, float scale, boo
     placeAt = pos;
     if(rotation) {
       placeAt += rotation->transform(direction);
+    } else {
+      placeAt += direction;
     }
-    //placeAt = camera.getCameraPos() 
-    //        //+ camera.getCameraMatrix().inverse().transform(direction);
-    //        + camera.getCameraMatrix().transform(direction);
+    Mat4f placeLike;
     if(rotation) {
       placeLike = *rotation;
     }
-    placeLike = Mat4f().storeScale(scaleDiag) * placeLike;
-    //placeLike = camera.getCameraMatrix().inverse() * Mat4f().storeScale(scaleDiag);
+    placeLike = placeLike * Mat4f().storeScale(scaleDiag);
     Entity* tess = RenderHelper::RenderTess(placeAt, &placeLike, colors[dir]);
     if(!permanent && tess) {
-      tess->GetComponentBus().AddComponent(new TimedDeath(0.01f)); //uuuugh
+      tess->GetComponentBus().AddComponent(new TimedDeath(10.1f)); //uuuugh
     }
+  }
+}
+// so according to this, the render matrix is
+// +x right, +y up, -z forward, +w in
+// camera matrix is -x right, +y up, +z forward, +w in
+// hahaha
+
+float CenteredRand() { return ((float)rand() / (float)RAND_MAX) - 0.5f; }
+void RenderHelper::SpamAxes(Vec4f pos) {
+  //SCOPE_TIME(); //"RenderHelper::SpamAxes");
+  static float randSpread = 1000.0f;
+  static int num = 1;
+  static Vec4f fixedOffset(0.0f, 0.0f, 0.0f, 0.0f);
+  pos += fixedOffset;
+  for(int i = 0; i <= num; i++) {
+    Vec4f randOffset(CenteredRand(), CenteredRand(), CenteredRand(), CenteredRand());
+    randOffset = (randOffset * randSpread) + pos;
+    RenderAxis(randOffset, NULL /*rot*/, 20.0f /*scale*/, false /*permanent*/);
   }
 }
 

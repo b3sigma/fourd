@@ -109,6 +109,7 @@
     <ClCompile Include="..\common\components\physics_component.cpp" />
     <ClCompile Include="..\common\filedata.cpp" />
     <ClCompile Include="..\common\fourmath.cpp" />
+    <ClCompile Include="..\common\frame_timer.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />
@@ -154,6 +155,7 @@
     <ClInclude Include="..\common\fd_simple_file.h" />
     <ClInclude Include="..\common\filedata.h" />
     <ClInclude Include="..\common\fourmath.h" />
+    <ClInclude Include="..\common\frame_timer.h" />
     <ClInclude Include="..\common\mesh.h" />
     <ClInclude Include="..\common\misc_defs.h" />
     <ClInclude Include="..\common\physics.h" />

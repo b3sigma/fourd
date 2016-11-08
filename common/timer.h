@@ -24,8 +24,23 @@ namespace fd {
 #endif
 
   public:
+#ifdef WIN32
+    typedef LARGE_INTEGER TimerPrimative;
+#else
+    typedef timespec TimerPrimative;
+#endif
+
+  public:
     Timer(const std::string& message) : Timer() {
       m_message = message;
+    }
+
+    Timer(Timer& rCopy)
+        : m_message(rCopy.m_message)
+        , _elapsed(rCopy._elapsed)
+        , _start(rCopy._start)
+    {
+      rCopy.m_message.clear(); // cuz destructor message... ugh
     }
 
     Timer() : _elapsed(0.0)

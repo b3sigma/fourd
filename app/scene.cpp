@@ -221,6 +221,7 @@ void Scene::RenderDynamicEntities(Camera* pCamera) {
     RenderMesh(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
         pEntity->m_position, pEntity->m_orientation);
   }
+  //printf("dynamic entities took %f\n", dyn.GetElapsed());
 }
 
 void Scene::RenderQuaxolChunk(Camera* pCamera, Shader* pShader) {

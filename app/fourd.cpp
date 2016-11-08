@@ -996,7 +996,7 @@ void StepFrame() {
     g_vr->GetPerEyeRenderSize(guiWidth, guiHeight);
   }
   float frameTime = (float)g_renderer.GetFrameTime();
-  // printf("Frametime was %f\n", frameTime);
+  //printf("Frametime was %f\n", frameTime);
   ImGuiWrapper::NewFrame(frameTime, guiWidth, guiHeight);
 
   if(g_vr && g_vr->IsUsingVR()) {
@@ -1012,6 +1012,8 @@ void StepFrame() {
       g_inputHandler.SendAnyInputSignal(&(g_camera.GetComponentBus()));
     }
   }
+
+  //RenderHelper::SpamAxes(g_camera.getCameraPos());
 
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
