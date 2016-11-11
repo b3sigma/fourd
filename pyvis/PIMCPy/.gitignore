@@ -1,0 +1,6 @@
+*.pyc
+
+# byproducts of running
+*.png
+
+nogithere/

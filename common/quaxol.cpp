@@ -59,6 +59,11 @@ void QuaxolChunk::UpdateRendering() {
   UpdateTrisFromConnects();
 }
 
+void QuaxolChunk::Clear() {
+  memset(m_blocks, 0, sizeof(m_blocks));
+  UpdateRendering();
+}
+
 void QuaxolChunk::SetAt(const QuaxolSpec& pos, bool present) {
   if(!IsValid(pos)) return;
   Block& block = GetBlock(pos);
@@ -299,7 +304,7 @@ void QuaxolChunk::AddRenderCubeByFlag(
   CanonicalCube& cube = s_canonicalCubesByFlag[connectFlags];
   assert(cube.m_connectFlags == connectFlags); // call BuildCanonicalCubesByFlag
 
-  int indexOffset = m_verts.size();
+  int indexOffset = (int)m_verts.size();
   for(auto vert : cube.m_verts) {
     m_verts.emplace_back(vert + vertOffset);
   }
@@ -319,7 +324,7 @@ void QuaxolChunk::AddRenderCubeByDir(
   CanonicalCube& cube = s_canonicalCubesByDir[dirIndex];
   assert(cube.m_dirIndex == dirIndex); // call BuildCanonicalCubesByDir
 
-  int indexOffset = m_verts.size();
+  int indexOffset = (int)m_verts.size();
   for(auto vert : cube.m_verts) {
     m_verts.emplace_back(vert + vertOffset);
   }

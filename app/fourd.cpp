@@ -32,7 +32,9 @@
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
 #include "../common/thirdparty/argh.h"
+#include "../pyvis/pyvis.h"
 #include "entity.h"
+#include "imgui_console.h"
 #include "glhelper.h"
 #include "imgui_wrapper.h"
 #include "input_handler.h"
@@ -200,6 +202,13 @@ void AddAllEyeCandy() {
 }
 
 bool Initialize(int width, int height) {
+
+#if defined(FD_USE_PYTHON_HOOK) 
+  if(!fd::PyVisInterface::InitPython())
+    return false;
+#endif //defined(FD_USE_PYTHON_HOOK)     
+
+
   //tesseract.buildQuad(10.0f, Vec4f(-20.0, 0, -20.0, 0));
   //tesseract.buildCube(10.0f, Vec4f(0, 0, 0, 0));
   //tesseract.buildTesseract(10.0f, Vec4f(-5.1f,-5.1f,-5.1f,-5.1f), Vec4f(0,0,0,0));
@@ -1018,9 +1027,33 @@ void StepFrame() {
   g_renderer.Step();
   g_scene.Step((float)g_renderer.GetFrameTime());
 
+//#if defined(FD_USE_PYTHON_HOOK) 
+//  static bool doneOnce = false;
+//  
+//  if(!doneOnce) { //uuuughhh
+//    // doneOnce = true;
+//    
+//    if(g_scene.m_pQuaxolChunk) {
+//      g_scene.m_pQuaxolChunk->Clear();
+//      fd::PyVisInterface::PathIntegralSingleStep(
+//          *g_scene.m_pQuaxolChunk);
+//      g_scene.m_pQuaxolChunk->UpdateRendering();
+//    }
+//
+//    // static fd::PyVisInterface::NumberList numbers;
+//    // numbers.resize(0);
+//    // fd::PyVisInterface::PathIntegralSingleStep(numbers);
+//    // printf("Made it out alive!\nHere are the numbers:\n");
+//    // for(auto n : numbers) { printf(" %f", n); }
+//    // printf("\nwowthatwasgreat\n");
+//  }
+//  // TODO: quaxol scalar writer
+//#endif //FD_USE_PYTHON_HOOK
+
   UpdatePointerEntity();
 }
 
+// Happens before tests... so hopefully everything here is great!
 void StaticInitialize() {
   Timer staticTimer(std::string("StaticInitialize"));
   WasGLErrorPlusPrint();
@@ -1030,6 +1063,17 @@ void StaticInitialize() {
   WasGLErrorPlusPrint();
 }
 
+void MainLoopShutdown() {
+  ImGuiWrapper::Shutdown();
+  glfwTerminate();
+  delete g_vr;
+  g_vr = NULL;
+
+#if defined(FD_USE_PYTHON_HOOK) 
+  fd::PyVisInterface::ShutdownPython();
+#endif //defined(FD_USE_PYTHON_HOOK)     
+}
+
 float Rand() { return (float)rand() / (float)RAND_MAX; }
 const float cfThreshold = 0.000001f;
 bool IsEqual(float l, float r) { return (fabs(l - r) < cfThreshold); }
@@ -1037,8 +1081,8 @@ bool IsZero(float val) { return (fabs(val) < cfThreshold); }
 
 // TODO: tests in here is totally tacky, move them.
 void RunTests() {
-//return;
 
+  // TODO: put the tests in their own classes at least
   Vec4f a(Rand(), Rand(), Rand(), Rand());
   Vec4f b(Rand(), Rand(), Rand(), Rand());
   Vec4f c(Rand(), Rand(), Rand(), Rand());
@@ -1080,7 +1124,7 @@ void RunTests() {
   Quatf rotPiDiv4(sqrt(2.0f) / 2.0f, sqrt(2.0f) / 2.0f, 0.0f, 0.0f);
   Quatf rotPiDiv2(0.0f, 1.0f, 0.0f, 0.0f);
   assert(rotPiDiv2.approxEqual(rotPiDiv4 * rotPiDiv4, 0.00001f));
-
+  
   //Mat4f threeMat;
   //threeMat.eigen().
 
@@ -1089,13 +1133,31 @@ void RunTests() {
   Physics::RunTests();
   PhysicsHelp::RunTests();
   Timer::RunTests();
+  #if defined(FD_USE_PYTHON_HOOK)
+  bool pythonTestSuccess = PyVisInterface::RunTests();
+  assert(pythonTestSuccess);
+  #endif // FD_USE_PYTHON_HOOK
+}
+
+void ConsoleAddCustomCommands() {
+  ConsoleInterface::AddConsoleCommand("#RELOAD");
+}
+
+void ConsoleCommandCallback(const char* command) {
+  
+  if(0 == strcmp(command, "#RELOAD")) {
+    PyVisInterface::ReloadScripts();
+  } else {
+    PyVisInterface::RunOneLine(command);
+  }
 }
 
 void glfwErrorCallback(int error, const char* description) {
   printf("GLFW Error: %d :  %s\n", error, description);
 }
 
-// Soooo tacky!
+// At first I thought this was tacky, but they are so fast and it reminds
+// me they are going and relevant so it's sort of okay?
 #define RUN_TESTS
 
 int main(int argc, const char *argv[]) {
@@ -1103,6 +1165,7 @@ int main(int argc, const char *argv[]) {
 
   std::string keepAliveFileName("");
   bool displayUsage = false;
+  bool displayDebugInfo = true;
   float pixelScale = 0.5f; //1.0f;
   float screenSaverMoveThreshold = 0.00003f;
   float screenSaverRotateThreshold = 0.0001f;
@@ -1114,6 +1177,8 @@ int main(int argc, const char *argv[]) {
       "-h", "Display help (you probably figured this one out)");
   cmd_line.addFlag(displayUsage,
       "-?", "Display help (you probably figured this one out)");
+  cmd_line.addFlag(displayDebugInfo,
+      "--debug_info", "Display system information with debug enabled");
   cmd_line.addFlag(ImGuiWrapper::s_bGuiDisabled,
       "--disable_ui", "Disable the gui, useful for when it sucks");
   cmd_line.addOption<float>(pixelScale, pixelScale,
@@ -1230,7 +1295,8 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
 
-  if(!ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/))
+  if(!ImGuiWrapper::Init(g_glfwWindow, Key, NULL /*mouseButtonCallback*/,
+      ConsoleCommandCallback))
   {
     printf("Imgui init fail\n");
     return -1;
@@ -1253,6 +1319,12 @@ int main(int argc, const char *argv[]) {
   if(!Initialize(startWidth, startHeight)) {
     printf("Initialized failed\n");
     return -1;
+  }
+
+  if(displayDebugInfo) {
+    printf("OpenGL vendor string: %s\n", glGetString(GL_VENDOR));
+    printf("OpenGL renderer string: %s\n", glGetString(GL_RENDERER));
+    printf("OpenGL version string: %s\n", glGetString(GL_VERSION));
   }
 
   ReshapeGL(g_glfwWindow, startWidth, startHeight);
@@ -1278,10 +1350,8 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  ImGuiWrapper::Shutdown();
-  glfwTerminate();
 
-  delete g_vr;
+  MainLoopShutdown();
 
   return 0;
 }

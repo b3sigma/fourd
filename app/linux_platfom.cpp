@@ -1,5 +1,8 @@
 #ifndef WIN32 // sorry future self mac port implementer
 
+#include <dirent.h>
+#include <stdio.h>
+
 #include "platform_interface.h"
 #include "linux_platform.h"
 
@@ -56,8 +59,23 @@ void Platform::Shutdown() {
 
 bool Platform::GetNextFileName(const char* fileMatch,
     const char* currentFile, std::string& foundFile) {
+  // TODO: do, or maybe just refactor the shaders to be extension based and then do that
+  // or dir based
   return false;
-  // TODO: do
+  DIR* dir = opendir(fileMatch);
+  if(!dir) {
+    printf("GetNextFileName couldn't open %s\n", fileMatch);
+    return false;
+  }
+  
+  struct dirent* file = NULL;
+  while(NULL != (file = readdir(dir))) {
+    printf("Searching %s had a file named %s\n",
+      fileMatch, file->d_name); 
+  } 
+  closedir(dir);
+  return true;
+
   // if(!fileMatch) return false;
   //
   // WIN32_FIND_DATA findData;

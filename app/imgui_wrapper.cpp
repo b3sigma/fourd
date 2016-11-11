@@ -19,6 +19,7 @@
 #include "render.h"
 #include "shader.h"
 #include "texture.h"
+#include "imgui_console.h"
 
 namespace fd {
 
@@ -70,6 +71,29 @@ void ImGuiKeyCallback(
     io.KeysDown[key] = true;
   if (action == GLFW_RELEASE)
     io.KeysDown[key] = false;
+
+  // nice side effect of different buttons is you have less of repeat issue
+  int consoleActivateKey = '`';
+  int consoleDeactivateKey = GLFW_KEY_ESCAPE;
+  bool dropFurtherProcessing = false;
+  if(ConsoleInterface::s_consoleActive) {
+    dropFurtherProcessing = true;
+    if(io.KeysDown[consoleDeactivateKey]) {
+      ConsoleInterface::SetFocus(false);
+    }  
+  } else {
+    dropFurtherProcessing = false;
+    if(io.KeysDown[consoleActivateKey]) {
+      ConsoleInterface::SetFocus(true);
+      ConsoleInterface::DropNextKeyInput();
+      // ConsoleInterface::DropPreviousKeyInput();
+      io.KeysDown[consoleActivateKey] = false;
+      dropFurtherProcessing = true;
+    }
+  }
+
+  if(dropFurtherProcessing)
+    return;
 
   (void)mods; // Modifiers are not reliable across systems
   io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
@@ -206,7 +230,8 @@ static void ImGuiSetClipboardText(const char* text) {
 
 
 bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
-    GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback) {
+    GLFWkeyfun keyCallback, GLFWmousebuttonfun mouseButtonCallback,
+    ConsoleInterface::OnCommandCallback consoleCallback) {
   s_glfwWindow = glfwWindow;
 
   ImGuiIO& io = ImGui::GetIO();
@@ -247,6 +272,9 @@ bool ImGuiWrapper::Init(GLFWwindow* glfwWindow,
   glfwSetKeyCallback(s_glfwWindow, ImGuiKeyCallback);
 
   if(!InitOpenGL())
+    return false;
+
+  if(!ConsoleInterface::Init(consoleCallback))
     return false;
 
   return true;
@@ -320,6 +348,8 @@ bool ImGuiWrapper::InitOpenGL() {
 }
 
 void ImGuiWrapper::Shutdown() {
+  ConsoleInterface::Shutdown();
+
   if (g_VaoHandle) glDeleteVertexArrays(1, &g_VaoHandle);
   if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
   g_VaoHandle = 0;
@@ -509,7 +539,7 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
   ImVec2 windowSize((float)renderer->m_viewWidth, (float)renderer->m_viewHeight);
 
-  if(doUpdate) {
+  if(doUpdate) { 
 
     RenderFpsOverlay(frameTime, offset);
     RenderVRDebugOverlay(frameTime, offset, renderer);
@@ -531,6 +561,8 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
   //  ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
   //  ImGui::ShowTestWindow(&showTestWindow);
   //}
+
+  ConsoleInterface::Render();
 
   ImGui::Render();
 }

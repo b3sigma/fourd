@@ -39,13 +39,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/;../openvr/headers/</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/;../openvr/lib/win32/</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/;../openvr/headers/;C:\Python27\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/;../openvr/headers/</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/;../openvr/lib/win32/</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../common/;../app/thirdparty/glew/include;../FreeGLUT/freeglut/freeglut/include;;../OculusSDK/LibOVR/Include/;../OculusSDK/LibOVR/Src/;../glfw/include/;../imgui/;../openvr/headers/;C:\Python27\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);./win-libs/;../OculusSDK/LibOVR/Lib/Win32/VS2013/;../glfw/lib/win/</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -91,6 +91,7 @@
     <ClCompile Include="..\app\components\quaxol_modifier.cpp" />
     <ClCompile Include="..\app\entity.cpp" />
     <ClCompile Include="..\app\fourd.cpp" />
+    <ClCompile Include="..\app\imgui_console.cpp" />
     <ClCompile Include="..\app\imgui_wrapper.cpp" />
     <ClCompile Include="..\app\input_handler.cpp" />
     <ClCompile Include="..\app\meshbuffer.cpp" />
@@ -123,6 +124,7 @@
     <ClCompile Include="..\common\thirdparty\jenn3d\todd_coxeter.cpp" />
     <ClCompile Include="..\common\timer.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
+    <ClCompile Include="..\pyvis\pyvis.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\components\gui_input_router.h" />
@@ -131,6 +133,7 @@
     <ClInclude Include="..\app\components\screensaver.h" />
     <ClInclude Include="..\app\entity.h" />
     <ClInclude Include="..\app\glhelper.h" />
+    <ClInclude Include="..\app\imgui_console.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
     <ClInclude Include="..\app\input_handler.h" />
     <ClInclude Include="..\app\meshbuffer.h" />
@@ -174,6 +177,7 @@
     <ClInclude Include="..\common\types.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
+    <ClInclude Include="..\pyvis\pyvis.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg" />

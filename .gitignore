@@ -9,6 +9,8 @@ project/*.suo
 project/*.opensdf
 project/Debug/*
 project/Release/*
+# linux visual code spam
+.vscode/
 
 # linux build spam
 temp*
@@ -22,3 +24,6 @@ imgui.ini
 
 # using apitrace for opengl debugging, which leaves these around
 *.trace
+
+# python compiled files
+*.pyc

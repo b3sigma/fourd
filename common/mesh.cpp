@@ -1161,7 +1161,7 @@ void Mesh::Shape::addUniqueTriangle(int a, int b, int c) {
   int64 triCode = makeUniqueTriCode(a, b, c);
   TriHash::iterator iTri = _uniqueTris.find(triCode);
   if (iTri == _uniqueTris.end()) {
-    int triIndex = _uniqueTris.size() + 1;
+    int triIndex = (int)_uniqueTris.size() + 1;
     _uniqueTris.insert(std::make_pair(triCode, triIndex));
     // totally gave up on windings
     _triangles.push_back(a);
@@ -1223,12 +1223,13 @@ public:
 
     int numFaces = (int)graph->faces.size();
     // not sure if the assumption that all faces have the same length is always valid
-    int numIndicesGuess = numFaces * (graph->faces[0].size() - 2) * 3; // tri-list a polygon
+    int numIndicesGuess = numFaces * ((int)(graph->faces[0].size()) - 2) * 3; // tri-list a polygon
     _indices.resize(0);
-    _indices.reserve(numIndicesGuess);
+    if(numIndicesGuess > 0)
+      _indices.reserve(numIndicesGuess);
     for(int f = 0; f < numFaces; f++) {
       const jenn::ToddCoxeter::Ring& poly = graph->faces[f];
-      int polySize = poly.size();
+      int polySize = (int)poly.size();
       int numTris = (polySize - 2);
       for(int tri = 0; tri < numTris; tri++) {
         _indices.push_back(poly[0]);

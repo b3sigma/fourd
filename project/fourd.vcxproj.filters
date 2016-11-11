@@ -108,6 +108,12 @@
     <ClCompile Include="..\app\components\quaxol_modifier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\app\imgui_console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pyvis\pyvis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\app\vr_oculus_wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -261,6 +267,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\app\components\gui_input_router.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\app\imgui_console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pyvis\pyvis.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\app\render_helper.h">

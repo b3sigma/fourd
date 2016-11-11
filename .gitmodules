@@ -16,3 +16,6 @@
 [submodule "openvr"]
 	path = openvr
 	url = https://github.com/b3sigma/openvr
+[submodule "pyvis/PIMCPy"]
+	path = pyvis/PIMCPy
+	url = https://github.com/b3sigma/PIMCPy.git
