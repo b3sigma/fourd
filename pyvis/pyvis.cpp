@@ -6,7 +6,15 @@
 
 #include <map>
 #ifdef WIN32
-#include <Python.h>
+  #ifdef _DEBUG
+    #define FORCE_PYTHON_RELEASE
+    #undef _DEBUG
+  #endif
+  #include <Python.h>
+  #ifdef FORCE_PYTHON_RELEASE
+    #define _DEBUG
+    #undef FORCE_PYTHON_RELEASE
+  #endif
 #else //WIN32
 #include <python2.7/Python.h>
 #endif //WIN32
@@ -119,11 +127,6 @@ public:
 };
 
 bool LoadInitialModules(PyVis* pyVis) {
-    PyObject* mainModule = pyVis->LoadModule("__main__");
-    pyVis->consoleGlobalContextDict = mainModule; 
-    if(!mainModule) { return false; }
-    PyErr_Print();
-
     std::string scriptName("EmbeddedBinding");
     std::string scriptNameShorthand("eb");
     if(!pyVis->LoadModule(scriptName)) {
@@ -188,6 +191,11 @@ bool PyVisInterface::InitPython() {
     PyList_Append(sysPath, PyString_FromString("pyvis/PIMCPy"));
     PyErr_Print();
 
+    PyObject* mainModule = pyVis->LoadModule("__main__");
+    pyVis->consoleGlobalContextDict = mainModule; 
+    PyErr_Print();
+    if(!mainModule) { return false; }
+  
     //if(!LoadInitialModules(pyVis.get())) {
     //    return false;
     //}
@@ -269,7 +277,7 @@ bool PyVisInterface::PathIntegralSingleStep(QuaxolChunk& output) {
 
 bool PyVisInterface::RunOneLine(const char* command) {
     // printf("About to try to run '%s'\n", command);
-    if(!g_PyVis || !g_PyVis->consoleGlobalContextDict || !g_PyVis->consoleLocalContextDict) {
+    if(!g_PyVis) { // || !g_PyVis->consoleGlobalContextDict || !g_PyVis->consoleLocalContextDict) {
         printf("RunOneLine failed! dropped '%s'\n", command);
         return false;
     }
