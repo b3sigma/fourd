@@ -190,8 +190,12 @@ void SetDefaultCameraMode() {
   }
 }
 
+// soo... level system?
 void AddAllEyeCandy() {
   float closeDist = -50.0f;
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandySpherinder, Vec4f(closeDist, 150.0f, 150.0f, 100.0f));
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandySpherinder, Vec4f(closeDist + 50.0f, 0.0f, -50.0f, 15.0f));
+  RenderHelper::AddEyeCandy(RenderHelper::EyeCandySpherinder, Vec4f(closeDist + 150.0f, 0.0f, -50.0f, 20.0f));
   RenderHelper::AddEyeCandy(RenderHelper::EyeCandyQuad, Vec4f(closeDist, 00.0f, -50.0f, 15.0f));
   RenderHelper::AddEyeCandy(RenderHelper::EyeCandyCube, Vec4f(closeDist, 00.0f, 00.0f, 15.0f));
   RenderHelper::AddEyeCandy(RenderHelper::EyeCandyTesseract, Vec4f(closeDist, 00.0f, 50.0f, 5.0f));

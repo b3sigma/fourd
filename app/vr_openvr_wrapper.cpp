@@ -100,8 +100,12 @@ namespace fd {
       m_vecRenderModels.clear();
       delete m_lensShader;
 
-      glDeleteBuffers(1, &m_glIDVertBuffer);
-      glDeleteBuffers(1, &m_glIDIndexBuffer);
+      if(m_glIDVertBuffer) {
+        glDeleteBuffers(1, &m_glIDVertBuffer);
+      }
+      if(m_glIDIndexBuffer) {
+        glDeleteBuffers(1, &m_glIDIndexBuffer);
+      }
 
       if (m_unLensVAO != 0) {
         glDeleteVertexArrays(1, &m_unLensVAO);
@@ -1063,9 +1067,13 @@ namespace fd {
     }
 
     virtual void SetVRPreferredMovementMode(Camera* pCamera) {
-      pCamera->setMovementMode(Camera::MovementMode::ROOM);
+      static bool roomScale = false;
+      if(roomScale) {
+        pCamera->setMovementMode(Camera::MovementMode::WALK);
+      } else {
+        pCamera->setMovementMode(Camera::MovementMode::ROOM);
+      }
     }
-
 
     //virtual std::string GetDeviceName() {
     //  if(!m_HMD) return std::string("");

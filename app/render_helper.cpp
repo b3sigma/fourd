@@ -19,9 +19,12 @@ MeshList g_eyeCandyMeshes;
 void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
   g_eyeCandyMeshes.emplace_back(new Mesh());
   Mesh* candy = g_eyeCandyMeshes.back().get();
+  Shader* shader = g_renderer.LoadShader("ColorBlendClipped"); // not owned
   const float size = 30.0f;
   const float smallSize = 15.0f;
   Vec4f smallOff(13.0f, 0.0f, 0.0f, 3.0f);
+  float rotationSpeed = 20.0f;
+  Mat4f rotation;
   switch(type) {
     case EyeCandyQuad:
       candy->buildQuad(smallSize, smallOff, Vec4f());
@@ -50,16 +53,38 @@ void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
       const Vec4f offsetSize(size / 2 + shift, size / 2 + shift, shift, size / 2 + shift);
       candy->buildCaylay600Cell(size, offsetSize);
     } break;
+    case EyeCandySpherinder: {
+      float minRadius = 7.5f;
+      candy->buildSpherinder(minRadius, minRadius * 3);
+      //shader = g_renderer.LoadShader("Sliced");
+      //shader = g_renderer.LoadShader("Sliced");
+      //shader = g_renderer.LoadShader("Rainbow");
+      int randIndex = (int)(fmod(pos.lengthSq(), 2.9f)) % 3;
+      switch(randIndex) {
+      case 0:
+        rotation.storeRotation(2.7f, Camera::UP, Camera::INSIDE);
+        break;
+      case 1:
+        rotation.storeRotation(2.7f, Camera::RIGHT, Camera::INSIDE);
+        break;
+      case 2:
+        rotation.storeRotation(2.7f, Camera::FORWARD, Camera::INSIDE);
+        break;
+      }
+      rotation *= 4.0f;
+      rotationSpeed = 0.0f;
+    } break;
   }
 
   Entity* pEntity = g_renderer.GetFirstScene()->AddEntity();
-  // ugh need like a mesh manager and better approach to shader handling
-  //pEntity->Initialize(candy, LoadShader("ColorBlend"), NULL);
-  pEntity->Initialize(candy, g_renderer.LoadShader("ColorBlendClipped"), NULL);
+  pEntity->Initialize(candy, shader, NULL);
   pEntity->m_position = pos;
-  pEntity->GetComponentBus().AddComponent(
-      new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
-      -20.0f /* ugh negative duration to be forever*/, true /*worldRotation*/));
+  pEntity->m_orientation = rotation;
+  if(rotationSpeed > 0.0f) {
+    pEntity->GetComponentBus().AddComponent(
+        new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
+        -rotationSpeed /* ugh negative duration to be forever*/, true /*worldRotation*/));
+  }
 }
 
 Entity* RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, float scale) {

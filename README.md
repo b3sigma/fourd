@@ -38,8 +38,8 @@ Controls UI:
 * o/l = animated pi/2 rotation between inside up
 
 VR:
+* VR is disabled by default. To enable Vive or Oculus0.4.4, uncomment just one define in vr_wrapper.h
 * V = enable VR (vive/rift only)
-* F = fullscreen
 
 Rendering UI:
 * 0-9&* load different base shapes and different levels. (Default is quaxols in 4d.)
@@ -49,6 +49,7 @@ Rendering UI:
 * v/b Decrease/increase far w-plane
 * n/m Decrease/increase w-plane far/near ratio (alternative to FOV)
 * ] toggles w-ortho and w-projection (w-ortho can also be set by far/near ratio=1)
+* F = fullscreen (brokenish since vr stuff cuz who uses rectangle displays anyway? ;)
 
 Action UI (vague due to being in flux):
 * z add quaxol

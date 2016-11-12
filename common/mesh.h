@@ -47,7 +47,10 @@ public:
   // Nice math description, not so great for imperative code.
   // Also only good for nice symmetric stuff, so the four-cylinder is no go.
   void buildQuad(float size, Vec4f offset, Vec4f step); // {4}
-  void buildCube(float size, Vec4f offset, Vec4f step); // {4,3}
+  void buildCube(float size, Vec4f offset, Vec4f numberedSkewStep = Vec4f()); // {4,3}
+  void buildSphere(float size, Vec4f offset);
+  void buildSpherinder(float sphereSize, float cylSize, Vec4f offset = Vec4f());
+  
   void buildTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
   void buildTesseract(const Vec4f& min, const Vec4f& max);
   void buildReferenceTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
@@ -75,11 +78,13 @@ public:
   //void carveSolids(
 
   void clearCurrent();
-  void projectIntoFour(float insideDist, Vec4f step);
+  void projectIntoFour(float insideDist, Vec4f numberedSkewStep = Vec4f());
   void merge(const Mesh& other);
+  void tesselateByThree();
+  void tesselateBySix();
   
 private:
-  void populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& step);
+  void populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& numberedSkewStep);
   void populateVerts(const Vec4f& min, const Vec4f& max, int dim);
   void buildNormals(const VecList& verts, const IndexList& indices, VecList& normals);
   void addTri(int a, int b, int c);

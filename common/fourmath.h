@@ -332,7 +332,7 @@ public:
     return r;
   }
 
-  void operator *= (const T& s) const {
+  void operator *= (const T& s) {
     *this = *this * s;
   }
 

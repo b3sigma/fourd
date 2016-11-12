@@ -83,7 +83,7 @@ void Mesh::populateVerts(const Vec4f& min, const Vec4f& max, int dim) {
   }
 }
 
-void Mesh::populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& step) {
+void Mesh::populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& numberedSkewStep) {
   assert(dim <= 4 && dim >= 2);
   int numVerts = 1 << dim;
   _verts.resize(0);
@@ -99,7 +99,7 @@ void Mesh::populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& 
       possibleDim--;
     }
 
-    _verts.push_back(vert + offset + (step * static_cast<float>(i)));
+    _verts.push_back(vert + offset + (numberedSkewStep * static_cast<float>(i)));
   }
 }
 
@@ -140,9 +140,9 @@ void Mesh::addCube(int a, int b, int c, int d, int e, int f, int g, int h) {
   addQuad(e, f, g, h);
 }
 
-void Mesh::buildCube(float size, Vec4f offset, Vec4f step) {
+void Mesh::buildCube(float size, Vec4f offset, Vec4f numberedSkewStep) {
   int dim = 3;
-  populateVerts(size, dim, offset, step);
+  populateVerts(size, dim, offset, numberedSkewStep);
 
   _indices.resize(0);
   _indices.reserve(6 * 6);
@@ -265,6 +265,133 @@ void Mesh::buildFourTetrad(float size, Vec4f offset) {
     }
   }
 }
+
+void Mesh::buildSphere(float size, Vec4f offset) {
+  Vec4f localOffset(size, size, size, 0.0f);
+  localOffset *= -0.5f; // this makes the first cube centered on the origin
+  buildCube(size, offset + localOffset);
+  tesselateBySix();
+  //tesselateBySix();
+  for(auto& vertex : _verts) {
+    Vec4f localCoords(vertex - offset);
+    localCoords.storeNormalized();
+    localCoords *= size;
+    vertex = localCoords + offset;
+  }
+}
+
+void Mesh::tesselateByThree() {
+  size_t numOldTris = _indices.size() / 3; // index list for triangles
+  assert(numOldTris * 3 == _indices.size()); // if it's not an index list, like a strip, will have 67% of getting caught here :)
+
+  // each tri gets a new vert
+  size_t numNewVerts = numOldTris;
+  size_t numOldVerts = _verts.size();
+  _verts.reserve(numOldVerts + numNewVerts);
+
+  size_t numNewTris = numOldTris * 2; // going to reuse the slot for the split tri 
+  size_t numNewIndices = numNewTris * 3;
+  size_t numOldIndices = _indices.size(); 
+  _indices.reserve(numOldIndices + numNewIndices);
+  
+  for(size_t t = 0; t < numOldTris; t++) {
+    size_t startInd = t * 3;
+    const int& aInd = _indices[startInd + 0]; 
+    int& bInd = _indices[startInd + 1]; // this one is going to get overwritten
+    const int& cInd = _indices[startInd + 2]; 
+    const Vec4f& a = _verts[aInd];
+    const Vec4f& b = _verts[bInd];
+    const Vec4f& c = _verts[cInd];
+    _verts.emplace_back((a + b + c) * (1.0f/3.0f));
+    int dInd = (int)_verts.size() - 1; // I am so sorry 64-bit persona, we are going to need to make these 32 bits explicitly ugh
+    // new tri the first
+    _indices.emplace_back(dInd); // try and preserve windings
+    _indices.emplace_back(aInd);
+    _indices.emplace_back(bInd);
+
+    // new tri the second
+    _indices.emplace_back(dInd);
+    _indices.emplace_back(bInd);
+    _indices.emplace_back(cInd);
+
+    // for the 3rd tri, overwrite the original
+    // aInd = aInd; // including for symmetry
+    bInd = dInd; // this keeps the winding
+    // cInd = cInd; // including for symmetry
+  }
+}
+
+void Mesh::tesselateBySix() {
+  size_t numOldTris = _indices.size() / 3; // index list for triangles
+  assert(numOldTris * 3 == _indices.size()); // if it's not an index list, like a strip, will have 67% of getting caught here :)
+
+  // each tri gets 4 new verts (ugh, we are duplicating verts * 1.5, but whatever)
+  size_t numNewVerts = numOldTris * 4;
+  size_t numOldVerts = _verts.size();
+  _verts.reserve(numOldVerts + numNewVerts);
+
+  size_t numNewTris = numOldTris * 5; // 1 goes in, 6 leave
+  size_t numNewIndices = numNewTris * 3;
+  size_t numOldIndices = _indices.size(); 
+  _indices.reserve(numOldIndices + numNewIndices);
+  
+  for(size_t t = 0; t < numOldTris; t++) {
+    size_t startInd = t * 3;
+    int& aInd = _indices[startInd + 0]; 
+    int& bInd = _indices[startInd + 1];
+    int& cInd = _indices[startInd + 2]; 
+    const Vec4f& a = _verts[aInd];
+    const Vec4f& b = _verts[bInd];
+    const Vec4f& c = _verts[cInd];
+    _verts.emplace_back((a + b) * 0.5f);
+    int abInd = (int)_verts.size() - 1;
+    _verts.emplace_back((b + c) * 0.5f);
+    int bcInd = (int)_verts.size() - 1;
+    _verts.emplace_back((c + a) * 0.5f);
+    int caInd = (int)_verts.size() - 1;
+    _verts.emplace_back((a + b + c) * (1.0f/3.0f));
+    int dInd = (int)_verts.size() - 1;
+
+    // try and preserve abc winding
+    _indices.emplace_back(aInd);
+    _indices.emplace_back(abInd);
+    _indices.emplace_back(dInd);
+
+    _indices.emplace_back(aInd);
+    _indices.emplace_back(dInd);
+    _indices.emplace_back(caInd);
+
+    _indices.emplace_back(caInd);
+    _indices.emplace_back(dInd);
+    _indices.emplace_back(cInd);
+
+    _indices.emplace_back(cInd);
+    _indices.emplace_back(dInd);
+    _indices.emplace_back(bcInd);
+
+    _indices.emplace_back(bcInd);
+    _indices.emplace_back(dInd);
+    _indices.emplace_back(bInd);
+
+    // for the last tri, overwrite the original
+    aInd = bInd;
+    bInd = dInd;
+    cInd = abInd;
+  }
+}
+
+void Mesh::buildSpherinder(float sphereSize, float cylSize, Vec4f offset) {
+  Mesh sphere;
+  int numSlices = 3;
+  float sliceOffset = cylSize / numSlices;
+  for(int i = 0; i < numSlices; i++) {
+    Vec4f offset(0.0f, 0.0f, 0.0f, sliceOffset * i);
+    sphere.buildSphere(sphereSize, offset);
+    sphere.projectIntoFour(sliceOffset);
+    this->merge(sphere);
+  }
+}
+
 
 // This doesn't work. You need a vector per dimension you want to constrain but
 // with triangles you are only really constrained in two reduced dimensions, leaving an
@@ -533,7 +660,7 @@ void Mesh::buildShapes(VecList& verts, IndexList& indices, Shapes& outShapes) {
 // More interesting 4d projections will require more interesting shape definitions.
 // More intelligent projections that don't make tons of cubes will require
 // a 4d approach to rendering which would do the equivalent of interior surface removal.
-void Mesh::projectIntoFour(float insideDist, Vec4f step) {
+void Mesh::projectIntoFour(float insideDist, Vec4f numberedSkewStep) {
   Vec4f shift(0, 0, 0, insideDist);
   VecList fourVerts;
   fourVerts.resize(_verts.size());
@@ -543,7 +670,7 @@ void Mesh::projectIntoFour(float insideDist, Vec4f step) {
       ++iV) {
     Vec4f& v = *iV;
     v += shift;
-    v += step;
+    v += numberedSkewStep;
   }
   int numOldVerts = (int)_verts.size();
   _verts.resize(_verts.size() + fourVerts.size());

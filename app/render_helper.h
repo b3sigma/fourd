@@ -16,6 +16,7 @@ public:
     EyeCandy24Cell,
     EyeCandy120Cell,
     EyeCandy600Cell,
+    EyeCandySpherinder,
   };
 
   static void AddEyeCandy(EyeCandyTypes type, const Vec4f& pos);

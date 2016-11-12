@@ -1,5 +1,11 @@
 #pragma once
 
+// Currently only one of these can be defined
+// Need to do a cmake rule to make this smooth
+// Or see about including both at the same time and having reasonable selection
+//#define FD_VR_USE_OCULUS
+//#define FD_VR_USE_OPENVR
+
 #include <string>
 #include "platform_interface.h"
 #include "../common/fourmath.h"
@@ -8,12 +14,9 @@ namespace fd {
 
 class Camera;
 class Texture;
-//#define FD_VR_USE_OCULUS
-//#define FD_VR_USE_OPENVR
 
 // Interface class for actual vr.
-// Probably silly as ovr is only game in town currently, which means the 2nd
-// kind of thing will still be hard.
+// This ended up alright for different builds that work for different setups. That might be fine, but if it turns out a single build for all the headsets is better, the CreateVR function will need to be defined in vr_wrapper.cpp instead and maybe enumerate exposed interfaces from oculus and vive
 class VRWrapper {
 public:
 
