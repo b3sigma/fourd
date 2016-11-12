@@ -1,6 +1,7 @@
 // Pulled from ImGui example ExampleAppConsole
 #include <ctype.h>      // toupper, isprint
 #include <stdio.h>      // vsnprintf, sscanf
+#include <malloc.h>
 
 #include <GL/glew.h>
 #include "../imgui/imgui.h"

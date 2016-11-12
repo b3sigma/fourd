@@ -127,6 +127,8 @@
     <ClCompile Include="..\common\tweak.cpp" />
     <ClCompile Include="..\common\tweak_registrar.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
+    <ClCompile Include="..\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\pyvis\pyvis.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -183,6 +185,7 @@
     <ClInclude Include="..\common\types.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
+    <ClInclude Include="..\imgui\imgui_internal.h" />
     <ClInclude Include="..\pyvis\pyvis.h" />
   </ItemGroup>
   <ItemGroup>

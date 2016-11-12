@@ -867,7 +867,7 @@ void AsciiKeyUpdate(int key, bool isShift) {
   }
 }
 
-void Draw(GLFWwindow* window) {
+void DrawFrame(GLFWwindow* window) {
   WasGLErrorPlusPrint();
   if (!g_shader)
     return;
@@ -1314,7 +1314,8 @@ int main(int argc, const char *argv[]) {
 
   glfwSetCursorPosCallback(g_glfwWindow, PassiveMotion);
 
-  glfwSetWindowRefreshCallback(g_glfwWindow, Draw);
+  // DrawFrame is not double-callable currently because of imgui
+  //glfwSetWindowRefreshCallback(g_glfwWindow, DrawFrame);
 
   if(g_vr) { // && startVRFullscreen) {
     SetIsUsingVR(true);
@@ -1339,7 +1340,7 @@ int main(int argc, const char *argv[]) {
 
   while(true) {
     StepFrame();
-    Draw(g_glfwWindow);
+    DrawFrame(g_glfwWindow);
 
     if(!keepAliveFileName.empty()) {
       if(g_renderer.GetTotalTime() >= keepAliveNext) {
