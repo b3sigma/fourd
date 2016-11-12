@@ -1068,6 +1068,7 @@ void StaticInitialize() {
 }
 
 void MainLoopShutdown() {
+  SaveLevel("current");
   ImGuiWrapper::Shutdown();
   glfwTerminate();
   delete g_vr;

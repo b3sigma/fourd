@@ -4,7 +4,7 @@
 // Need to do a cmake rule to make this smooth
 // Or see about including both at the same time and having reasonable selection
 //#define FD_VR_USE_OCULUS
-//#define FD_VR_USE_OPENVR
+#define FD_VR_USE_OPENVR
 
 #include <string>
 #include "platform_interface.h"

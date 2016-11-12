@@ -47,6 +47,7 @@ namespace fd {
     };
     EyeRenderInfo m_eye[2];
 
+    bool m_roomScale = false;
     bool m_flippedEyes = true; // hahahahaha wait seriously?
     vr::TrackedDevicePose_t m_devicePoses[vr::k_unMaxTrackedDeviceCount];
     Pose4f m_device3Poses[vr::k_unMaxTrackedDeviceCount];
@@ -81,7 +82,7 @@ namespace fd {
 
     //const Mat4f* m_debugHeadPose;
     //bool m_isDebugDevice
-    bool m_debugRendering = true;
+    bool m_debugRendering = false; //true;
 
   public:
     VVRWrapper() {
@@ -695,7 +696,8 @@ namespace fd {
       }
 
       {
-        static float worldScale = 20.0f; // ugh, move this to somewhere in camera
+        // hacking this to 0 because something is wrong and this is less wrong
+        static float worldScale = 0.0f; // ugh, move this to somewhere in camera
         static Vec4f posSigns(1.0f, 1.0f, 1.0f, 1.0f);
         pose.position.set(vrPose.m[0][3], vrPose.m[1][3], vrPose.m[2][3], 0.0f);
         pose.position *= worldScale;
@@ -779,7 +781,7 @@ namespace fd {
       WasGLErrorPlusPrint();
     }
 
-    void StartEye(vr::Hmd_Eye eye, Texture** outRenderColor, Texture** outRenderDepth) {
+    void StartEye(vr::Hmd_Eye eye, Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {
       WasGLErrorPlusPrint();
       // remove this, it's also set externally, but will be nice for debugging that this vr is on
       glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
@@ -809,6 +811,9 @@ namespace fd {
       WasGLErrorPlusPrint();
 
       DrawControllerModels(eye);
+
+      UpdateCameraRenderMatrix(eye, pCamera);
+
     }
 
     void DrawControllerModels(vr::Hmd_Eye eye) {
@@ -898,15 +903,17 @@ namespace fd {
       return fdMat;
     }
 
-    void StoreHMDMatrixPoseEye(vr::Hmd_Eye nEye, Pose4f& outPose)
-    {
+    void StoreHMDMatrixPoseEye(vr::Hmd_Eye nEye, Pose4f& outPose) {
       if (!m_HMD)
         return;
 
       vr::HmdMatrix34_t matEye = m_HMD->GetEyeToHeadTransform(nEye);
       ConvertSteamVRMatrixToPose4(matEye, outPose);
 
-      outPose = outPose.invert();
+      static bool invertedPose = false; //true;
+      if(invertedPose) {
+        outPose = outPose.invert();
+      }
     }
 
     // The current intuitive approach is to consider the vr pose as being a 3-pose within the 4-space that is defined as the 4-pose of the camera. To convert from the vr 3-pose to the correct new 4-pose, as defined as already aligned with the camera's xyz-pose out of the 4-pose, transform the vr 3-pose filled out to an identity 4-pose for extra params by the identity matrix, then multiply by the room 4-pose to get the 4-pose of the camera.
@@ -934,8 +941,6 @@ namespace fd {
       //  //pCamera->_renderPos = pCamera->_cameraPos + ovrEyePos;
       //  pCamera->UpdateRenderMatrix(&localEye, &ovrEyePos);
 
-
-
       pCamera->UpdateRenderMatrix(&matRoomCameraEye);
 
       //ovrMatrix4f ovrProj = ovrMatrix4f_Projection(m_HMD->DefaultEyeFov[eye],
@@ -954,8 +959,7 @@ namespace fd {
       if(m_flippedEyes) {
         eye = vr::Eye_Right;
       }
-      StartEye(eye, outRenderColor, outRenderDepth);
-      UpdateCameraRenderMatrix(eye, pCamera);
+      StartEye(eye, pCamera, outRenderColor, outRenderDepth);
     }
 
     virtual void FinishLeftEye(
@@ -973,8 +977,7 @@ namespace fd {
       if(m_flippedEyes) {
         eye = vr::Eye_Left;
       }
-      StartEye(eye, outRenderColor, outRenderDepth);
-      UpdateCameraRenderMatrix(eye, pCamera);
+      StartEye(eye, pCamera, outRenderColor, outRenderDepth);
     }
 
     virtual void FinishRightEye(
@@ -992,7 +995,6 @@ namespace fd {
       RenderDistortion();
       WasGLErrorPlusPrint();
 
-      //vr::Texture_t leftEyeTexture = { (void*)(m_eye[vr::Eye_Left].m_resolveTex->GetTextureID()), vr::API_OpenGL, vr::ColorSpace_Linear }; //vr::ColorSpace_Gamma };
       vr::Texture_t leftEyeTexture = { (void*)(m_eye[vr::Eye_Left].m_renderTex->GetTextureID()), vr::API_OpenGL, vr::ColorSpace_Linear }; //vr::ColorSpace_Gamma };
       vr::EVRCompositorError err = vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture);
       if(err != vr::VRCompositorError_None) {
@@ -1008,7 +1010,6 @@ namespace fd {
       }
 
       WasGLErrorPlusPrint();
-      //vr::Texture_t rightEyeTexture = { (void*)m_eye[vr::Eye_Right].m_resolveTex->GetTextureID(), vr::API_OpenGL, vr::ColorSpace_Linear }; // vr::ColorSpace_Gamma };
       vr::Texture_t rightEyeTexture = { (void*)m_eye[vr::Eye_Right].m_renderTex->GetTextureID(), vr::API_OpenGL, vr::ColorSpace_Linear }; // vr::ColorSpace_Gamma };
       err = vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture);
       if(err != vr::VRCompositorError_None) {
@@ -1069,9 +1070,9 @@ namespace fd {
     virtual void SetVRPreferredMovementMode(Camera* pCamera) {
       static bool roomScale = false;
       if(roomScale) {
-        pCamera->setMovementMode(Camera::MovementMode::WALK);
-      } else {
         pCamera->setMovementMode(Camera::MovementMode::ROOM);
+      } else {
+        pCamera->setMovementMode(Camera::MovementMode::WALK);
       }
     }
 

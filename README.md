@@ -38,7 +38,8 @@ Controls UI:
 * o/l = animated pi/2 rotation between inside up
 
 VR:
-* VR is disabled by default. To enable Vive or Oculus0.4.4, uncomment just one define in vr_wrapper.h
+* VR is SteamVR by default. To disable Vive or enable Oculus0.4.4, change defines at the top of vr_wrapper.h
+* VR is best with a gamepad right now, sitting for either Oculus or Vive.
 * V = enable VR (vive/rift only)
 
 Rendering UI:
