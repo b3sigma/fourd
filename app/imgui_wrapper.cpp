@@ -20,6 +20,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "imgui_console.h"
+#include "imgui_tweak.h"
 
 namespace fd {
 
@@ -546,6 +547,8 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
     RenderControlsSceen(windowSize);
     RenderResetScreen(windowSize);
+
+    TweakWindow::RenderWindow(frameTime, offset);
   }
 
   //static bool opened = true;

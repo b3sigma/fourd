@@ -1,4 +1,5 @@
 #include "physics_component.h"
+#include "..\tweak.h"
 
 namespace fd {
 
@@ -49,8 +50,8 @@ void PhysicsComponent::OnJump(float frameTime) {
     return; // don't double jump
   }
 
-  const float jumpAmount = -0.75f; // negative to go up
-  Vec4f impulse = m_pPhysics->m_gravity * jumpAmount;
+  static TweakVariable jumpAmountVar("game.jumpImpulse", 0.75f);
+  Vec4f impulse = m_pPhysics->m_gravity * (-1.0f * jumpAmountVar.AsFloat());  // negative to go up
 
   const float jumpTime = 1.0f;
   m_jumpCountdown = jumpTime;
