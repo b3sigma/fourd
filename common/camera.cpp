@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "camera.h"
+#include "tweak.h"
 #include "components/animated_rotation.h"
 #include "components/animated_camera_params.h"
-
 
 using namespace ::fd;
 
@@ -339,19 +339,18 @@ void Camera::ApplyTranslationInput(float amount, Direction direction) {
   }
 }
 
+TweakVariable runSpeedVar("game.runSpeed", 30.0f);
 void Camera::OnInputForward(float fDeltaTime, float amount) {
-  const float runSpeed = 30.0f;
-  ApplyTranslationInput(runSpeed * amount * fDeltaTime, Camera::FORWARD);
+  ApplyTranslationInput(runSpeedVar.AsFloat() * amount * fDeltaTime, Camera::FORWARD);
 }
 
 void Camera::OnInputInside(float fDeltaTime, float amount) {
-  const float runSpeed = 309.0f;
-  ApplyTranslationInput(runSpeed * amount * fDeltaTime, Camera::INSIDE);
+  ApplyTranslationInput(runSpeedVar.AsFloat() * amount * fDeltaTime, Camera::INSIDE);
 }
 
+TweakVariable runStrafeSpeedVar("game.runStrafeSpeed", 30.0f);
 void Camera::OnInputStrafe(float fDeltaTime, float amount) {
-  const float strafeSpeed = 30.0f;
-  ApplyTranslationInput(strafeSpeed * amount * fDeltaTime, Camera::RIGHT);
+  ApplyTranslationInput(runStrafeSpeedVar.AsFloat() * amount * fDeltaTime, Camera::RIGHT);
 }
 
 void Camera::OnInputLookUp(float fDeltaTime, float amount) {

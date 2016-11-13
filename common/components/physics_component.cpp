@@ -53,8 +53,8 @@ void PhysicsComponent::OnJump(float frameTime) {
   static TweakVariable jumpAmountVar("game.jumpImpulse", 0.75f);
   Vec4f impulse = m_pPhysics->m_gravity * (-1.0f * jumpAmountVar.AsFloat());  // negative to go up
 
-  const float jumpTime = 1.0f;
-  m_jumpCountdown = jumpTime;
+  static TweakVariable jumpTimeVar("game.jumpWaitTime", 1.0f);
+  m_jumpCountdown = jumpTimeVar.AsFloat();
   *m_pOwnerVelocity += impulse;
 }
 

@@ -16,7 +16,7 @@ static void ShowHelpMarker(const char* desc) {
 void TweakWindow::RenderWindow(float frameTime, const Vec2f& offset) {
   static bool opened = true;
 
-  ImVec2 startPos(100.0f, 500.0f);
+  ImVec2 startPos(100.0f, 300.0f);
   startPos.x += offset.x();
   startPos.y += offset.y();
   ImGui::SetNextWindowPos(startPos);
@@ -29,7 +29,7 @@ void TweakWindow::RenderWindow(float frameTime, const Vec2f& offset) {
 
   ImGui::Text("Tweaks availabe:                                         ");
 
-  for(auto tweakEntry : TweakRegistrar::_nameToTweak) {
+  for(auto tweakEntry : *TweakRegistrar::_nameToTweak) {
     TweakVariable* tweak = tweakEntry.second;
     ImGui::DragFloat(tweakEntry.first.c_str(), tweak->AsFloatPtr(), 0.005f);
     ImGui::SameLine(); 

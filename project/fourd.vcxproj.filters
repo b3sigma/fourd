@@ -144,6 +144,9 @@
     <ClCompile Include="..\imgui\imgui_draw.cpp">
       <Filter>thirdparty</Filter>
     </ClCompile>
+    <ClCompile Include="..\app\components\gui_input_router.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\app\render.h">

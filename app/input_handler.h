@@ -12,6 +12,7 @@ public:
 
   struct JoystickBinding {
     std::string m_command;
+    std::string m_releaseCommand;
     //std::string m_joystickType;
     float m_deadzone;
     bool m_isButton;

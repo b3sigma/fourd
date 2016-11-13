@@ -34,85 +34,185 @@ void InputHandler::PollJoysticks() {
 
 
 void InputHandler::AddDefaultBindings() {
-  JoystickBinding binding;
-  binding.m_command.assign("inputForward");
-  binding.m_buttonIndex = 1;
-  binding.m_isButton = false;
-  binding.m_isInverted = false;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputForward");
+    binding.m_buttonIndex = 1;
+    binding.m_isButton = false;
+    binding.m_isInverted = false;
+    m_joyBindings.push_back(binding);
+  }
 
-  binding.m_command.assign("inputStrafe");
-  binding.m_buttonIndex = 0;
-  binding.m_isButton = false;
-  binding.m_isInverted = false;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputStrafe");
+    binding.m_buttonIndex = 0;
+    binding.m_isButton = false;
+    binding.m_isInverted = false;
+    m_joyBindings.push_back(binding);
+  }
 
-  binding.m_command.assign("inputLookUp");
-  binding.m_buttonIndex = 3;
-  binding.m_isButton = false;
-  binding.m_isInverted = false;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
 
-  binding.m_command.assign("inputLookRight");
-  binding.m_buttonIndex = 4;
-  binding.m_isButton = false;
-  binding.m_isInverted = true;
-  m_joyBindings.push_back(binding);
+    binding.m_command.assign("inputLookUp");
+    binding.m_buttonIndex = 3;
+    binding.m_isButton = false;
+    binding.m_isInverted = false;
+    m_joyBindings.push_back(binding);
+  }
 
-  binding.m_command.assign("inputRoll");
-  //binding.m_command.assign("inputInside");
-  binding.m_buttonIndex = 2; // triggers -1 right, +1 left
-  binding.m_isButton = false;
-  //binding.m_isInverted = true;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
 
-  binding.m_command.assign("inputJump");
-  binding.m_buttonIndex = 0;
-  binding.m_isButton = true;
-  m_joyBindings.push_back(binding);
+    binding.m_command.assign("inputLookRight");
+    binding.m_buttonIndex = 4;
+    binding.m_isButton = false;
+    binding.m_isInverted = true;
+    m_joyBindings.push_back(binding);
+  }
 
-  binding.m_command.assign("inputShiftSlice");
-  binding.m_buttonIndex = 1;
-  binding.m_isButton = true;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
 
-  binding.m_command.assign("inputAddQuaxol");
-  binding.m_buttonIndex = 3;
-  binding.m_isButton = true;
-  m_joyBindings.push_back(binding);
+    binding.m_command.assign("inputRoll");
+    //binding.m_command.assign("inputInside");
+    binding.m_buttonIndex = 2; // triggers -1 right, +1 left
+    binding.m_isButton = false;
+    //binding.m_isInverted = true;
+    m_joyBindings.push_back(binding);
+  }
 
-  binding.m_command.assign("inputRemoveQuaxol");
-  binding.m_buttonIndex = 2;
-  binding.m_isButton = true;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
 
-  //binding.m_command.assign("inputNextCurrentItem");
-  binding.m_command.assign("inputInside");
-  binding.m_buttonIndex = 4; // shoulder
-  binding.m_isButton = true;
-  binding.m_isButtonContinuous = true;
-  binding.m_isInverted = false;
-  binding.m_spamRepeats = true;
-  m_joyBindings.push_back(binding);
+    binding.m_command.assign("inputJump");
+    binding.m_buttonIndex = 0;
+    binding.m_isButton = true;
+    m_joyBindings.push_back(binding);
+  }
 
-  //binding.m_command.assign("inputPrevCurrentItem");
-  binding.m_command.assign("inputInside");
-  binding.m_buttonIndex = 5; // shoulder button
-  binding.m_isButton = true;
-  binding.m_isButtonContinuous = true;
-  binding.m_isInverted = true;
-  binding.m_spamRepeats = true;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
 
-  binding.m_command.assign("inputControlsMenu");
-  binding.m_buttonIndex = 6; //select
-  binding.m_isButton = true;
-  m_joyBindings.push_back(binding);
+    binding.m_command.assign("inputShiftSlice");
+    binding.m_buttonIndex = 1;
+    binding.m_isButton = true;
+    m_joyBindings.push_back(binding);
+  }
 
-  binding.m_command.assign("inputMainMenu");
-  binding.m_buttonIndex = 7; //start
-  binding.m_isButton = true;
-  m_joyBindings.push_back(binding);
+  {
+    JoystickBinding binding;
+
+    binding.m_command.assign("inputAddQuaxol");
+    binding.m_buttonIndex = 3;
+    binding.m_isButton = true;
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+
+    binding.m_command.assign("inputRemoveQuaxol");
+    binding.m_buttonIndex = 2;
+    binding.m_isButton = true;
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+
+    //binding.m_command.assign("inputNextCurrentItem");
+    binding.m_command.assign("inputInside");
+    binding.m_buttonIndex = 4; // shoulder
+    binding.m_isButton = true;
+    binding.m_isButtonContinuous = true;
+    binding.m_isInverted = false;
+    binding.m_spamRepeats = true;
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    //binding.m_command.assign("inputPrevCurrentItem");
+    binding.m_command.assign("inputInside");
+    binding.m_buttonIndex = 5; // shoulder button
+    binding.m_isButton = true;
+    binding.m_isButtonContinuous = true;
+    binding.m_isInverted = true;
+    binding.m_spamRepeats = true;
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputControlsMenu");
+    binding.m_buttonIndex = 6; //select
+    binding.m_isButton = true;
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputMainMenu");
+    binding.m_buttonIndex = 7; //start
+    binding.m_isButton = true;
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputPadUp");
+    binding.m_buttonIndex = 10; // dpad up
+    binding.m_isButton = true;
+    binding.m_releaseCommand.assign("inputPadUp_Release");
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputPadDown");
+    binding.m_buttonIndex = 12; // dpad down
+    binding.m_isButton = true;
+    binding.m_releaseCommand.assign("inputPadDown_Release");
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputPadRight");
+    binding.m_buttonIndex = 11; // dpad right
+    binding.m_isButton = true;
+    binding.m_releaseCommand.assign("inputPadRight_Release");
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputPadLeft");
+    binding.m_buttonIndex = 13; // dpad left
+    binding.m_isButton = true;
+    binding.m_releaseCommand.assign("inputPadLeft_Release");
+    m_joyBindings.push_back(binding);
+  }
+
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputButton0");
+    binding.m_buttonIndex = 0; // a
+    binding.m_isButton = true;
+    binding.m_releaseCommand.assign("inputButton0_Release");
+    m_joyBindings.push_back(binding);
+  }
+  
+  {
+    JoystickBinding binding;
+    binding.m_command.assign("inputButton1");
+    binding.m_buttonIndex = 1; // b
+    binding.m_isButton = true;
+    binding.m_releaseCommand.assign("inputButton1_Release");
+    m_joyBindings.push_back(binding);
+  }
 
 }
 
@@ -131,8 +231,18 @@ void InputHandler::ApplyJoystickInput(float frameTime) {
         if(binding.m_buttonIndex >= (int)joy.m_buttons.size())
           continue; // not a possible binding
 
-        if(!joy.m_buttons[binding.m_buttonIndex])
-          continue; // only support press for now
+        if(!joy.m_buttons[binding.m_buttonIndex]) {
+          // check if it was pressed before and we need to send release command
+          if(!binding.m_releaseCommand.empty() 
+              && !joy.m_lastButtons.empty() && !joy.m_lastButtons[binding.m_buttonIndex]) {
+            for(auto inputTarget : m_inputTargets) {
+              inputTarget->SendSignal(binding.m_releaseCommand,
+                  SignalN<float>(), frameTime);
+            }
+          }
+          continue; // all done with this binding
+        }
+
 
         if(!binding.m_spamRepeats) {
           if(binding.m_buttonIndex >= (int)joy.m_lastButtons.size()) {

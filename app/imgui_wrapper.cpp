@@ -106,6 +106,7 @@ void ImGuiKeyCallback(
   }
 }
 
+
 // This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
 // If text or lines are blurry when integrating ImGui in your engine:
 // - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f)
@@ -535,6 +536,7 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
     RenderResetScreen(windowSize);
 
     TweakWindow::RenderWindow(frameTime, offset);
+
   }
 
   //static bool opened = true;
@@ -545,11 +547,11 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
   //  ImGui::End();
   //}
 
-  //static bool showTestWindow = true;
-  //if(showTestWindow) {
-  //  ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-  //  ImGui::ShowTestWindow(&showTestWindow);
-  //}
+  static bool showTestWindow = false;
+  if(showTestWindow) {
+    ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+    ImGui::ShowTestWindow(&showTestWindow);
+  }
 
   ConsoleInterface::Render();
 
