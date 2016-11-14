@@ -537,23 +537,23 @@ void ImGuiWrapper::Render(float frameTime, const Vec2f& offset, ::fd::Render* re
 
     TweakWindow::RenderWindow(frameTime, offset);
 
+
+    //static bool opened = true;
+    //if(opened) {
+    //  ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiSetCond_FirstUseEver);
+    //  ImGui::Begin("Another Window", &opened);
+    //  ImGui::Text("Hello");
+    //  ImGui::End();
+    //}
+
+    static bool showTestWindow = false;
+    if(showTestWindow) {
+      ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+      ImGui::ShowTestWindow(&showTestWindow);
+    }
+
+    ConsoleInterface::Render();
   }
-
-  //static bool opened = true;
-  //if(opened) {
-  //  ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiSetCond_FirstUseEver);
-  //  ImGui::Begin("Another Window", &opened);
-  //  ImGui::Text("Hello");
-  //  ImGui::End();
-  //}
-
-  static bool showTestWindow = false;
-  if(showTestWindow) {
-    ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-    ImGui::ShowTestWindow(&showTestWindow);
-  }
-
-  ConsoleInterface::Render();
 
   ImGui::Render();
 }

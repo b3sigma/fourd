@@ -11,12 +11,14 @@
 //#include <Windows.h>
 //#endif
 #include "glhelper.h"
+#include "input_handler.h"
 #include "render.h"
 #include "render_helper.h"
 #include "shader.h"
 #include "win32_platform.h"
-#include "../common/fourmath.h"
 #include "../common/camera.h"
+#include "../common/fourmath.h"
+#include "../common/tweak.h"
 
 // hmm not great
 extern fd::Render g_renderer; // fourd.cpp
@@ -427,11 +429,19 @@ namespace fd {
       return sResult;
     }
 
-    void HandleInput() {
+    // passing in the input handler directly seems crappy
+    // I guess there should be a component serving from the inputhandler that provides joysticks?
+    // or we just pass in the camera component bus and then when we get openvr events we generate the corresponding input events
+    // the downside of that is that the glfw joystick handler will be doing much of the same (presumably) deadzone and binding shit
+    // so binding this directly to the joystick handler means there is only one joystick handler and this will write state to a joystick struct
+    // which will then be interpreted later this frame to do game input
+    // so either there's partially duplicated code or overly complicated abstractions (probably both)
+    // the abstraction means less complicated downstream though, which wins
+    void HandleInput(float frameTime, InputHandler* input_handler) {
       // Process SteamVR events
       vr::VREvent_t event;
       while (m_HMD->PollNextEvent(&event, sizeof(event))) {
-        ProcessVREvent(event);
+        ProcessVREvent(frameTime, event, input_handler);
       }
 
       // Process SteamVR controller state
@@ -443,7 +453,11 @@ namespace fd {
       }
     }
 
-    void ProcessVREvent(const vr::VREvent_t & event) {
+    void ProcessVREvent(float frameTime, const vr::VREvent_t& event, InputHandler* input_handler) {
+      printf("OpenVR event at %f: type:%d\n", frameTime, event.eventType);
+      printf("Openvr controller button:%d\n", event.data.controller.button);
+      printf("Openvr mouse x:%d y:%d butt:%d\n", event.data.mouse.x, event.data.mouse.y, event.data.mouse.button);
+
       switch (event.eventType) {
         case vr::VREvent_TrackedDeviceActivated: {
           SetupRenderModelForTrackedDevice(event.trackedDeviceIndex);
@@ -454,7 +468,21 @@ namespace fd {
         } break;
         case vr::VREvent_TrackedDeviceUpdated: {
           printf("Device %u updated.\n", event.trackedDeviceIndex);
-        }break;
+        } break;
+        case vr::VREvent_ButtonPress : {
+          switch((vr::EVRButtonId)event.data.controller.button) {
+            case vr::k_EButton_Grip :
+            case vr::k_EButton_ApplicationMenu :
+            case vr::k_EButton_SteamVR_Trigger :
+            case vr::k_EButton_SteamVR_Touchpad : {
+              input_handler->SendDiscreteSignal("inputShiftSlice", frameTime);
+            } break;
+          }
+        } break;
+        case vr::VREvent_TouchPadMove : {
+          static TweakVariable touchX("touch mouse x", 0.0f);
+          touchX.AsFloat() = event.data.mouse.x;
+        } break;
       }
     }
 
@@ -1096,12 +1124,10 @@ namespace fd {
       return true;
     }
 
-
-
-    //virtual void Recenter() {
-    //  if(!m_HMD) return;
-    //  ovrHmd_RecenterPose(m_HMD);
-    //}
+    virtual void Recenter() {
+      if(!m_HMD) return;
+      m_HMD->ResetSeatedZeroPose();
+    }
 
     ALIGNED_ALLOC_NEW_DEL_OVERRIDE
   };

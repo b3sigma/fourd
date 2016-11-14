@@ -27,10 +27,10 @@ public:
   int* AsIntPtr();
   bool* AsBoolPtr();
 
-  float AsFloat();
-  double AsDouble();
-  int AsInt();
-  bool AsBool();
+  float& AsFloat();
+  double& AsDouble();
+  int& AsInt();
+  bool& AsBool();
   
 };
 

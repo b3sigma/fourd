@@ -4,7 +4,7 @@
 // Need to do a cmake rule to make this smooth
 // Or see about including both at the same time and having reasonable selection
 //#define FD_VR_USE_OCULUS
-//#define FD_VR_USE_OPENVR
+#define FD_VR_USE_OPENVR
 
 #include <string>
 #include "platform_interface.h"
@@ -14,6 +14,7 @@ namespace fd {
 
 class Camera;
 class Texture;
+class InputHandler;
 
 // Interface class for actual vr.
 // This ended up alright for different builds that work for different setups. That might be fine, but if it turns out a single build for all the headsets is better, the CreateVR function will need to be defined in vr_wrapper.cpp instead and maybe enumerate exposed interfaces from oculus and vive
@@ -37,7 +38,7 @@ public:
     Camera* pCamera, Texture** outRenderColor, Texture** outRenderDepth) {}
   virtual void FinishFrame() {}
 
-  virtual void HandleInput() {}
+  virtual void HandleInput(float frameTime, InputHandler* inputHandler) {}
 
   virtual std::string GetDeviceName() { return std::string(""); }
   virtual bool GetIsDebugDevice() { return true; }

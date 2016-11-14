@@ -143,6 +143,7 @@
     <ClInclude Include="..\app\imgui_tweak.h" />
     <ClInclude Include="..\app\imgui_wrapper.h" />
     <ClInclude Include="..\app\input_handler.h" />
+    <ClInclude Include="..\app\input_signals.h" />
     <ClInclude Include="..\app\meshbuffer.h" />
     <ClInclude Include="..\app\platform_interface.h" />
     <ClInclude Include="..\app\render.h" />

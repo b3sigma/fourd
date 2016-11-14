@@ -1,5 +1,6 @@
 #include "gui_input_router.h"
 
+#include <functional>
 #include <unordered_map>
 
 #include "../imgui/imgui.h"
@@ -67,6 +68,19 @@ void GuiInputRouterComponent::OnConnected() {
   RegisterSignal(std::string("inputButton1"), this,          &GuiInputRouterComponent::OnButton1);
   RegisterSignal(std::string("inputButton1_Release"), this,  &GuiInputRouterComponent::OnButton1_Release);
   RegisterSignal(std::string("Step"), this, &GuiInputRouterComponent::OnStep);
+
+  // really would like to get lambdas to work
+  //  void GuiInputRouterComponent::OnPadDown(float frameTime) {
+  //  SetNavTypeFromSignal(std::string("inputPadDown"), 1.0f);
+  //}
+  //static std::function<void(float)> padDown =
+  ////static auto padDown = 
+  //[this]() -> void {
+  //  SetNavTypeFromSignal(std::string("inputPadDown"), 1.0f); };
+  //RegisterSignal(std::string("inputPadDown"), this,
+  //  padDown);
+  //RegisterSignal(std::string("inputPadDown"), this,
+  //  [](float frameTime) { SetNavTypeFromSignal(std::string("inputPadDown"), 1.0f); });
 }
 
 void GuiInputRouterComponent::OnStep(float delta) {

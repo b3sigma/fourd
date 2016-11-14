@@ -1013,13 +1013,14 @@ void StepFrame() {
   ImGuiWrapper::NewFrame(frameTime, guiWidth, guiHeight);
 
   if(g_vr && g_vr->IsUsingVR()) {
-    g_vr->HandleInput();
+    g_vr->HandleInput(frameTime, &g_inputHandler);
   }
 
   g_inputHandler.PollJoysticks();
   g_inputHandler.ApplyJoystickInput((float)g_renderer.GetFrameTime());
   ApplyMouseMove();
 
+  // TODO: try to roll up into g_vr->HandleInput when we can test oculus where that's relevant
   if(g_vr && g_vr->IsUsingVR() && g_vr->m_doScreenSaver) {
     if(g_vr->m_hadInput) {
       g_inputHandler.SendAnyInputSignal(&(g_camera.GetComponentBus()));

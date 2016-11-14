@@ -36,9 +36,9 @@ int* TweakVariable::AsIntPtr() { return &_intVal; }
 float* TweakVariable::AsFloatPtr() { return &_floatVal; }
 bool* TweakVariable::AsBoolPtr() { return &_boolVal; }
 
-double TweakVariable::AsDouble() { return _doubleVal; }
-int TweakVariable::AsInt() { return _intVal; }
-float TweakVariable::AsFloat() { return _floatVal; }
-bool TweakVariable::AsBool() { return _boolVal; }
+double& TweakVariable::AsDouble() { return _doubleVal; }
+int& TweakVariable::AsInt() { return _intVal; }
+float& TweakVariable::AsFloat() { return _floatVal; }
+bool& TweakVariable::AsBool() { return _boolVal; }
 
 } //namespace fd

@@ -314,6 +314,9 @@
     <ClInclude Include="..\imgui\imgui_internal.h">
       <Filter>thirdparty</Filter>
     </ClInclude>
+    <ClInclude Include="..\app\input_signals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\cg\four.cg">

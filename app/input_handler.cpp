@@ -4,6 +4,17 @@
 
 namespace fd {
 
+InputHandler::InputHandler() 
+    : m_startExtraJoysticks(GLFW_JOYSTICK_LAST + 1) {
+}
+
+InputHandler::Joystick& InputHandler::TickleExtraJoystick(int index) {
+  if ((int)m_joysticks.size() < index) {
+    m_joysticks.resize(index + 1);
+  }
+  return m_joysticks[index];
+}
+
 void InputHandler::PollJoysticks() {
   for(int j = GLFW_JOYSTICK_1; j <= GLFW_JOYSTICK_LAST; j++) {
     if(glfwJoystickPresent(j)) {
@@ -293,6 +304,19 @@ void InputHandler::SendAnyInputSignal(ComponentBus* target) {
   target->SendSignal(anyInputSignal, SignalN<>());
 }
 
+void InputHandler::SendDiscreteSignal(const std::string& signal, float frameTime) {
+  for(auto inputTarget : m_inputTargets) {
+    inputTarget->SendSignal(signal,
+        SignalN<float>(), frameTime);
+  }
+}
+
+void InputHandler::SendContinuousInputSignal(const std::string& signal, float frameTime, float value) {
+  for(auto inputTarget : m_inputTargets) {
+    inputTarget->SendSignal(signal,
+        SignalN<float, float>(), frameTime, value);
+  }
+}
 
 void InputHandler::DoCommand(const std::string& command, float frameTime) {
   for (auto inputTarget : m_inputTargets) {

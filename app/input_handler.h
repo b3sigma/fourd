@@ -43,7 +43,11 @@ public:
   };
   typedef std::vector<Joystick> JoystickList;
   JoystickList m_joysticks;
+  const int m_startExtraJoysticks; // non-glfw joysticks essentially
 
+  InputHandler();
+
+  Joystick& TickleExtraJoystick(int index); // don't keep this more than a frame, allocates on call potentially
 
   // weirdly, I feel like this is still under-abstracted,
   // like there should be yet another intermediate that holds state
@@ -56,16 +60,16 @@ public:
   void AddInputTarget(ComponentBus* bus);
 
   void SendAnyInputSignal(ComponentBus* target);
+  void SendDiscreteSignal(const std::string& signal, float frameTime);
+  void SendContinuousInputSignal(const std::string& signal, float frameTime, float value);
 };
 
 } // namespace fd
 
 
-// how to structure joystick code?
 // how to structure key input code?
 
 // would be nice to have key binding support
-
 
 // joysticks seem to be polling based, keys are event based
 // key events should write to input state structure?
