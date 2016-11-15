@@ -74,7 +74,7 @@ namespace fd {
     double GetElapsed() {
       #ifdef WIN32
         LARGE_INTEGER current;
-        if (SUCCEEDED(QueryPerformanceCounter(&current))) {
+        if (QueryPerformanceCounter(&current)) {
           _elapsed = static_cast<double>(current.QuadPart - _start.QuadPart) / _frequency;
         }
       #else // linux

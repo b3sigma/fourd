@@ -11,6 +11,9 @@
 
 #if defined(_MSC_VER)
 #define _CRT_SECURE_NO_WARNINGS
+#pragma warning(push)
+#pragma warning(disable: 4996) //strerror whining
+// don't want to clean them up now because don't really want char arrays and it's from imgui
 #endif
 
 namespace fd {
@@ -100,7 +103,7 @@ class Console
     ~Console()
     {
         ClearLog();
-        for (size_t i = 0; i < Items.size(); i++) 
+        for (size_t i = 0; i < (size_t)Items.size(); i++) 
             free(History[i]); 
     }
 
@@ -122,7 +125,7 @@ class Console
 
     void    ClearLog()
     {
-        for (size_t i = 0; i < Items.size(); i++) 
+        for (size_t i = 0; i < (size_t)Items.size(); i++) 
             free(Items[i]); 
         Items.clear();
         ScrollToBottom = true;
@@ -200,7 +203,7 @@ class Console
             ImGui::EndPopup();
         }
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4,1)); // Tighten spacing
-        for (size_t i = 0; i < Items.size(); i++)
+        for (size_t i = 0; i < (size_t)Items.size(); i++)
         {
             const char* item = Items[i];
             if (!filter.PassFilter(item))
@@ -246,12 +249,12 @@ class Console
         else if (ImStricmp(command_line, "#HELP") == 0)
         {
             AddLog("Commands:");
-            for (size_t i = 0; i < Commands.size(); i++)
+            for (size_t i = 0; i < (size_t)Commands.size(); i++)
                 AddLog("- %s", Commands[i]);
         }
         else if (ImStricmp(command_line, "#HISTORY") == 0)
         {
-            for (size_t i = History.size() >= 10 ? History.size() - 10 : 0; i < History.size(); i++)
+            for (size_t i = History.size() >= 10 ? (size_t)History.size() - 10 : 0; i < (size_t)History.size(); i++)
                 AddLog("%3d: %s\n", i, History[i]);
         }
         else if (ImStricmp(command_line, "#CLOSE") == 0)
@@ -301,7 +304,7 @@ class Console
 
                 // Build a list of candidates
                 ImVector<const char*> candidates;
-                for (size_t i = 0; i < Commands.size(); i++)
+                for (size_t i = 0; i < (size_t)Commands.size(); i++)
                     if (ImStrnicmp(Commands[i], word_start, (int)(word_end-word_start)) == 0)
                         candidates.push_back(Commands[i]);
 
@@ -325,7 +328,7 @@ class Console
                     {
                         int c = 0;
                         bool all_candidates_matches = true;
-                        for (size_t i = 0; i < candidates.size() && all_candidates_matches; i++)
+                        for (size_t i = 0; i < (size_t)candidates.size() && all_candidates_matches; i++)
                             if (i == 0)
                                 c = toupper(candidates[i][match_len]);
                             else if (c != toupper(candidates[i][match_len]))
@@ -343,7 +346,7 @@ class Console
 
                     // List matches
                     AddLog("Possible matches:\n");
-                    for (size_t i = 0; i < candidates.size(); i++)
+                    for (size_t i = 0; i < (size_t)candidates.size(); i++)
                         AddLog("- %s\n", candidates[i]);
                 }
             } break;
@@ -427,5 +430,8 @@ void ConsoleInterface::AddConsoleCommand(const char* command) {
     }
 }
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#endif
 
 } //namespace fd

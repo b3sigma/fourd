@@ -145,6 +145,7 @@ namespace fd {
     ~QuaxolChunk();
 
     bool LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset);
+    bool SetFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset);
     void Clear();
     void SetAt(const QuaxolSpec& pos, bool present);
     void SetAt(const QuaxolSpec& pos, bool present, int type);

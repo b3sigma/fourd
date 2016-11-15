@@ -405,9 +405,29 @@ bool Physics::LocalRayCastChunk(const QuaxolChunk& chunk,
   return false;
 }
 
+Vec4f Physics::ConvertWorldToLocal(Vec4f pos) {
+  if(!m_chunk)
+    return pos;
+
+  QuaxolChunk& chunk = *m_chunk;
+
+  Vec4f localPos(pos);
+  localPos -= chunk.m_position;
+  localPos /= chunk.m_blockSize;
+  return localPos;
+}
+
 void Physics::LineDraw4D(const Vec4f& start, const Vec4f& ray,
     DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback) {
 
+  Vec4f localStart = ConvertWorldToLocal(start);
+  Vec4f localRay = ConvertWorldToLocal(start + ray) - localStart; // uuuughlol
+
+  LocalLineDraw4D(localStart, localRay, callback);
+}
+
+void Physics::LocalLineDraw4D(const Vec4f& start, const Vec4f& ray,
+    DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback) {
   int sign[4];
   for(int c = 0; c < 4; c++) {
     sign[c] = GetSign(ray[c]);
@@ -424,12 +444,23 @@ void Physics::LineDraw4D(const Vec4f& start, const Vec4f& ray,
       // we will add this to the counter whenever we take a step
       step[c] = fabs(1.0f / normal[c]);
        // start out with the right number of "steps" based on start position
-      stepCounter[c] = (1.0f - fabs(clampDir[c])) * step[c];
-    } else {
+      if(clampDir[c] != 0.0f) {
+        stepCounter[c] = (1.0f - fabs(clampDir[c])) * step[c];
+      } else {
+        if(sign[c] < 0.0f) {
+          stepCounter[c] = 0.0f;
+        } else {
+          stepCounter[c] = step[c];
+        }
+      }
+   } else {
       step[c] = 0.0f;
       stepCounter[c] = FLT_MAX;
     }
   }
+
+  int numAdds = 1; // for start
+  int maxAdds = (int)ceil(ray.length() * 8.0f); // do an overestimate as this shouldn't happen
 
   QuaxolSpec gridPos(start);
   QuaxolSpec gridEnd(start + ray);
@@ -448,6 +479,13 @@ void Physics::LineDraw4D(const Vec4f& start, const Vec4f& ray,
     gridPos[nextAxis] += sign[nextAxis];
     stepCounter[nextAxis] += step[nextAxis];
     callback(gridPos[0], gridPos[1], gridPos[2], gridPos[3], start, ray);
+
+    numAdds++;
+    if(numAdds >= maxAdds) {
+      printf("Warning exceeded ray dist in LineDraw4D! start:%f,%f,%f,%f ray:%f,%f,%f,%f\n",
+          start.x, start.y, start.z, start.w, ray.x, ray.y, ray.z, ray.w);
+      break;
+    }
   }
 }
 

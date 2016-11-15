@@ -73,7 +73,10 @@ namespace fd {
         const Vec4f& start, const Vec4f& ray,
         Vec4f* outPos, Vec4f* normal);
 
+    Vec4f ConvertWorldToLocal(Vec4f pos);
     void LineDraw4D(const Vec4f& start, const Vec4f& ray,
+        DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback);
+    void LocalLineDraw4D(const Vec4f& start, const Vec4f& ray,
         DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> callback);
 
     static void RunTests();

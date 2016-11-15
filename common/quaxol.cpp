@@ -16,10 +16,7 @@ QuaxolChunk::QuaxolChunk(Vec4f position, Vec4f blockSize)
 
 QuaxolChunk::~QuaxolChunk() {}
 
-bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset) {
-  static unsigned char startFilled = 0; //0xff
-  memset(&m_blocks, startFilled, sizeof(m_blocks));
-
+bool QuaxolChunk::SetFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset) {
   if(!pPresent)
     return false;
 
@@ -45,13 +42,19 @@ bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* off
     int autoType = (local.w * 4 + (local.x % 3)) % 3;
 
     Block& fetchBlock = GetBlock(local.x, local.y, local.z, local.w);
-    fetchBlock.present = !startFilled;
+    fetchBlock.present = true;
     fetchBlock.type = autoType;
   }
 
   UpdateRendering();
 
   return true;
+}
+
+bool QuaxolChunk::LoadFromList(const TVecQuaxol* pPresent, const QuaxolSpec* offset) {
+  static unsigned char startFilled = 0; //0xff
+  memset(&m_blocks, startFilled, sizeof(m_blocks));
+  return SetFromList(pPresent, offset);
 }
 
 void QuaxolChunk::UpdateRendering() {

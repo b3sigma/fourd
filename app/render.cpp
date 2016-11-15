@@ -339,6 +339,9 @@ void Render::RenderAllScenesPerCamera(
       WasGLErrorPlusPrint();
     } else {
       pRenderColor = m_renderColor;
+      if(!pRenderColor)
+        return;
+
       glBindFramebuffer(GL_FRAMEBUFFER, pRenderColor->m_framebuffer_id);
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
           GL_TEXTURE_2D, pRenderColor->m_texture_id, 0);

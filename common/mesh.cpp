@@ -1167,7 +1167,7 @@ void Mesh::Polygon::AddUniqueTriangles() {
   // note that we are actually dealing with an array of indices into the vertex
   // array, and we need an index into that array of indices. Thus:
   int minIndexsValue = INT_MAX; // a case for apostrophes in var names?
-  int minIndexsIndex;
+  int minIndexsIndex = 0;
   for (int v = 0; v < polyVerts; ++v) {
     if(_indVerts[v] < minIndexsValue) {
       minIndexsIndex = v;

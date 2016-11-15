@@ -458,9 +458,18 @@ void ToggleMouseCapture() {
 }
 
 void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, const Vec4f& ray) {
-  g_scene.m_quaxols.emplace_back(x, y, z, w);
+  QuaxolSpec spot(x, y, z, w);
+  QuaxolSpec camera(g_scene.m_pPhysics->ConvertWorldToLocal(g_camera.getCameraPos()));
+  QuaxolSpec cameraLegs(camera);
+  cameraLegs.y -= 1; // todo: real standing support
 
-  ////printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
+  if(spot == camera || spot == cameraLegs)
+    return;
+
+  //g_scene.SetQuaxolAt(spot, true);
+  g_scene.m_quaxols.push_back(spot);
+
+  printf("Adding block x:%d y:%d z:%d w:%d\n", x, y, z, w);
   //Entity* pEntity = g_scene.AddEntity();
   //// ugh need like a mesh manager and better approach to shader handling
   //pEntity->Initialize(&tesseract, g_shader, NULL);
@@ -503,15 +512,14 @@ void AddRaycastEntity() {
 
 void AddTesseractLine() {
   Vec4f cameraPos = g_camera.getCameraPos();
-  cameraPos *= 1.0f / 10.0f;
   Vec4f ray = g_camera.getLookForward();
-  ray *= 10.0f;
+  ray *= 100.0f;
   DelegateN<void, int, int, int, int, const Vec4f&, const Vec4f&> delegate;
   delegate.Bind(AddTesseractLineCallback);
   g_scene.m_pPhysics->LineDraw4D(cameraPos, ray, delegate);
 
   QuaxolSpec offset(0,0,0,0);
-  g_scene.m_pQuaxolChunk->LoadFromList(&(g_scene.m_quaxols), &offset);
+  g_scene.m_pQuaxolChunk->SetFromList(&(g_scene.m_quaxols), &offset);
 }
 
 void SetIsUsingVR(bool usingVR) {
@@ -1359,6 +1367,7 @@ int main(int argc, const char *argv[]) {
 
 
   MainLoopShutdown();
+
 
   return 0;
 }
