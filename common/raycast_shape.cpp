@@ -4,15 +4,19 @@
 
 namespace fd {
 
-void RaycastShape::AddCapsuleRays(float size) {
-  //m_rays.emplace_back(size, 0.0f, 0.0f, 0.0f);
-  //m_rays.emplace_back(-size, 0.0f, 0.0f, 0.0f);
-  //m_rays.emplace_back(0.0f, size, 0.0f, 0.0f);
-  m_rays.emplace_back(0.0f, -size, 0.0f, 0.0f);
-  //m_rays.emplace_back(0.0f, 0.0f, size, 0.0f);
-  //m_rays.emplace_back(0.0f, 0.0f, -size, 0.0f);
-  //m_rays.emplace_back(0.0f, 0.0f, 0.0f, size);
-  //m_rays.emplace_back(0.0f, 0.0f, 0.0f, -size);
+void RaycastShape::AddCapsuleRays(float legHeight, float sphereRadius) {
+  m_rays.emplace_back(sphereRadius, 0.0f, 0.0f, 0.0f);
+  m_rays.emplace_back(-sphereRadius, 0.0f, 0.0f, 0.0f);
+  m_rays.emplace_back(0.0f, sphereRadius, 0.0f, 0.0f);
+  m_rays.emplace_back(0.0f, -legHeight, 0.0f, 0.0f);
+  m_rays.emplace_back(0.0f, 0.0f, sphereRadius, 0.0f);
+  m_rays.emplace_back(0.0f, 0.0f, -sphereRadius, 0.0f);
+  m_rays.emplace_back(0.0f, 0.0f, 0.0f, sphereRadius);
+  m_rays.emplace_back(0.0f, 0.0f, 0.0f, -sphereRadius);
+}
+
+void RaycastShape::AddRays(const RaycastShape::RayList& rays) {
+  m_rays.insert(m_rays.end(), rays.begin(), rays.end());
 }
 
 bool RaycastShape::DoesCollide(

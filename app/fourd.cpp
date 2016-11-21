@@ -25,6 +25,7 @@
 #include "../common/player_capsule_shape.h"
 #include "../common/raycast_shape.h"
 #include "../common/timer.h"
+#include "../common/tweak.h"
 #include "../common/types.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/camera_follow.h"
@@ -163,13 +164,28 @@ void ToggleCameraMode(Camera::MovementMode mode) {
         std::string("DestroyPhysics"), SignalN<>());
     PhysicsShape* shape = NULL;
     if(g_useCapsuleShape) {
-      float capsuleRadius = g_blockSize * 0.4f;
+      static float capsuleRadius = g_blockSize * 0.9f; //0.4f;
       float targetHeight = 10.0f;
       Vec4f offset(0.0f, targetHeight - capsuleRadius, 0.0f, 0.0f);
       shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
     } else {
       RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
-      rayshape->AddCapsuleRays(g_blockSize);
+      static TweakVariable tweakPlayerLegHeight("game.playerLegHeight", g_blockSize);
+      static TweakVariable tweakPlayerRadius("game.playerRadius", g_blockSize * 0.45f);
+      static TweakVariable tweakPlayerColMesh("game.playerColMesh", false);
+      if(tweakPlayerColMesh.AsBool()) {
+        std::unique_ptr<Mesh> mesh(new Mesh());
+        mesh->buildSpherinder(tweakPlayerLegHeight.AsFloat(), tweakPlayerRadius.AsFloat());
+        rayshape->AddRays(mesh->_verts);
+      } else {
+        // if these were wrapped in #defines, we could have a release mode build that just uses the default value... easy enough to refactor later though
+        static TweakVariable tweakPlayerColSingleRay("game.playerColSingleRay", true);
+        if(tweakPlayerColSingleRay.AsBool()) {
+          rayshape->AddRays({ Vec4f(0.0f, -tweakPlayerLegHeight.AsFloat(), 0.0f, 0.0f) });
+        } else {
+          rayshape->AddCapsuleRays(tweakPlayerLegHeight.AsFloat(), tweakPlayerRadius.AsFloat());
+        }
+      }
       shape = rayshape;
     }
     PhysicsComponent* physicsComp =

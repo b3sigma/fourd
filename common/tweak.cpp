@@ -6,24 +6,30 @@ namespace fd {
 TweakVariable::TweakVariable(const char* name, double startVal)
     : TweakVariable(name) { 
   _doubleVal = startVal; 
+  _type = TweakDouble;
 }
 
 TweakVariable::TweakVariable(const char* name, float startVal)
     : TweakVariable(name) { 
   _floatVal = startVal; 
+  _type = TweakFloat;
 }
 
 TweakVariable::TweakVariable(const char* name, int startVal)
     : TweakVariable(name) { 
-  _intVal = startVal; 
+  _intVal = startVal;
+  _type = TweakInt;
 }
 
 TweakVariable::TweakVariable(const char* name, bool startVal)
     : TweakVariable(name) { 
-  _boolVal = startVal; 
+  _boolVal = startVal;
+  _type = TweakBool;
 }
 
-TweakVariable::TweakVariable(const char* name) : _name(name) {
+TweakVariable::TweakVariable(const char* name) 
+    : _name(name)
+    , _largestVal(0) {
   TweakRegistrar::RegisterTweak(name, this);
 }
 

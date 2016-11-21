@@ -27,11 +27,25 @@ void TweakWindow::RenderWindow(float frameTime, const Vec2f& offset) {
     return;
   }
 
-  ImGui::Text("Tweaks availabe:                                         ");
+  ImGui::Text("Tweaks availabe:");
 
   for(auto tweakEntry : *TweakRegistrar::_nameToTweak) {
     TweakVariable* tweak = tweakEntry.second;
-    ImGui::DragFloat(tweakEntry.first.c_str(), tweak->AsFloatPtr(), 0.005f);
+    switch(tweak->GetType()) {
+      case TweakVariable::TweakDouble:
+      case TweakVariable::TweakFloat:
+        ImGui::DragFloat(tweakEntry.first.c_str(), tweak->AsFloatPtr());
+        break;
+      case TweakVariable::TweakInt:
+        ImGui::DragInt(tweakEntry.first.c_str(), tweak->AsIntPtr());
+        break;
+      case TweakVariable::TweakBool:
+        ImGui::Checkbox(tweakEntry.first.c_str(), tweak->AsBoolPtr());
+        break;
+      default:
+        ImGui::Text("Unsupported Tweak type:%d", tweak->GetType());
+        break;
+    }
     ImGui::SameLine(); 
     ShowHelpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input text.");
   }

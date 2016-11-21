@@ -27,7 +27,8 @@ public:
 
   RaycastShape(Physics* phys) : m_pPhysics(phys) {}
 
-  void AddCapsuleRays(float size);
+  void AddCapsuleRays(float legHeight, float sphereRadius);
+  void AddRays(const RayList& rays);
 
   virtual bool DoesCollide(
       float& deltaTime,
