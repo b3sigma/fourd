@@ -73,7 +73,7 @@ Mesh tesseract;
 ::fd::Shader* g_shader = NULL;
 ::fd::Entity* g_pointerEntity = NULL;
 bool g_captureMouse = false;
-bool g_useCapsuleShape = false;
+TweakVariable g_useCapsuleShape("game.playerColCapsule", false);
 ::fd::PlatformWindow* g_platformWindow = NULL;
 GLFWwindow* g_glfwWindow = NULL;
 ::fd::InputHandler g_inputHandler;
@@ -163,27 +163,54 @@ void ToggleCameraMode(Camera::MovementMode mode) {
     g_camera.GetComponentBus().SendSignal(
         std::string("DestroyPhysics"), SignalN<>());
     PhysicsShape* shape = NULL;
-    if(g_useCapsuleShape) {
+    if(g_useCapsuleShape.AsBool()) {
       static float capsuleRadius = g_blockSize * 0.9f; //0.4f;
       float targetHeight = 10.0f;
       Vec4f offset(0.0f, targetHeight - capsuleRadius, 0.0f, 0.0f);
       shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
     } else {
       RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
+      // if these were wrapped in #defines, we could have a release mode build that just uses the default value... easy enough to refactor later though
       static TweakVariable tweakPlayerLegHeight("game.playerLegHeight", g_blockSize);
       static TweakVariable tweakPlayerRadius("game.playerRadius", g_blockSize * 0.45f);
-      static TweakVariable tweakPlayerColMesh("game.playerColMesh", false);
-      if(tweakPlayerColMesh.AsBool()) {
+      enum ColType {
+        ColTypeSpherinder,
+        ColTypeFourCylinder,
+        ColTypeRaySingle, // end of mesh methods, so push meshes above
+        ColTypeWRayLine,
+        ColTypeCardinalLines,
+        // keep rays and meshes split
+        ColTypeNumOptions
+      };
+      static TweakVariable tweakPlayerColType("game.playerColType", (int)ColTypeRaySingle);
+      tweakPlayerColType.AsInt() = abs(tweakPlayerColType.AsInt()) % ColTypeNumOptions;
+      if(tweakPlayerColType.AsInt() < ColTypeRaySingle) {
         std::unique_ptr<Mesh> mesh(new Mesh());
-        mesh->buildSpherinder(tweakPlayerLegHeight.AsFloat(), tweakPlayerRadius.AsFloat());
+        switch(tweakPlayerColType.AsInt()) {
+          case ColTypeSpherinder: 
+            mesh->buildSpherinder(tweakPlayerLegHeight.AsFloat(), tweakPlayerRadius.AsFloat());
+            break;
+          case ColTypeFourCylinder:
+            mesh->buildFourCylinder(tweakPlayerRadius.AsFloat(), tweakPlayerLegHeight.AsFloat() * 2.0f, tweakPlayerRadius.AsFloat(), /*faceCount*/ 16);
+            break;
+        }
         rayshape->AddRays(mesh->_verts);
       } else {
-        // if these were wrapped in #defines, we could have a release mode build that just uses the default value... easy enough to refactor later though
-        static TweakVariable tweakPlayerColSingleRay("game.playerColSingleRay", true);
-        if(tweakPlayerColSingleRay.AsBool()) {
-          rayshape->AddRays({ Vec4f(0.0f, -tweakPlayerLegHeight.AsFloat(), 0.0f, 0.0f) });
-        } else {
-          rayshape->AddCapsuleRays(tweakPlayerLegHeight.AsFloat(), tweakPlayerRadius.AsFloat());
+        switch(tweakPlayerColType.AsInt()) {
+          case ColTypeRaySingle:
+            rayshape->AddRays({ Vec4f(0.0f, -tweakPlayerLegHeight.AsFloat(), 0.0f, 0.0f) });
+            break;
+          case ColTypeWRayLine:
+            rayshape->AddRays({ 
+              Vec4f(0.0f, -tweakPlayerLegHeight.AsFloat(), 0.0f, -tweakPlayerRadius.AsFloat()),
+              Vec4f(0.0f, -tweakPlayerLegHeight.AsFloat(), 0.0f, 0.0f),
+              Vec4f(0.0f, -tweakPlayerLegHeight.AsFloat(), 0.0f, tweakPlayerRadius.AsFloat()),
+            });
+            break;
+          case ColTypeCardinalLines:
+            rayshape->AddCapsuleRays(tweakPlayerLegHeight.AsFloat(), 
+                                     tweakPlayerRadius.AsFloat());
+            break;
         }
       }
       shape = rayshape;
@@ -247,7 +274,7 @@ bool Initialize(int width, int height) {
         0.0f /* wNear */, 50.0f /* wFar */, 0.5f /* wScreenRatio */);
   }
 
-  if(g_useCapsuleShape) {
+  if(g_useCapsuleShape.AsBool()) {
     g_camera.SetCameraPosition(Vec4f(1.5f, 40.0f, 1.5f, 1.5f));
   } else {
     g_camera.SetCameraPosition(Vec4f(1.5f, 19.5f, 1.5f, 1.5f));
