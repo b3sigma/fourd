@@ -1,8 +1,10 @@
 #include <memory>
 #include "../common/frame_timer.h"
 #include "../common/mesh.h"
+#include "../common/raycast_shape.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/mesh_cleanup.h"
+#include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
 #include "entity.h"
 #include "render_helper.h"
@@ -87,12 +89,26 @@ void RenderHelper::AddEyeCandy(EyeCandyTypes type, const Vec4f& pos) {
   }
 }
 
+Entity* RenderHelper::PhysicsTess(Vec4f pos, const Mat4f* rotation, Vec4f color, float scale) {
+  Entity* ent = RenderTess(pos, rotation, color, scale);
+  if(ent && ent->m_pMesh) {
+    Scene* scene = g_renderer.GetFirstScene();
+    Physics* physics = scene->m_pPhysics;
+    // ok, this is leaking. Should this thing just be a component? Or should the component own memory ownership? 
+    // the original intent around the shapes might have been to have them managed in order to reduce memory, much like meshes
+    RaycastShape* shape = new RaycastShape(physics);
+    shape->AddRays(ent->m_pMesh->_verts);
+    ent->GetComponentBus().AddComponent(new PhysicsComponent(physics, shape));
+  }
+  return ent;
+}
+
 Entity* RenderHelper::RenderTess(Vec4f pos, const Mat4f* rotation, Vec4f color, float scale) {
   //SCOPE_TIME(); //"RenderHelper::RenderAxis");
   static Mesh staticTesseract;
   static bool setupAlready = false;
   if(!setupAlready) {
-    staticTesseract.buildTesseract(1.0f, Vec4f(), Vec4f());
+    staticTesseract.buildTesseract(1.0f, Vec4f(-0.5f, -0.5f, -0.5f, -0.5f)); // centered, size 1
     setupAlready = true;
   }
 

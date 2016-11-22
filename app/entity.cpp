@@ -13,6 +13,8 @@ Entity::Entity(Scene* scene)
       std::string("orientation"), &m_orientation, true);
   m_componentBus.RegisterOwnerData(
       std::string("position"), &m_position, true);
+  m_componentBus.RegisterOwnerData(
+      std::string("velocity"), &m_velocity, true);
   m_componentBus.RegisterOwnerDataPtr(
       std::string("scene"), &m_scene, true);
 

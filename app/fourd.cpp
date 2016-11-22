@@ -229,7 +229,8 @@ void SetDefaultCameraMode() {
     // TODO: refactor the g_ into a game/app thing?s 
     ToggleCameraMode(g_camera.getMovementMode());
   } else {
-    ToggleCameraMode(Camera::MovementMode::WALK);
+    ToggleCameraMode(Camera::MovementMode::LOOK);
+    //ToggleCameraMode(Camera::MovementMode::WALK);
   }
 }
 
@@ -902,6 +903,11 @@ void AsciiKeyUpdate(int key, bool isShift) {
     } break;
     case 'H' : {
       RenderHelper::RenderAxis(g_camera.getRenderPos(), &g_camera.getRenderMatrix(), 20.0f /*scale*/, false /*permanent*/);
+    } break;
+    case 'T' : {
+      static TweakVariable tweakPlaceDist("help.physPlaceDist", 30.0f);
+      RenderHelper::PhysicsTess(g_camera.getCameraPos() + (g_camera.getLookForward() * tweakPlaceDist.AsFloat()), 
+          &g_camera.getRenderMatrix());
     } break;
     case 'I' : {
       DebugRotateVR((float)PI / 32.0f, Camera::UP, Camera::FORWARD);

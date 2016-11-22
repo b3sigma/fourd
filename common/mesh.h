@@ -51,7 +51,7 @@ public:
   void buildSphere(float size, Vec4f offset);
   void buildSpherinder(float sphereSize, float cylSize, Vec4f offset = Vec4f());
   
-  void buildTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
+  void buildTesseract(float size, Vec4f offset, Vec4f step = Vec4f()); // {4,3,3}
   void buildTesseract(const Vec4f& min, const Vec4f& max);
   void buildReferenceTesseract(float size, Vec4f offset, Vec4f step); // {4,3,3}
   void buildFourTetrad(float size, Vec4f offset); // 5-cell {3,3,3}

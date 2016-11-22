@@ -15,8 +15,15 @@ void RaycastShape::AddCapsuleRays(float legHeight, float sphereRadius) {
   m_rays.emplace_back(0.0f, 0.0f, 0.0f, -sphereRadius);
 }
 
+static const float rayEpsilon = 0.00001f; //ugh
 void RaycastShape::AddRays(const RaycastShape::RayList& rays) {
-  m_rays.insert(m_rays.end(), rays.begin(), rays.end());
+  m_rays.reserve(m_rays.size() + rays.size());
+  for(auto ray : rays) {
+    if(ray.lengthSq() > rayEpsilon) {
+      m_rays.emplace_back(ray);
+    }
+    // don't use zero length rays because problems
+  }
 }
 
 bool RaycastShape::DoesCollide(
@@ -65,11 +72,13 @@ bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
   bool hitSomething = false;
   for(auto ray : m_rays) {
     Vec4f pushedRay(ray + frameVelocity);
+    if(pushedRay.lengthSq() <= rayEpsilon)
+      continue;
     float dist;
     if(m_pPhysics->RayCast(position, pushedRay, &dist, &hitNormal)) {
       Vec4f collideRay = pushedRay.normalized() * dist;
       Vec4f correctedVel = collideRay - ray;
-      if(correctedVel.lengthSq() > frameVelocity.lengthSq()) {
+      if(correctedVel.lengthSq() > rayEpsilon && correctedVel.lengthSq() > frameVelocity.lengthSq()) {
         frameVelocity = correctedVel.normalized() * frameVelocity.length();
       } else {
         frameVelocity = correctedVel;

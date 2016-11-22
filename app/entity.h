@@ -18,6 +18,7 @@ public:
   // requires knowing about write update functions
   Mat4f m_orientation;
   Vec4f m_position;
+  Vec4f m_velocity; // should really be doing this with rigidbody
 
   ComponentBus m_componentBus;
   Scene* m_scene;
