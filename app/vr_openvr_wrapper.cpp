@@ -792,6 +792,9 @@ namespace fd {
         }
         static bool doCameraInversion = true;
         if(doCameraInversion) {
+          // TODO: lookslike we imported a bug
+          //m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd];
+          //m_hmdPose = m_hmdPose.invert();
           m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd].invert();
         } else {
           m_hmdPose = m_device3Poses[vr::k_unTrackedDeviceIndex_Hmd];
