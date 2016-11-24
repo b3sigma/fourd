@@ -16,7 +16,7 @@ namespace fd {
   class PhysicsComponent : public Component {
   public:
     Physics* m_pPhysics; // not owned
-    PhysicsShape* m_pShape; //owned
+    PhysicsShape* m_pShape; // not owned
 
     //Vec4f m_velocity;
     float m_jumpCountdown;
@@ -33,7 +33,7 @@ namespace fd {
 
     PhysicsComponent(Physics* pPhys, PhysicsShape* shape);
     virtual ~PhysicsComponent() {
-      delete m_pShape;
+      //delete m_pShape;
     }
 
     virtual void OnConnected();

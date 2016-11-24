@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "component.h"
 #include "fourmath.h"
 #include "physics_shape_interface.h"
 
@@ -17,15 +18,23 @@ public:
   Vec4f m_max;
 };
 
-class RaycastShape : public PhysicsShape {
+// TODO move this to components dir if this pans out
+class RaycastShape : public PhysicsShape, public Component {
 public:
   Physics* m_pPhysics;
+
+  Mat4f* m_pOwnerOrientation = NULL;
+  Vec4f* m_pOwnerPosition = NULL;
+  Vec4f* m_pOwnerVelocity = NULL;
 
   // not normalized, length included
   typedef std::vector<Vec4f> RayList;
   RayList m_rays;
+  bool m_oriented;
 
-  RaycastShape(Physics* phys) : m_pPhysics(phys) {}
+  RaycastShape(Physics* phys, bool oriented) : m_pPhysics(phys), m_oriented(oriented) {}
+
+  virtual void OnConnected();
 
   void AddCapsuleRays(float legHeight, float sphereRadius);
   void AddRays(const RayList& rays);

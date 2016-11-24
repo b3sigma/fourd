@@ -1,8 +1,22 @@
 #include "fourmath.h"
 #include "physics.h"
 #include "raycast_shape.h"
+#include "tweak.h"
 
 namespace fd {
+
+void RaycastShape::OnConnected() {
+  static std::string BDATpos("position");
+  static std::string BDATorient("orientation");
+  static std::string BDATvelocity("velocity");
+      
+  if(!m_ownerBus->GetOwnerData(BDATorient, true, &m_pOwnerOrientation)
+      || !m_ownerBus->GetOwnerData(BDATpos, true, &m_pOwnerPosition)
+      || !m_ownerBus->GetOwnerData(BDATvelocity, true, &m_pOwnerVelocity)) {
+    assert(false);
+    SelfDestruct(); // huh, won't this cause a crash in physicscomponent? bleh
+  }
+}
 
 void RaycastShape::AddCapsuleRays(float legHeight, float sphereRadius) {
   m_rays.emplace_back(sphereRadius, 0.0f, 0.0f, 0.0f);
@@ -35,7 +49,10 @@ bool RaycastShape::DoesCollide(
   Vec4f bestHitRay;
   float closestHitSq = FLT_MAX;
   bool hitSomething = false;
-  for(auto ray : m_rays) {
+  for(Vec4f ray : m_rays) {
+    if(m_oriented && m_pOwnerOrientation) {
+      ray = m_pOwnerOrientation->transform(ray);
+    }
     float dist;
     Vec4f localHitNormal;
     if(m_pPhysics->RayCast(position, ray, &dist, &localHitNormal)) {
@@ -70,7 +87,11 @@ bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
   Vec4f hitNormal;
   float closestHit = FLT_MAX;
   bool hitSomething = false;
-  for(auto ray : m_rays) {
+  for(Vec4f ray : m_rays) {
+    if(m_oriented && m_pOwnerOrientation) {
+      ray = m_pOwnerOrientation->transform(ray);
+    }
+
     Vec4f pushedRay(ray + frameVelocity);
     if(pushedRay.lengthSq() <= rayEpsilon)
       continue;
@@ -91,6 +112,30 @@ bool RaycastShape::DoesMovementCollide(const Mat4f& orientation,
       hitSomething = true;
     }
   }
+
+  // the idea is to block the player from sliding around in the w direction, which is disorienting without knowledge of your own physics volume
+  static TweakVariable lockTo3Space("game.playerLock3Space", false);
+  if(lockTo3Space.AsBool()) {
+    Vec4f cameraSpaceVelocity =  frameVelocity;
+
+    static TweakVariable tweakInvertedCamera("game.playerLock3Inverted", false);
+    if(tweakInvertedCamera.AsBool()) {
+      cameraSpaceVelocity = m_pOwnerOrientation->inverse().transform(cameraSpaceVelocity);
+    } else {
+      cameraSpaceVelocity = m_pOwnerOrientation->transform(cameraSpaceVelocity);
+    }
+
+    cameraSpaceVelocity.w = 0.0f;
+    
+    if(tweakInvertedCamera.AsBool()) {
+      cameraSpaceVelocity = m_pOwnerOrientation->transform(cameraSpaceVelocity);
+    } else {
+      cameraSpaceVelocity = m_pOwnerOrientation->inverse().transform(cameraSpaceVelocity);
+    }
+
+    frameVelocity = cameraSpaceVelocity;
+  }
+
   outVelocity = frameVelocity * (1.0f / deltaTime);
   return hitSomething;
 }

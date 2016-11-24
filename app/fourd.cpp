@@ -167,12 +167,13 @@ void ToggleCameraMode(Camera::MovementMode mode) {
       static float capsuleRadius = g_blockSize * 0.9f; //0.4f;
       float targetHeight = 10.0f;
       Vec4f offset(0.0f, targetHeight - capsuleRadius, 0.0f, 0.0f);
+      // this is leaking currently
       shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
+
     } else {
-      RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics);
-      // if these were wrapped in #defines, we could have a release mode build that just uses the default value... easy enough to refactor later though
+      RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics, /*oriented*/ true);
       static TweakVariable tweakPlayerLegHeight("game.playerLegHeight", g_blockSize);
-      static TweakVariable tweakPlayerRadius("game.playerRadius", g_blockSize * 0.45f);
+      static TweakVariable tweakPlayerRadius("game.playerRadius", g_blockSize * 0.25f);
       enum ColType {
         ColTypeSpherinder,
         ColTypeFourCylinder,
@@ -214,6 +215,7 @@ void ToggleCameraMode(Camera::MovementMode mode) {
         }
       }
       shape = rayshape;
+      g_camera.GetComponentBus().AddComponent(rayshape);
     }
     PhysicsComponent* physicsComp =
         new PhysicsComponent(g_scene.m_pPhysics, shape);
@@ -229,8 +231,8 @@ void SetDefaultCameraMode() {
     // TODO: refactor the g_ into a game/app thing?s 
     ToggleCameraMode(g_camera.getMovementMode());
   } else {
-    ToggleCameraMode(Camera::MovementMode::LOOK);
-    //ToggleCameraMode(Camera::MovementMode::WALK);
+    //ToggleCameraMode(Camera::MovementMode::LOOK);
+    ToggleCameraMode(Camera::MovementMode::WALK);
   }
 }
 

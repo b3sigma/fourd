@@ -94,11 +94,10 @@ Entity* RenderHelper::PhysicsTess(Vec4f pos, const Mat4f* rotation, Vec4f color,
   if(ent && ent->m_pMesh) {
     Scene* scene = g_renderer.GetFirstScene();
     Physics* physics = scene->m_pPhysics;
-    // ok, this is leaking. Should this thing just be a component? Or should the component own memory ownership? 
-    // the original intent around the shapes might have been to have them managed in order to reduce memory, much like meshes
-    RaycastShape* shape = new RaycastShape(physics);
+    RaycastShape* shape = new RaycastShape(physics, true);
     shape->AddRays(ent->m_pMesh->_verts);
     ent->GetComponentBus().AddComponent(new PhysicsComponent(physics, shape));
+    ent->GetComponentBus().AddComponent(shape);
   }
   return ent;
 }
