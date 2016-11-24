@@ -171,7 +171,7 @@ void ToggleCameraMode(Camera::MovementMode mode) {
       shape = new PlayerCapsuleShape(g_scene.m_pPhysics, capsuleRadius, offset);
 
     } else {
-      RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics, /*oriented*/ true);
+      RaycastShape* rayshape = new RaycastShape(g_scene.m_pPhysics, /*oriented*/ false);
       static TweakVariable tweakPlayerLegHeight("game.playerLegHeight", g_blockSize);
       static TweakVariable tweakPlayerRadius("game.playerRadius", g_blockSize * 0.25f);
       enum ColType {
