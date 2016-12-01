@@ -120,6 +120,7 @@
     <ClCompile Include="..\common\fourmath.cpp" />
     <ClCompile Include="..\common\frame_timer.cpp" />
     <ClCompile Include="..\common\mesh.cpp" />
+    <ClCompile Include="..\common\mesh_skinned.cpp" />
     <ClCompile Include="..\common\physics.cpp" />
     <ClCompile Include="..\common\physics_help.cpp" />
     <ClCompile Include="..\common\physics_rigidbody.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="..\common\fourmath.h" />
     <ClInclude Include="..\common\frame_timer.h" />
     <ClInclude Include="..\common\mesh.h" />
+    <ClInclude Include="..\common\mesh_skinned.h" />
     <ClInclude Include="..\common\misc_defs.h" />
     <ClInclude Include="..\common\physics.h" />
     <ClInclude Include="..\common\physics_rigidbody.h" />

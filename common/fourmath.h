@@ -429,6 +429,11 @@ public:
   Pose4() {}
   Pose4(const Mat& rot, const Vec& pos) : rotation(rot), position(pos) {}
 
+  void storeIdentity() {
+    rotation.storeIdentity();
+    position.storeZero();
+  }
+
   // M * x = R * x + P
   // M * M * x = (R * (R * x + P) + P)
   // M * M * x = RRx + RP + P
