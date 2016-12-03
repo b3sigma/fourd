@@ -12,6 +12,24 @@
 
 using namespace ::fd;
 
+void Mesh::getIndexedTriangle(int index, int& aVertInd, int& bVertInd, int& cVertInd, Vec4f& a, Vec4f& b, Vec4f& c) {
+  // should just go ahead and throw in a software rasterizer we're doing so much extra garbage on the cpu
+
+  assert(index < getNumberTriangles() && index >= 0);
+
+  aVertInd = _indices[index * 3];
+  bVertInd = _indices[index * 3 + 1];
+  cVertInd = _indices[index * 3 + 2];
+
+  assert(aVertInd < (int)_verts.size() && aVertInd >= 0);
+  assert(bVertInd < (int)_verts.size() && bVertInd >= 0);
+  assert(cVertInd < (int)_verts.size() && cVertInd >= 0);
+
+  a = _verts[aVertInd];
+  b = _verts[bVertInd];
+  c = _verts[cVertInd];
+}
+
 void Mesh::getTriangle(int index, Vec4f& a, Vec4f& b, Vec4f& c) {
   assert(index < getNumberTriangles() && index >= 0);
 

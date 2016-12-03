@@ -41,17 +41,23 @@ namespace fd {
     typedef std::unordered_map<std::string, Shader*> ShaderHash;
     static ShaderHash s_shaderhash;
 
+  public:
     // because msvc can't do constexpr quite right, must update cpp
     // names if you change these in InitCameraParamHandles
     enum shaderHandleEnum {
       // attribs
       AVertPosition,
       AVertColor,
+      AVertBoneIndex,
 
       // uniforms, per object
       UWorldMatrix,
       UWorldPosition,
       UTexDiffuse0,
+
+      // uniforms, skinning, per object
+      UBoneRotations,
+      UBonePositions,
 
       // uniforms, camera
       UCameraPosition,
@@ -59,7 +65,7 @@ namespace fd {
       UProjectionMatrix,
       UFourToThree,
       UWPlaneNearFar,
-      
+
       // accounting
       ENumCameraShaderHandles,
     };

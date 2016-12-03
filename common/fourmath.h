@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "../eigen/Eigen/Geometry"
 #include "../eigen/Eigen/LU"
+#include "../eigen/Eigen/StdVector"
 #include "mem_helpers.h"
 
 namespace fd {
@@ -152,6 +153,8 @@ public:
   
   public:
     static Vec s_ones;
+
+  ALIGNED_ALLOC_NEW_DEL_OVERRIDE
 };
 
 typedef Vector4<float> Vec4f;
@@ -178,9 +181,10 @@ protected:
 
 public:
   Matrix4() { storeIdentity(); }
-  Matrix4(const Matrix4<T>& c) {
-    d(0) = c.d(0); d(1) = c.d(1); d(2) = c.d(2); d(3) = c.d(3);
-  }
+  Matrix4(const Matrix4<T>& c) : e(c.e) {}
+  //Matrix4(const Matrix4<T>& c) {
+  //  d(0) = c.d(0); d(1) = c.d(1); d(2) = c.d(2); d(3) = c.d(3);
+  //}
   Matrix4(Vec x, Vec y, Vec z, Vec w) {
     d(0) = x; d(1) = y; d(2) = z; d(3) = w;
   }
@@ -427,6 +431,7 @@ public:
   Vec position;
 
   Pose4() {}
+  Pose4(const Pose4& rCopy) : rotation(rCopy.rotation), position(rCopy.position) {}
   Pose4(const Mat& rot, const Vec& pos) : rotation(rot), position(pos) {}
 
   void storeIdentity() {

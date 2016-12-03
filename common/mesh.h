@@ -28,12 +28,14 @@ public:
   VecList _colors;
 
   Mesh() {}
+  virtual ~Mesh() {} // sorry, per MeshSkinned. 2nd subclass forces refactor to components
 
   int getNumberTriangles() {
     return (int)_indices.size() / 3;
   }
 
   void getTriangle(int index, Vec4f& a, Vec4f& b, Vec4f& c);
+  void getIndexedTriangle(int index, int& aVert, int& bVert, int& cVert, Vec4f& a, Vec4f& b, Vec4f& c);
   void getColors(int index, Vec4f& a, Vec4f& b, Vec4f& c);
   void printIt();
 
@@ -82,6 +84,8 @@ public:
   void merge(const Mesh& other);
   void tesselateByThree();
   void tesselateBySix();
+
+  virtual bool hasSkinning() { return false; } // temporary until we actually use buffers
   
 private:
   void populateVerts(float size, int dim, const Vec4f& offset, const Vec4f& numberedSkewStep);

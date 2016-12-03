@@ -5,6 +5,7 @@
 
 #include "../common/camera.h"
 #include "../common/mesh.h"
+#include "../common/mesh_skinned.h"
 #include "../common/physics.h"
 #include "../common/quaxol.h"
 #include "../common/components/physics_component.h"
@@ -149,6 +150,7 @@ void Scene::Step(float fDelta) {
 }
 
 // should be moved to render justgoingtothrowthatoutthere
+// render is in app instead of common currently, so that would have to be changed
 void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
     const Vec4f& position, const Mat4f& orientation) {
   if(pShader == NULL) return; // should go away when we sort
@@ -192,6 +194,68 @@ void RenderMesh(Camera* pCamera, Shader* pShader, Mesh* pMesh,
   pShader->StopUsing();
 }
 
+void RenderMeshSkinned(Camera* pCamera, Shader* pShader, Mesh* pMesh,
+    const Vec4f& position, const Mat4f& orientation) {
+  if(pShader == NULL) return; // should go away when we sort
+  if(pMesh == NULL) return; // should go away when we sort
+
+  MeshSkinned* skinnedMesh = dynamic_cast<MeshSkinned*>(pMesh);
+  if(!skinnedMesh) return;
+  //skinnedMesh->updateFullPoses(); // do on demand? or setup dirty system and do both?
+  
+  pShader->StartUsing();
+  pShader->SetPosition(&position);
+  pShader->SetOrientation(&orientation);
+  pShader->SetCameraParams(pCamera);
+  GLuint colorHandle = pShader->GetColorHandle();
+  
+  GLint boneIndexHandle = pShader->getAttrib("vertBoneIndex");
+  GLint boneRotations = pShader->getUniform("boneRotations");
+  GLint bonePositions = pShader->getUniform("bonePositions");
+  if(boneIndexHandle == -1 || boneRotations == -1 || bonePositions == -1) {
+    printf("RenderMeshSkinned problem with shader handles\n");
+  }
+
+  if(!skinnedMesh->_boneRotations.empty()) {
+    glUniformMatrix4fv(boneRotations, (::std::min)(20, (int)skinnedMesh->_boneRotations.size()), GL_FALSE, skinnedMesh->_boneRotations[0].raw()); // huh, this might not work actually, need to check we didn't pad
+  }
+  if(!skinnedMesh->_bonePositions.empty()) {
+    glUniform4fv(bonePositions, (::std::min)(20, (int)skinnedMesh->_bonePositions.size()), skinnedMesh->_bonePositions[0].raw()); // also might not work due to extra padding
+  }
+
+  // wow ugly now need to do buffers
+  int numTris = pMesh->getNumberTriangles();
+  int startTriangle = 0;
+  int endTriangle = numTris;
+  glBegin(GL_TRIANGLES);
+  Vec4f a, b, c;
+  Vec4f colorA, colorB, colorC;
+  int aInd, bInd, cInd;
+  for (int t = startTriangle; t < endTriangle && t < numTris; t++) {
+    pMesh->getIndexedTriangle(t, aInd, bInd, cInd, a, b, c);
+    if(colorHandle != -1) {
+      pMesh->getColors(t, colorA, colorB, colorC);
+      glVertexAttrib4fv(colorHandle, colorA.raw());
+    }
+    glVertexAttribI1i(boneIndexHandle, *skinnedMesh->getBoneIndex(aInd));
+    glVertex4fv(a.raw());
+
+    if(colorHandle != -1) {
+      glVertexAttrib4fv(colorHandle, colorB.raw());
+    }
+    glVertexAttribI1i(boneIndexHandle, *skinnedMesh->getBoneIndex(bInd));
+    glVertex4fv(b.raw());
+
+    if(colorHandle != -1) {
+      glVertexAttrib4fv(colorHandle, colorC.raw());
+    }
+    glVertexAttribI1i(boneIndexHandle, *skinnedMesh->getBoneIndex(cInd));
+    glVertex4fv(c.raw());
+  }
+  glEnd();
+  pShader->StopUsing();
+}
+
 void Scene::RenderGroundPlane(Camera* pCamera) {
   static bool renderGroundPlane = false;
   if(!renderGroundPlane)
@@ -217,9 +281,14 @@ void Scene::RenderEverything(Camera* pCamera) {
 // TODO: if this gets used more, will probably need split between alpha/non
 void Scene::RenderDynamicEntities(Camera* pCamera) {
   for(const auto pEntity : m_dynamicEntities) {
-    //TODO: sort by shader transition
-    RenderMesh(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
-        pEntity->m_position, pEntity->m_orientation);
+    if(pEntity->m_pMesh && pEntity->m_pMesh->hasSkinning()) {
+      //TODO: sort by shader transition
+      RenderMesh(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
+          pEntity->m_position, pEntity->m_orientation);
+    } else {
+      RenderMeshSkinned(pCamera, pEntity->m_pShader, pEntity->m_pMesh,
+          pEntity->m_position, pEntity->m_orientation);
+    }
   }
   //printf("dynamic entities took %f\n", dyn.GetElapsed());
 }

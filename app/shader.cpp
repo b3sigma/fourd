@@ -68,11 +68,16 @@ void Shader::InitCameraParamHandles() {
   // per vertex
   m_handles[AVertPosition] = getAttrib("vertPosition");
   m_handles[AVertColor] = getAttrib("vertColor");
+  m_handles[AVertBoneIndex] = getAttrib("vertBoneIndex");
 
   // per object
   m_handles[UWorldMatrix] = getUniform("worldMatrix");
   m_handles[UWorldPosition] = getUniform("worldPosition");
   m_handles[UTexDiffuse0] = getUniform("texDiffuse0");
+
+  // skinning, per object
+  m_handles[UBoneRotations] = getUniform("boneRotations");
+  m_handles[UBonePositions] = getUniform("bonePositions");
 
   // camera
   m_handles[UCameraPosition] = getUniform("cameraPosition");

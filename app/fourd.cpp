@@ -15,11 +15,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "../common/camera.h"
+#include "../common/chunkloader.h"
 #include "../common/fd_simple_file.h"
 #include "../common/fourmath.h"
 #include "../common/mesh.h"
-#include "../common/camera.h"
-#include "../common/chunkloader.h"
+#include "../common/mesh_skinned.h"
 #include "../common/physics.h"
 #include "../common/physics_help.h"
 #include "../common/player_capsule_shape.h"
@@ -29,6 +30,7 @@
 #include "../common/types.h"
 #include "../common/components/animated_rotation.h"
 #include "../common/components/camera_follow.h"
+#include "../common/components/mesh_cleanup.h"
 #include "../common/components/periodic_motion.h"
 #include "../common/components/physics_component.h"
 #include "../common/components/timed_death.h"
@@ -532,20 +534,31 @@ void AddTesseractLineCallback(int x, int y, int z, int w, const Vec4f& pos, cons
   //    new TimedDeath(21.0f /* duration */));
 }
 
-void AddRaycastEntity() {
+bool StandardRayCast(Vec4f* outHitPos = NULL);
+bool StandardRayCast(Vec4f* outHitPos) {
   Vec4f position = g_camera.getCameraPos();
   Vec4f ray = g_camera.getLookForward();
   ray *= 1000.0f;
-  float dist;
-  if (g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+  float dist = 999999999.0f; // FLOAT_MAX
+  if(g_scene.m_pPhysics->RayCast(position, ray, &dist)) {
+    if(outHitPos) {
+      *outHitPos = position + ray.normalized() * dist;
+    }
+    return true;
+  }
+  return false;
+}
+
+void AddRaycastEntity() {
+  Vec4f hitPos;
+  if (StandardRayCast(&hitPos)) {
     Entity* pEntity = g_scene.AddEntity();
+
     // ugh need like a mesh manager and better approach to shader handling
-
     pEntity->Initialize(&tesseract, g_renderer.LoadShader("ColorBlendClipped"), NULL);
-    //pEntity->Initialize(&tesseract, g_shader, NULL);
+    
     //pEntity->m_orientation.storeScale(10.0f);
-
-    pEntity->m_position = position + ray.normalized() * dist;
+    pEntity->m_position = hitPos;
 
     pEntity->GetComponentBus().AddComponent(
       new AnimatedRotation((float)PI * 2.0f, Camera::RIGHT, Camera::INSIDE,
@@ -566,6 +579,23 @@ void AddTesseractLine() {
 
   QuaxolSpec offset(0,0,0,0);
   g_scene.m_pQuaxolChunk->SetFromList(&(g_scene.m_quaxols), &offset);
+}
+
+void AddCactusDancer() {
+  Vec4f hitPos;
+  if (StandardRayCast(&hitPos)) {
+    std::unique_ptr<MeshSkinned> mesh(new MeshSkinned());
+    Entity* pEntity = g_scene.AddEntity();
+
+    mesh->buildAxisSignPost();
+    //mesh->buildCactusDancer();
+
+    pEntity->Initialize(mesh.get(), g_renderer.LoadShader("SkinnedRainbow"), NULL);
+    pEntity->m_position = hitPos;
+    
+    pEntity->GetComponentBus().AddComponent(new MeshCleanupComponent(&(pEntity->m_pMesh)));
+    mesh.release(); // MeshCleanupComponent took ownership and will clean up the entity pointer
+  }
 }
 
 void SetIsUsingVR(bool usingVR) {
@@ -872,6 +902,9 @@ void AsciiKeyUpdate(int key, bool isShift) {
     } break;
     case 'z' : {
       g_inputHandler.DoCommand("inputAddQuaxol", g_renderer.GetFrameTimeF());
+    } break;
+    case 'W' : {
+      AddCactusDancer();
     } break;
     case 'S' : {
       AddRaycastEntity();

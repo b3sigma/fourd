@@ -17,21 +17,49 @@ namespace fd {
 
   class MeshSkinned : public Mesh {
   public:
-    struct Bone {
+    class Bone { public: ALIGNED_ALLOC_NEW_DEL_OVERRIDE
+      Pose4f _poseRelative;
       enum { InvalidParentIndex = -1 };
-      int _parentIndex; // -1 for root?
-      Pose4f _pose;
+      int _parentIndex = InvalidParentIndex; // InvalidParentIndex to indicate this is root
+      int _dirtyCounter = 0; // currently only needs 1 bit, but used int for alignment
+
+
+      //Bone() {}
+      //Bone(const Bone& c)
+      //  : _poseRelative(c._poseRelative)
+      //  , _parentIndex(c._parentIndex)
+      //  , _dirtyCounter(c._dirtyCounter) {} // needless, trying to get around weird alignment issue
     };
 
-    typedef std::vector<Bone> VecBones;
+    virtual ~MeshSkinned() {}
+
+    typedef std::vector<Bone, Eigen::aligned_allocator<Bone> > VecBones;
     VecBones _bones;
 
     typedef std::vector<unsigned char> BoneIndexList;
     BoneIndexList _vertBoneIndices;
+    const unsigned char* getBoneIndex(int vertex) const { return &_vertBoneIndices[vertex]; }
+
+    // this structure is more closely aligned with how the renderer will need it
+    typedef std::vector<Vec4f> VecBonePositions;
+    typedef std::vector<Mat4f, Eigen::aligned_allocator<Mat4f> > VecBoneRotations;
+    // these are the full concatenated poses that map from local bone space to final object space
+    VecBonePositions _bonePositions; 
+    VecBoneRotations _boneRotations;
 
     void buildCactusDancer();
+    void buildTilt();
+    void buildAxisSignPost();
+
+
+    void updateFullPoses();
 
     virtual void clearCurrent();
+
+  protected:
+    void updateBoneRecursive(int index, char dirtyCounter);
+    void fillBonesWithTesseracts(float segmentLength);
+
 
   };
 
